@@ -88,7 +88,7 @@ h2 { font-size: 32px; margin: 0 0 6px; letter-spacing: -.02em; }
 .card.svc .price { font-size: 15px; }
 .depts { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
 .dept { border: 1px solid var(--line); border-radius: 18px; overflow: hidden; background: white; border-top: 5px solid var(--dc); }
-.dept h3 { margin: 0; padding: 14px 18px; display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--dc); background: color-mix(in srgb, var(--dc) 6%, white); }
+.dept h3 { margin: 0; padding: 14px 18px; display: flex; align-items: center; gap: 8px; font-size: 16px; color: color-mix(in srgb, var(--dc) 72%, black); background: color-mix(in srgb, var(--dc) 6%, white); }
 .dept h3 small { margin-left: auto; color: var(--ink-2); font-weight: 500; font-size: 12.5px; }
 .dd { width: 10px; height: 10px; border-radius: 50%; background: var(--dc); }
 .trow { display: flex; gap: 10px; padding: 10px 18px; border-top: 1px solid #f1f4f8; font-size: 14px; }

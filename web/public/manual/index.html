@@ -1,3 +1,4 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MediCore User Manual</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -6,7 +7,7 @@
 <style>
 /* Layout: sticky chapter rail on the left, one reading column, screenshots break wider than the text column. */
 :root{
-  --bg:#fbf9f4; --paper:#ffffff; --ink:#122321; --ink-2:#44585a; --ink-3:#7a8c8c; --line:#dfe7e5;
+  --bg:#fbf9f4; --paper:#ffffff; --ink:#122321; --ink-2:#44585a; --ink-3:#566767; --line:#dfe7e5;
   --brand:#0f766e; --brand-2:#0b5f58; --brand-soft:#e3f3f0; --rail:#f3eee3; --rail-ink:#3d5052;
   --amber:#b45309; --amber-soft:#fdf2df; --violet:#6d28d9; --violet-soft:#efe9fd; --red:#b91c1c; --red-soft:#fde7e7;
   --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif; --body:'Figtree','Segoe UI',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
@@ -168,7 +169,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
   <div class="ch-head"><span class="ch-num">01</span><div><h2>Before you start</h2><div class="who">For: owner, administrator, Pentarch installer</div></div></div>
   <p>MediCore runs on <b>one main computer</b> at the facility. Every other computer, tablet and phone opens it in a web browser over the facility Wi-Fi. It does not need the internet to work, so power and the router are what keep it running.</p>
   <h3>What you need</h3>
-  <div class="tw"><table><thead><tr><th>Item</th><th>Minimum</th><th>Why</th></tr></thead><tbody>
+  <div class="tw" tabindex="0"><table><thead><tr><th>Item</th><th>Minimum</th><th>Why</th></tr></thead><tbody>
     <tr><td>Main computer</td><td>Windows 10 or 11, 4 GB RAM (8 GB better), 20 GB free disk</td><td>Holds the system and all the data</td></tr>
     <tr><td>Node.js 22 LTS</td><td>Version 22.13 or newer, from nodejs.org</td><td>The engine MediCore runs on. Main computer only</td></tr>
     <tr><td>Wi-Fi router</td><td>Any home or office router</td><td>Connects the other devices to the main computer</td></tr>
@@ -258,7 +259,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
     <li>To sign out, click the door icon next to your name at the bottom of the menu. Always sign out on a shared computer.</li>
   </ol>
   <div class="note warn"><b class="t">Never share PINs</b><p>Everything you do is recorded under your name in the audit trail (Chapter 16). Change your PIN in <span class="ui">Settings → My account</span>. A forgotten PIN is reset by the administrator in <span class="ui">Settings → Staff &amp; access</span>.</p></div>
-  <div class="tw"><table><thead><tr><th>Sample account (sample data only)</th><th>Username</th><th>PIN</th></tr></thead><tbody>
+  <div class="tw" tabindex="0"><table><thead><tr><th>Sample account (sample data only)</th><th>Username</th><th>PIN</th></tr></thead><tbody>
     <tr><td>Owner you created in the wizard</td><td>what you chose</td><td>what you chose</td></tr>
     <tr><td>Practice staff</td><td>shown in the sign-in list</td><td><code>1234</code></td></tr>
     <tr><td>Pentarch super administrator</td><td><code>pentarch</code></td><td><code>2026</code> (change for real installs)</td></tr>
@@ -595,7 +596,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
 <!-- 16 -->
 <section class="ch col" id="reports" data-roles="owner clinician pharmacist cashier">
   <div class="ch-head"><span class="ch-num">16</span><div><h2>Reports</h2><div class="who">For: administrators, clinicians, pharmacists, cashiers</div></div></div>
-  <div class="tw"><table><thead><tr><th>Report</th><th>Shows</th><th>Use it for</th></tr></thead><tbody>
+  <div class="tw" tabindex="0"><table><thead><tr><th>Report</th><th>Shows</th><th>Use it for</th></tr></thead><tbody>
     <tr><td>Daily summary</td><td>Today's collections, profit, cash-ups, stock alerts</td><td>The owner's end-of-day check, sent on WhatsApp</td></tr>
     <tr><td>Profit &amp; loss</td><td>Sales, cost of goods, gross and net profit, shrinkage</td><td>Knowing what the business really made</td></tr>
     <tr><td>Sales &amp; cashiers</td><td>Takings by cashier and hour, items sold, refunds</td><td>Staffing, spotting unusual refunds</td></tr>
@@ -628,7 +629,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
 <!-- 18 -->
 <section class="ch col" id="settings" data-roles="owner pentarch">
   <div class="ch-head"><span class="ch-num">18</span><div><h2>Settings</h2><div class="who">For: administrators (everyone has My account and Other devices)</div></div></div>
-  <div class="tw"><table><thead><tr><th>Tab</th><th>What you do there</th></tr></thead><tbody>
+  <div class="tw" tabindex="0"><table><thead><tr><th>Tab</th><th>What you do there</th></tr></thead><tbody>
     <tr><td>Facility details</td><td>Name, website tagline, phone, email, location, KMHFR facility code, KRA PIN, brand colour, and the partner labs, imaging centres and hospitals you refer to</td></tr>
     <tr><td>Type &amp; services</td><td>Switch pharmacy / clinic / hospital and turn services on or off. <b>No data is lost</b>; only menus change, and wards are created if admissions are switched on.</td></tr>
     <tr><td>Service prices</td><td>Consultation, procedure, bed and other fees. Add new services.</td></tr>
@@ -640,7 +641,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
   <figure class="shot wide"><div class="frame"><img src="img/settings_type.jpg" alt="Type and services" loading="lazy"></div></figure>
   <h3>Staff and what each role can open</h3>
   <figure class="shot wide"><div class="frame"><img src="img/settings_staff.jpg" alt="Staff and access" loading="lazy"></div></figure>
-  <div class="tw"><table><thead><tr><th>Page</th><th>Admin</th><th>Reception</th><th>Nurse</th><th>Clinician</th><th>Lab</th><th>Pharmacist</th><th>Cashier</th></tr></thead><tbody>
+  <div class="tw" tabindex="0"><table><thead><tr><th>Page</th><th>Admin</th><th>Reception</th><th>Nurse</th><th>Clinician</th><th>Lab</th><th>Pharmacist</th><th>Cashier</th></tr></thead><tbody>
     <tr><td>Dashboard</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
     <tr><td>Patients</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">–</td></tr>
     <tr><td>Queue and visits</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">–</td><td class="y">✓</td><td class="n">–</td></tr>
@@ -697,7 +698,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
 <!-- 22 -->
 <section class="ch col" id="routines" data-roles="owner pharmacist cashier lab nurse reception clinician">
   <div class="ch-head"><span class="ch-num">22</span><div><h2>Daily, weekly and monthly routines</h2><div class="who">For: everyone, owner checks</div></div></div>
-  <div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>Do this</th></tr></thead><tbody>
+  <div class="tw" tabindex="0"><table><thead><tr><th>When</th><th>Who</th><th>Do this</th></tr></thead><tbody>
     <tr><td>Every morning</td><td>Admin</td><td>Start MediCore; check the dashboard for stock alerts and appointments</td></tr>
     <tr><td>Every morning</td><td>Lab</td><td>Clear the “To validate” list from the night before</td></tr>
     <tr><td>Every morning</td><td>Owner / admin</td><td>Work through <b>To do today</b> on the dashboard</td></tr>
@@ -716,7 +717,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
 <!-- 23 -->
 <section class="ch col" id="trouble" data-roles="owner pentarch reception nurse clinician lab pharmacist cashier">
   <div class="ch-head"><span class="ch-num">23</span><div><h2>Troubleshooting</h2><div class="who">For: everyone</div></div></div>
-  <div class="tw"><table><thead><tr><th>Problem</th><th>What to do</th></tr></thead><tbody>
+  <div class="tw" tabindex="0"><table><thead><tr><th>Problem</th><th>What to do</th></tr></thead><tbody>
     <tr><td>Other devices say “site can't be reached”</td><td>Is the black window open on the main computer? Are both on the same Wi-Fi? Allow Node.js through Windows Firewall (Private networks). Check the address in Settings → Other devices.</td></tr>
     <tr><td>The address changed</td><td>The router gave the main computer a new IP. Reserve its IP in the router settings and update bookmarks.</td></tr>
     <tr><td>Screens look old, no version number in the menu</td><td>You are running an older copy. Update (Chapter 2) and press Ctrl+F5.</td></tr>
@@ -733,7 +734,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
 <!-- 24 -->
 <section class="ch col" id="glossary" data-roles="owner reception nurse clinician lab pharmacist cashier pentarch">
   <div class="ch-head"><span class="ch-num">24</span><div><h2>Glossary</h2></div></div>
-  <div class="tw"><table><tbody>
+  <div class="tw" tabindex="0"><table><tbody>
     <tr><td><b>ANC</b></td><td>Antenatal care: check-ups during pregnancy</td></tr>
     <tr><td><b>ETAT+</b></td><td>Emergency Triage Assessment and Treatment, the Kenyan triage standard</td></tr>
     <tr><td><b>FEFO</b></td><td>First expiry, first out: the batch that expires first is sold first</td></tr>
