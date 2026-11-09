@@ -117,14 +117,15 @@ module.exports = function cloud(app, H) {
     const base = (facility || 'demo').toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 10) || 'demo';
     let username; do username = base + crypto.randomInt(10, 99); while (R.get('SELECT id FROM users WHERE username=?', username));
     const pin = String(crypto.randomInt(1000, 9999));
+    const staffPin = String(crypto.randomInt(1000, 9999)); // the sample team gets its own PIN per demo, never a shared one
     const orgId = R.run('INSERT INTO orgs(name,owner_name,phone,email,location,created_at,demo,lead_id,agent_id) VALUES(?,?,?,?,?,?,1,?,?)',
       facility, contact || facility, phone, email, location, now(), leadId, agent?.id).lastInsertRowid;
     H.createBranch(orgId, { name: facility, type, phone, email, location }, true);
     R.run("INSERT INTO users(org_id,branch_id,name,username,pin_hash,role,created_at) VALUES(?,NULL,?,?,?,'admin',?)", orgId, contact || 'Owner', username, D.hashPin(pin), now());
-    for (const [n, r, role] of H.SAMPLE_STAFF) if (!(type === 'pharmacy' && r === 'nurse')) R.run('INSERT INTO users(org_id,branch_id,name,username,pin_hash,role,created_at) VALUES(?,NULL,?,?,?,?,?)', orgId, n, H.uniqueUsername(`${base}.${r}`), D.hashPin('1234'), role, now());
+    for (const [n, r, role] of H.SAMPLE_STAFF) if (!(type === 'pharmacy' && r === 'nurse')) R.run('INSERT INTO users(org_id,branch_id,name,username,pin_hash,role,created_at) VALUES(?,NULL,?,?,?,?,?)', orgId, n, H.uniqueUsername(`${base}.${r}`), D.hashPin(staffPin), role, now());
     H.startTrial(orgId);
     const ends = R.get('SELECT trial_ends FROM licences WHERE org_id=?', orgId).trial_ends;
-    return { org_id: orgId, username, pin, ends };
+    return { org_id: orgId, username, pin, ends, staff_pin: staffPin };
   }
   app.post('/api/public/portal/leads/:uid/demo', wrap(req => {
     const a = agentOf(req);

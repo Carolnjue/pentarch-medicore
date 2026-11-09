@@ -45,7 +45,7 @@ export default function Try() {
             <div className="pp-okbox"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4"><path d="M20 6L9 17l-5-5" /></svg><h2>Your demo is ready</h2><p>Write these down or take a screenshot. You will need them to sign in again.</p></div>
             <div className="pp-creds big"><div><small>Web address</small><b>{location.host}</b></div><div><small>Username</small><b>{res.username}</b></div><div><small>PIN</small><b>{res.pin}</b></div><div><small>Free until</small><b>{new Date(res.ends + 'T00:00:00').toLocaleDateString('en-KE', { day: 'numeric', month: 'long' })}</b></div></div>
             <button className="pp-btn primary block" onClick={open}>Open my MediCore</button>
-            <p className="pp-small center">Staff sign-ins for the sample team use PIN 1234. Change them in Settings → Staff.</p>
+            <p className="pp-small center">The sample team (reception, pharmacist, cashier and others) sign in with PIN <b>{res.staff_pin || 'shown in Settings → Staff'}</b>. See their usernames in Settings → Staff &amp; access.</p>
             <p className="pp-small center">Want someone to walk you through it? WhatsApp <a href={`https://wa.me/${PHONE_WA}`}>{PHONE}</a>.</p>
           </div> : <form className="pp-form" onSubmit={go}>
             <h2>Start your free demo</h2>
