@@ -142,9 +142,12 @@ function POS() {
   const needsRx = cart.some(l => l.item.rx_only && !l.rx_ref);
   const short = cart.find(l => baseOf(l) > l.item.stock);
   const credit = cust && cust.credit_limit > 0 ? Math.max(0, cust.credit_limit - (cust.owed || 0)) : 0;
+  const finishing = useRef(false);
   const finish = async p => {
+    if (finishing.current) return; // ignore a second tap while the first sale is saving
+    finishing.current = true;
     let r;
-    try { r = await act(() => api.post('/pos/sale', { customer_id: cust?.id, customer: cust?.name || 'Walk-in customer', lines: cart.map(l => ({ item_id: l.item.id, qty: l.qty, mode: l.mode, rx_ref: l.rx_ref })), payments: p ? [p] : [] }), p ? 'Sale complete' : 'Sale put on account'); } catch { return; }
+    try { r = await act(() => api.post('/pos/sale', { customer_id: cust?.id, customer: cust?.name || 'Walk-in customer', lines: cart.map(l => ({ item_id: l.item.id, qty: l.qty, mode: l.mode, rx_ref: l.rx_ref })), payments: p ? [p] : [] }), p ? 'Sale complete' : 'Sale put on account'); } catch { return; } finally { finishing.current = false; }
     setCart([]); setCust(null); setPaying(false); setReceipt(r); reloadItems(); setTick(t => t + 1); searchRef.current?.focus();
   };
   return <div className="stack">

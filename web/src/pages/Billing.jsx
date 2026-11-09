@@ -31,7 +31,9 @@ export function PayPanel({ balance, phone, onPay }) {
   const [amount, setAmount] = useState(balance);
   const [ref, setRef] = useState('');
   useEffect(() => setAmount(balance), [balance]);
-  const pay = (m = method, r = ref, a = amount) => onPay({ method: m, amount: Number(a), reference: r });
+  const [busy, setBusy] = useState(false);
+  // one payment at a time: a double tap on a slow connection must not record the money twice
+  const pay = async (m = method, r = ref, a = amount) => { if (busy) return; setBusy(true); try { await onPay({ method: m, amount: Number(a), reference: r }); } finally { setBusy(false); } };
   return <div className="stack">
     <div className="row">{[['cash', 'Cash'], ['mpesa', 'M-Pesa'], ['card', 'Card'], ['sha', 'SHA'], ['insurance', 'Insurance']].map(([k, l]) =>
       <button key={k} className={method === k ? 'primary' : ''} onClick={() => setMethod(k)}>{l}</button>)}</div>
@@ -43,7 +45,7 @@ export function PayPanel({ balance, phone, onPay }) {
     {method === 'mpesa' && <span className="faint small">Or, for Till/Paybill payments already made, type the M-Pesa code: <input value={ref} onChange={e => setRef(e.target.value.toUpperCase())} placeholder="e.g. SJK3H2L9QX" style={{ maxWidth: 160, display: 'inline-block' }} /> <button className="sm" disabled={!ref} onClick={() => pay()}>Record</button></span>}
     {['card', 'insurance'].includes(method) && <Field label="Reference / authorisation no."><input value={ref} onChange={e => setRef(e.target.value)} /></Field>}
     {method === 'sha' && <div className="alert info small">Demo: SHA eligibility shows as active and the claim is recorded locally. Live SHA claims connect after DHA certification.</div>}
-    {method !== 'mpesa' && <div><button className="primary" disabled={!(amount > 0)} onClick={() => pay(method, method === 'sha' ? 'SHA-CLAIM-DEMO-' + Date.now().toString().slice(-6) : ref)}>Record {money(amount)} {method === 'sha' ? 'as SHA claim' : ''}</button></div>}
+    {method !== 'mpesa' && <div><button className="primary" disabled={!(amount > 0) || busy} onClick={() => pay(method, method === 'sha' ? 'SHA-CLAIM-DEMO-' + Date.now().toString().slice(-6) : ref)}>Record {money(amount)} {method === 'sha' ? 'as SHA claim' : ''}</button></div>}
   </div>;
 }
 

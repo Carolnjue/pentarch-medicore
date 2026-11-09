@@ -46,9 +46,15 @@ export function Toaster() {
   useEffect(() => { if (t) { const h = setTimeout(() => setT(null), t.err ? 5000 : 3000); return () => clearTimeout(h); } }, [t]);
   return t ? <div className={'toast' + (t.err ? ' err' : '')} role="status">{t.err ? '⚠ ' : '✓ '}{t.msg}</div> : null;
 }
+// Runs a save and reports the result. The same save cannot run twice at once (a double tap on a slow network).
+const running = new Set();
 export async function act(fn, okMsg) {
+  const key = String(fn) + '|' + (okMsg || '');
+  if (running.has(key)) throw new Error('Already saving');
+  running.add(key);
   try { const r = await fn(); if (okMsg) toast(okMsg); return r; }
   catch (e) { toast(e.message, true); throw e; }
+  finally { running.delete(key); }
 }
 
 // ---------- components ----------
