@@ -567,6 +567,7 @@ module.exports = function commerce(app, H) {
       for (const l of todo) {
         const b = get('SELECT * FROM batches WHERE id=?', l.batch_id); if (!b) fail('Batch not found');
         const q = Math.min(Number(l.qty), b.qty);
+        if (!(q > 0)) continue;
         run('UPDATE batches SET qty=qty-? WHERE id=?', q, b.id);
         run('INSERT INTO stock_moves(item_id,batch_id,qty,type,ref,by_user,created_at) VALUES(?,?,?,?,?,?,?)', b.item_id, b.id, -q, 'dispose', `${no} ${reason}`, userOf(req), now());
         run('INSERT INTO disposals(disp_no,item_id,batch_id,batch_no,expiry,qty,cost,reason,method,witness,note,by_user,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',

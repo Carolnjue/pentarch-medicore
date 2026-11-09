@@ -137,11 +137,12 @@ module.exports = function cloud(app, H) {
     if (!PHONE.test(String(b.phone).replace(/\s/g, ''))) fail('Enter a valid Kenyan phone number, e.g. 0712 345 678');
     const ip = req.ip || 'x';
     recent[ip] = (recent[ip] || []).filter(t => Date.now() - t < 864e5);
-    if (recent[ip].length >= 5) fail('Too many demos from this connection today. Call us and we will set one up.');
     const phone = normPhone(b.phone);
     const ex = R.get('SELECT * FROM leads WHERE phone=? AND demo_org_id IS NOT NULL ORDER BY id DESC LIMIT 1', phone);
     if (ex && R.get('SELECT id FROM orgs WHERE id=?', ex.demo_org_id) && ex.demo_ends >= today()) fail(`A demo for this number is already running until ${ex.demo_ends}. Sign in with username ${ex.demo_user}; your PIN was shown when it was created. Forgot it? Call Pentarch.`);
     const agent = b.agent ? R.get("SELECT * FROM agents WHERE code=? AND status='active'", String(b.agent).toUpperCase()) : null;
+    // a sales agent signing up clients in one office or training room gets a higher daily allowance
+    if (recent[ip].length >= (agent ? 40 : 5)) fail('Too many demos from this connection today. Call us and we will set one up.');
     const uid = crypto.randomUUID();
     const leadId = R.run(`INSERT INTO leads(uid,agent_id,source,facility,type,contact,phone,email,county,town,stage,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,'trial',?,?)`,
       uid, agent?.id || null, 'website', b.facility.trim(), b.type, b.contact.trim(), phone, b.email, b.county, b.town, now(), now()).lastInsertRowid;
