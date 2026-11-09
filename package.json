@@ -10,7 +10,8 @@
     "build": "npm --prefix web run build",
     "start": "node --no-warnings server/index.js",
     "dev:server": "node --no-warnings --watch server/index.js",
-    "dev:web": "npm --prefix web run dev"
+    "dev:web": "npm --prefix web run dev",
+    "restart-live": "pkill -f '[l]snode:/home/pentarch/medicore_app' ; pkill -f '[n]ode.*medicore_app/server/index.js' ; echo restarted"
   },
   "engines": {
     "node": ">=22.13"
