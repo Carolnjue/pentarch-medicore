@@ -159,7 +159,7 @@ function POS() {
         <div className="scanbox"><Icon name="scan" size={18} /><input ref={searchRef} value={q} onChange={e => setQ(e.target.value)} onKeyDown={onEnter} placeholder="Scan a barcode or type a name, then Enter" autoFocus /></div>
         <button onClick={() => setRefund(true)} title="Return an item and refund"><Icon name="undo" size={15} />Return</button>
       </div>
-      <div className="row" style={{ gap: 5 }}>{cats.map(x => <button key={x} className={'sm' + (cat === x ? ' primary' : '')} onClick={() => setCat(x)}>{x}</button>)}</div>
+      <div className="row chiprow" style={{ gap: 5 }}>{cats.map(x => <button key={x} className={'sm' + (cat === x ? ' primary' : '')} onClick={() => setCat(x)}>{x}</button>)}</div>
       <div className="pgrid">{results.map(i => <button key={i.id} type="button" className={'pcard' + (i.stock <= 0 ? ' out' : '')} disabled={i.stock <= 0} onClick={() => add(i)}>
         <div className="art"><ProductArt item={i} size={110} /></div>
         <span className="nm">{i.name}</span>
@@ -234,7 +234,7 @@ function Inventory() {
     </div>
     {filter !== 'all' && <div className="tip"><Icon name="info" size={16} /><div>Showing <b>{{ low: 'items below reorder level', out: 'out-of-stock items', expiry: 'items expiring within 90 days or with expired batches' }[filter]}</b> ({list.length}). <a href="#" onClick={e => { e.preventDefault(); setFilter('all'); }}>Show all stock</a></div></div>}
     {valueOpen && <StockValue items={all} onClose={() => setValueOpen(false)} />}
-    <div className="row" style={{ gap: 5 }}>{cats.map(x => <button key={x} className={'sm' + (cat === x ? ' primary' : '')} onClick={() => setCat(x)}>{x}</button>)}</div>
+    <div className="row chiprow" style={{ gap: 5 }}>{cats.map(x => <button key={x} className={'sm' + (cat === x ? ' primary' : '')} onClick={() => setCat(x)}>{x}</button>)}</div>
     {view === 'grid' ? <div className="pgrid">{list.map(i => <button key={i.id} type="button" className={'pcard' + (i.stock <= 0 ? ' out' : '')} onClick={() => setOpen(i.id)}>
       <div className="art"><ProductArt item={i} size={110} /></div>
       <span className="nm">{i.name}</span>

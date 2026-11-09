@@ -333,3 +333,6 @@ kbd { font-family: ui-monospace, Consolas, monospace; background: var(--bg); bor
   .g4 > .stat .hint { font-size: 11px; }
   .g4 > .stat .stat-ic { display: none; }
 }
+
+/* phones: product category chips scroll sideways instead of filling the screen */
+@media (max-width: 760px) { .chiprow { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; } .chiprow > button { flex: none; } }

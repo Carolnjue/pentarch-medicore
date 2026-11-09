@@ -20,11 +20,11 @@ export function kindOf(it) {
   if (/test|kit|strip|rdt/.test(n) || it.form === 'kit') return 'kit';
   if (/condom/.test(n)) return 'sachet';
   if (/diaper|wipes|pads|mask|apron/.test(n)) return 'pack';
-  if (/cannula|catheter|tube|bag|set|blade|clamp|speculum|depressor|container|slides|lancet|suture/.test(n) && it.form === 'device') return 'device';
+  if (/cannula|catheter|tube|bag|set|blade|clamp|speculum|depressor|container|slides|lancet|suture/.test(n) && it.form === 'device') return 'sachet'; // sterile consumables come in a peel pouch
   return {
     tablet: 'box', capsule: 'box', lozenge: 'box', pessary: 'box', syrup: 'bottle', solution: 'bottle', lotion: 'bottle',
     injection: 'vial', infusion: 'ivbag', cream: 'tube', gel: 'tube', ointment: 'jar', drops: 'dropper', spray: 'dropper',
-    inhaler: 'inhaler', sachet: 'sachet', powder: 'jar', gloves: 'glove', syringe: 'syringe', device: 'device', kit: 'kit',
+    inhaler: 'inhaler', sachet: 'sachet', powder: 'jar', gloves: 'glove', syringe: 'syringe', device: 'pack', kit: 'kit',
   }[it.form] || 'box';
 }
 
