@@ -23,7 +23,8 @@ module.exports = function cloud(app, H) {
   function agentOf(req) {
     const t = req.get('x-portal');
     const s = t && R.get('SELECT * FROM portal_sessions WHERE token=?', t);
-    const a = s && R.get("SELECT * FROM agents WHERE id=? AND status='active'", s.agent_id);
+    let a = s && R.get("SELECT * FROM agents WHERE id=? AND status='active'", s.agent_id);
+    if (a && Date.now() - new Date(s.created_at) > (a.role === 'admin' ? 14 : 90) * 864e5) { R.run('DELETE FROM portal_sessions WHERE token=?', t); a = null; }
     if (!a) fail('Please sign in to the sales portal', 401);
     return a;
   }

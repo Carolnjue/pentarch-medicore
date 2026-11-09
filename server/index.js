@@ -44,7 +44,9 @@ app.use('/api', (req, res, next) => {
   if (OPEN.includes(full) || full.startsWith('/api/public')) return next();
   const token = req.get('x-token');
   const s = token && R.get('SELECT * FROM sessions WHERE token=?', token);
-  const u = s && R.get('SELECT * FROM users WHERE id=? AND active=1', s.user_id);
+  let u = s && R.get('SELECT * FROM users WHERE id=? AND active=1', s.user_id);
+  // sign-ins last 30 days (7 for Pentarch superadmin), then the person enters their PIN again
+  if (u && Date.now() - new Date(s.created_at) > (u.role === 'superadmin' ? 7 : 30) * 864e5) { R.run('DELETE FROM sessions WHERE token=?', token); u = null; }
   if (!u) {
     if (full === '/api/onboard' && !CLOUD && !R.get('SELECT id FROM orgs LIMIT 1')) return next(); // very first facility
     return res.status(401).json({ error: 'Please sign in again' });
@@ -107,6 +109,7 @@ app.post('/api/me/pin', wrap(req => {
   if (!D.verifyPin(req.user.pin_hash, old_pin)) { G.failed(['u:' + req.user.username]); fail('Current PIN is wrong'); }
   if (!/^\d{4,8}$/.test(String(new_pin))) fail('PIN must be 4 to 8 digits');
   R.run('UPDATE users SET pin_hash=? WHERE id=?', D.hashPin(String(new_pin)), req.user.id);
+  R.run('DELETE FROM sessions WHERE user_id=? AND token!=?', req.user.id, req.get('x-token')); // sign out other devices
   return { ok: true };
 }));
 
@@ -175,7 +178,7 @@ app.put('/api/org/users/:id', adminOnly, wrap(req => {
   if (!u || (req.user.role !== 'superadmin' && u.org_id !== req.user.org_id)) fail('User not found', 404);
   if (u.id === req.user.id && b.active === 0) fail('You cannot deactivate yourself');
   R.run('UPDATE users SET name=?, role=?, branch_id=?, active=? WHERE id=?', b.name ?? u.name, b.role ?? u.role, b.branch_id === undefined ? u.branch_id : b.branch_id || null, b.active ?? u.active, u.id);
-  if (b.pin) { if (!/^\d{4,8}$/.test(String(b.pin))) fail('PIN must be 4 to 8 digits'); R.run('UPDATE users SET pin_hash=? WHERE id=?', D.hashPin(String(b.pin)), u.id); }
+  if (b.pin) { if (!/^\d{4,8}$/.test(String(b.pin))) fail('PIN must be 4 to 8 digits'); R.run('UPDATE users SET pin_hash=? WHERE id=?', D.hashPin(String(b.pin)), u.id); R.run('DELETE FROM sessions WHERE user_id=?', u.id); G.passed(['u:' + u.username]); }
   return { ok: true };
 }));
 
