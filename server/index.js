@@ -1240,8 +1240,17 @@ app.get('/api/public/site', wrap(req => {
       shop_cat: i.shop_cat, rx_only: !!i.rx_only, in_stock: i.stock >= i.pack_size, image: i.image, description: i.description, code: i.code })),
   };
 }));
+// public forms (website bookings and orders, agent sign-up): a fair limit per connection so nobody can flood a facility
+const publicHits = new Map();
+function publicLimit(req, kind, max = 20) {
+  const k = kind + ':' + req.ip, list = (publicHits.get(k) || []).filter(t => Date.now() - t < 3600e3);
+  if (list.length >= max) fail('Too many requests from this connection. Please call the facility instead.', 429);
+  list.push(Date.now()); publicHits.set(k, list);
+}
+setInterval(() => { for (const [k, l] of publicHits) if (!l.some(t => Date.now() - t < 3600e3)) publicHits.delete(k); }, 30 * 60e3).unref();
 app.post('/api/public/booking', wrap(req => {
   publicBranch(req);
+  publicLimit(req, 'booking');
   const b = req.body;
   if (!b.name || !b.phone || !b.date) fail('Name, phone and date are required');
   if (!PHONE.test(String(b.phone).replace(/\s/g, ''))) fail('Enter a valid phone number, e.g. 0712 345 678');
@@ -1251,13 +1260,15 @@ app.post('/api/public/booking', wrap(req => {
 }));
 app.post('/api/public/order', wrap(req => {
   publicBranch(req);
+  publicLimit(req, 'order');
   const b = req.body;
   if (!b.name || !b.phone || !(b.items || []).length) fail('Name, phone and at least one item are required');
   if (!PHONE.test(String(b.phone).replace(/\s/g, ''))) fail('Enter a valid M-Pesa number, e.g. 0712 345 678');
   const items = b.items.map(l => {
     const it = get('SELECT * FROM items WHERE id=? AND web=1', l.id);
     if (!it) fail('An item is no longer available');
-    return { id: it.id, name: it.name, qty: Number(l.qty), mode: it.pack_size > 1 ? 'pack' : 'unit', price: it.pack_price, rx_only: !!it.rx_only, unit: it.pack_size > 1 ? it.pack_name : it.unit };
+    const q = Number(l.qty); if (!Number.isInteger(q) || q < 1 || q > 100) fail('Choose a quantity between 1 and 100');
+    return { id: it.id, name: it.name, qty: q, mode: it.pack_size > 1 ? 'pack' : 'unit', price: it.pack_price, rx_only: !!it.rx_only, unit: it.pack_size > 1 ? it.pack_name : it.unit };
   });
   const total = items.reduce((a, l) => a + l.qty * l.price, 0);
   const hasRx = items.some(l => l.rx_only);
@@ -1266,7 +1277,7 @@ app.post('/api/public/order', wrap(req => {
     b.name, b.phone, JSON.stringify(items), total, b.delivery || 'pickup', b.prescription_note, hasRx ? 'awaiting_review' : 'new', now()).lastInsertRowid;
   return { ok: true, order_no: 'WEB-' + id, total, message: hasRx ? 'Order received. A pharmacist will review your prescription and call you before dispensing.' : 'Order received. You will get an M-Pesa prompt once the pharmacy confirms.' };
 }));
-Object.assign(H, { D, R, all, get, run, tx, now, today, wrap, fail, userOf, audit, deduct, fmtQty, stockOf, billTotals, addLine, pad, adminOnly, itemsWithStock, cfg, PHONE });
+Object.assign(H, { publicLimit, D, R, all, get, run, tx, now, today, wrap, fail, userOf, audit, deduct, fmtQty, stockOf, billTotals, addLine, pad, adminOnly, itemsWithStock, cfg, PHONE });
 require('./commerce')(app, H);
 require('./backup')(app, H);
 Object.assign(H, { TYPES: D.TYPES, createBranch, SAMPLE_STAFF, uniqueUsername, sessionFor, dropBranch: D.dropBranch });

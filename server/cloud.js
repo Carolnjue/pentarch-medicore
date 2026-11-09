@@ -33,6 +33,7 @@ module.exports = function cloud(app, H) {
   const newCode = name => { let c; do c = (name || 'AG').replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase().padEnd(3, 'X') + crypto.randomInt(100, 999); while (R.get('SELECT id FROM agents WHERE code=?', c)); return c; };
 
   app.post('/api/public/portal/signup', wrap(req => {
+    H.publicLimit(req, 'signup', 5);
     const b = req.body;
     if (!b.name?.trim() || !b.phone || !b.pin) fail('Name, phone and a PIN are required');
     if (!PHONE.test(String(b.phone).replace(/\s/g, ''))) fail('Enter a valid Kenyan phone number');
