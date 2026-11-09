@@ -14,11 +14,20 @@ export function setBranch(id) { branchId = id; store.set('mc_branch', id); }
 export function onSessionExpired(fn) { onExpired = fn; }
 
 async function call(method, url, body) {
-  const res = await fetch('/api' + url, {
-    method,
-    headers: { 'content-type': 'application/json', 'x-token': session?.token || '', 'x-branch': branchId || '' },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch('/api' + url, {
+      method,
+      headers: { 'content-type': 'application/json', 'x-token': session?.token || '', 'x-branch': branchId || '' },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    // the server could not be reached at all: say what to check rather than a browser error
+    const online = /pentarchcommunications\.com$/.test(location.hostname);
+    throw new Error(online ? 'Cannot reach MediCore. Check this device\'s internet connection and try again.'
+      : 'Cannot reach the MediCore computer. Check that it is switched on with the black MediCore window open, and that this device is on the same Wi-Fi.');
+  }
+  if (res.status === 502 || res.status === 503) throw new Error('MediCore is restarting. Wait a few seconds and try again.');
   const data = await res.json().catch(() => ({}));
   if (res.status === 401 && session && url !== '/login') { setSession(null); onExpired(); }
   if (!res.ok) throw new Error(data.error || 'Something went wrong. Please try again.');

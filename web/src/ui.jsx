@@ -25,12 +25,13 @@ export function fmtQty(it, q) {
 }
 
 // ---------- data hook ----------
+let lastNetToast = 0;
 export function useData(url, deps = []) {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const load = useCallback(() => {
     if (!url) return;
-    api.get(url).then(d => { setData(d); setError(null); }).catch(e => setError(e.message));
+    api.get(url).then(d => { setData(d); setError(null); }).catch(e => { setError(e.message); if (/^Cannot reach|restarting/.test(e.message) && Date.now() - lastNetToast > 10e3) { lastNetToast = Date.now(); toast(e.message, true); } });
   }, [url]);
   useEffect(() => { load(); }, [load, ...deps]);
   return [data, load, error];
