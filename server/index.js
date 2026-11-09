@@ -1284,7 +1284,7 @@ function lanAddresses() {
 }
 // On the hosted server a deploy only replaces files; the running process restarts itself when the code changes
 if (process.env.MEDICORE_CLOUD === '1') {
-  const watched = () => fs.readdirSync(__dirname).filter(f => f.endsWith('.js')).reduce((m, f) => Math.max(m, fs.statSync(path.join(__dirname, f)).mtimeMs), 0);
+  const watched = () => [...fs.readdirSync(__dirname).filter(f => f.endsWith('.js')).map(f => path.join(__dirname, f)), path.join(__dirname, '..', 'package.json')].reduce((m, f) => { try { return Math.max(m, fs.statSync(f).mtimeMs); } catch { return m; } }, 0);
   const bootStamp = watched();
   setInterval(() => { try { if (watched() !== bootStamp) { console.log('Code updated, restarting'); setTimeout(() => process.exit(0), 1500); } } catch {} }, 30e3).unref();
 }
