@@ -77,7 +77,8 @@ const slug = s => (s || 'facility').toLowerCase().replace(/[^a-z0-9]+/g, ' ').tr
 function uniqueUsername(base) { let u = base, i = 2; while (R.get('SELECT id FROM users WHERE username=?', u)) u = base + i++; return u; }
 
 const VERSION = require('../package.json').version;
-app.get('/api/health', (req, res) => res.json({ ok: true, time: now(), version: VERSION }));
+const BOOTED = now();
+app.get('/api/health', (req, res) => res.json({ ok: true, time: now(), version: VERSION, booted: BOOTED }));
 app.get('/api/bootstrap', wrap(() => ({
   hasOrgs: CLOUD || !!R.get('SELECT id FROM orgs LIMIT 1'), cloud: CLOUD,
   types: Object.fromEntries(Object.entries(D.TYPES).map(([k, v]) => [k, { label: v.label, sample: v.sample, defaults: v.defaults }])),
