@@ -225,13 +225,13 @@ function Daily() {
     {!d ? <div className="card">Loading…</div> : <>
       <div className="grid g4">
         <Stat label="Collected" value={money(d.collected)} hint={`${d.receipts} receipts`} />
-        <Stat label="Gross profit on sales" value={money(d.gross)} hint={d.sales - d.refunds > 0 ? `${Math.round(d.gross / (d.sales - d.refunds) * 100)}% margin` : ''} />
+        <Stat label="Gross profit" value={money(d.gross)} hint={d.sales - d.refunds > 0 ? `on ${money(d.sales - d.refunds)} billed today · ${Math.round(d.gross / (d.sales - d.refunds) * 100)}% margin` : ''} />
         <Stat label="Expenses paid" value={money(d.expenses)} hint={d.refunds ? `Refunds ${money(d.refunds)}` : 'No refunds'} />
         <Stat label="Cash-up" value={d.shifts.length ? (d.shifts.every(x => x.variance === 0) ? 'Balanced' : money(d.shifts.reduce((a, x) => a + x.variance, 0))) : 'No shift closed'} hint={d.open.length ? `Still open: ${d.open.map(o => o.user).join(', ')}` : `${d.shifts.length} shift${d.shifts.length === 1 ? '' : 's'} closed`} />
       </div>
       <div className="grid g2">
         <div className="card"><h3>Payments</h3>{d.pay.length ? <table className="table"><tbody>{d.pay.map(p => <tr key={p.method}><td style={{ textTransform: 'capitalize' }}>{p.method === 'mpesa' ? 'M-Pesa' : p.method}</td><td className="num">{money(p.amount)}</td></tr>)}</tbody></table> : <Empty icon="cash">No payments on this day.</Empty>}
-          <h3 style={{ marginTop: 18 }}>Top sellers</h3>{d.top.length ? <table className="table"><tbody>{d.top.map(t => <tr key={t.description}><td>{t.description}</td><td className="num">{money(t.amount)}</td></tr>)}</tbody></table> : <Empty icon="reports">No sales.</Empty>}</div>
+          <h3 style={{ marginTop: 18 }}>Top earners today</h3>{d.top.length ? <table className="table"><tbody>{d.top.map(t => <tr key={t.description}><td>{t.description}</td><td className="num">{money(t.amount)}</td></tr>)}</tbody></table> : <Empty icon="reports">No sales.</Empty>}</div>
         <div className="card"><h3>Needs attention</h3>
           <p className="small muted">{d.out_count} out of stock · {d.low_count - d.out_count} low · {d.expiring_count} batch{d.expiring_count === 1 ? '' : 'es'} expiring within 60 days ({money(d.expiring_value)} at cost)</p>
           <table className="table small"><tbody>
