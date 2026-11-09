@@ -377,6 +377,14 @@ function seedSample(D, cfg) {
   // ---------- back office: customers, expenses, a closed shift, a purchase order ----------
   for (const [n, ph, lim, pts] of [['Grace Wambui', '0712009988', 5000, 34], ['Kamau Hardware staff (account)', '0733445566', 20000, 120], ['Mama Zawadi', '0701112233', 0, 12]])
     run('INSERT INTO customers(name,phone,credit_limit,points,created_at) VALUES(?,?,?,?,?)', n, ph, lim, pts, daysAgo(60));
+  // regular customers: link some past counter sales to them so points match what they spent (1 point per KES 100)
+  for (const c of all('SELECT * FROM customers')) {
+    let want = c.points * 100;
+    for (const b of all("SELECT b.id, (SELECT COALESCE(SUM(amount),0) FROM payments WHERE bill_id=b.id) paid FROM bills b WHERE b.status='paid' AND b.patient_id IS NULL AND b.customer_id IS NULL AND b.created_at<? ORDER BY b.id DESC LIMIT 400", daysAgo(2))) {
+      if (want <= 0) break;
+      if (b.paid > 0 && b.paid <= want + 300) { run('UPDATE bills SET customer_id=? WHERE id=?', c.id, b.id); want -= b.paid; }
+    }
+  }
   // account customers with something owing, and one part payment, so the statement has a story
   {
     const kamau = get("SELECT id FROM customers WHERE phone='0733445566'").id, grace = get("SELECT id FROM customers WHERE phone='0712009988'").id;

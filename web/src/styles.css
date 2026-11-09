@@ -7,7 +7,7 @@
   --panel: #ffffff;
   --ink: #0f172a;
   --ink-2: #475569;
-  --ink-3: #94a3b8;
+  --ink-3: #5f6c7f;
   --line: #e5e9f0;
   --good: #15803d; --good-bg: #dcfce7;
   --warn: #b45309; --warn-bg: #fef3c7;
@@ -208,7 +208,7 @@ button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 .pcard.out { opacity: .55; }
 
 /* ---------- lab menu ---------- */
-.dept { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 99px; color: var(--dc); background: color-mix(in srgb, var(--dc) 12%, white); }
+.dept { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; padding: 3px 10px; border-radius: 99px; color: color-mix(in srgb, var(--dc) 62%, black); background: color-mix(in srgb, var(--dc) 12%, white); }
 .dept::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--dc); }
 .tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
 .tcard { border: 1.5px solid var(--line); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; gap: 10px; align-items: flex-start; background: white; transition: border-color .1s, background .1s; text-align: left; font-weight: 400; white-space: normal; }
@@ -256,8 +256,8 @@ button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
 /* clickable stat cards */
 .stat-click { cursor: pointer; transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease; }
 .stat-click:hover, .stat-click:focus-visible { transform: translateY(-2px); box-shadow: 0 10px 24px -12px rgba(15, 23, 42, .25); border-color: var(--brand); outline: none; }
-.stat-more { margin-top: 6px; font-size: 12px; font-weight: 650; color: var(--brand); display: inline-flex; align-items: center; gap: 2px; opacity: .75; }
-.stat-click:hover .stat-more { opacity: 1; }
+.stat-more { margin-top: 6px; font-size: 12px; font-weight: 650; color: var(--brand-ink, var(--brand)); display: inline-flex; align-items: center; gap: 2px; }
+.stat-click:hover .stat-more { text-decoration: underline; }
 .g-auto { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
 .minibar { height: 8px; border-radius: 99px; background: #eef2f6; overflow: hidden; }
 .minibar > i { display: block; height: 100%; border-radius: 99px; background: var(--brand); }

@@ -38,8 +38,8 @@ export default function Reports() {
 
 function Range({ from, to, setFrom, setTo }) {
   return <div className="row noprint" style={{ marginBottom: 14 }}>
-    <input type="date" value={from} onChange={e => setFrom(e.target.value)} style={{ width: 170 }} /><span>to</span>
-    <input type="date" value={to} onChange={e => setTo(e.target.value)} style={{ width: 170 }} />
+    <input type="date" aria-label="From date" value={from} onChange={e => setFrom(e.target.value)} style={{ width: 170 }} /><span>to</span>
+    <input type="date" aria-label="To date" value={to} onChange={e => setTo(e.target.value)} style={{ width: 170 }} />
     {[['Today', 0], ['7 days', 6], ['30 days', 29]].map(([l, n]) => <button key={l} className="sm" onClick={() => { setFrom(minus(n)); setTo(todayISO()); }}>{l}</button>)}
   </div>;
 }
@@ -100,7 +100,7 @@ function Moh705() {
   const tot = d.rows.reduce((a, r) => ({ u: a.u + r.under5, o: a.o + r.over5 }), { u: 0, o: 0 });
   return <div className="card">
     <div className="cardhead"><div><h3>MOH 705A / 705B · Outpatient morbidity summary</h3><p className="faint small">{c.facility_name} · KMHFR {c.kmhfr} · {month}</p></div>
-      <div className="right row noprint"><input type="month" value={month} onChange={e => setMonth(e.target.value)} style={{ width: 170 }} />
+      <div className="right row noprint"><input type="month" aria-label="Month" value={month} onChange={e => setMonth(e.target.value)} style={{ width: 170 }} />
         <button className="sm" onClick={() => csv(`MOH705_${month}.csv`, d.rows.map(r => ({ diagnosis: r.diagnosis, moh705a_under5: r.under5, moh705b_5_and_over: r.over5 })))}>Export for KHIS</button></div></div>
     <table className="table"><thead><tr><th>Diagnosis (new cases)</th><th className="num">705A: under 5</th><th className="num">705B: 5 and over</th><th className="num">Total</th></tr></thead>
       <tbody>{d.rows.map(r => <tr key={r.diagnosis}><td>{r.diagnosis}</td><td className="num">{r.under5}</td><td className="num">{r.over5}</td><td className="num"><b>{r.under5 + r.over5}</b></td></tr>)}
@@ -117,7 +117,7 @@ function Moh711() {
   const rows = [['ANC first visits', d.anc_first], ['ANC re-visits', d.anc_revisit], ['Deliveries', d.deliveries], ['Live births', d.live_births], ['Low birth weight (<2.5 kg)', d.low_birth_weight],
     ['Admissions', d.admissions], ['Discharges', d.discharges], ['Referrals out', d.referrals_out], ['Referrals in', d.referrals_in]];
   return <div className="card">
-    <div className="cardhead"><h3>MOH 711 integrated service summary (selected indicators)</h3><input className="right noprint" type="month" value={month} onChange={e => setMonth(e.target.value)} style={{ width: 170 }} /></div>
+    <div className="cardhead"><h3>MOH 711 integrated service summary (selected indicators)</h3><input className="right noprint" type="month" aria-label="Month" value={month} onChange={e => setMonth(e.target.value)} style={{ width: 170 }} /></div>
     <table className="table"><tbody>{rows.map(([l, v]) => <tr key={l}><td>{l}</td><td className="num"><b>{v}</b></td></tr>)}</tbody></table>
   </div>;
 }
@@ -217,7 +217,7 @@ function Daily() {
   const wa = d ? `https://wa.me/${(d.owner_whatsapp || '').replace(/\D/g, '').replace(/^0/, '254')}?text=${encodeURIComponent(d.text)}` : '#';
   return <div className="stack">
     <div className="row noprint">
-      <input type="date" value={day} max={todayISO()} onChange={e => setDay(e.target.value)} style={{ width: 170 }} />
+      <input type="date" aria-label="Day" value={day} max={todayISO()} onChange={e => setDay(e.target.value)} style={{ width: 170 }} />
       {d && <><a className="btn primary right" href={wa} target="_blank" rel="noreferrer"><Icon name="upload" size={15} />Send on WhatsApp</a>
         <button onClick={() => { navigator.clipboard?.writeText(d.text); }}>Copy text</button></>}
     </div>

@@ -26,7 +26,7 @@ export default function Queue() {
         <button className="primary" onClick={() => setAdding(true)}><Icon name="plus" size={15} />Add to queue</button>
       </PageHead>
       <Tip id="queue">Triage colours: <Badge tone="bad">Emergency</Badge> treat now, <Badge tone="warn">Priority</Badge> seen next, <Badge tone="good">Queue</Badge> seen in turn (Kenya ETAT+). Click a ticket to open the patient's visit.</Tip>
-      <div className="board" style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(210px, 1fr))` }}>
+      <div className="board" tabIndex={0} aria-label="Patient queue board" style={{ gridTemplateColumns: `repeat(${lanes.length}, minmax(210px, 1fr))` }}>
         {lanes.map(([k, label]) => {
           const items = (list || []).filter(v => v.status === k);
           return <div key={k} className="lane">
