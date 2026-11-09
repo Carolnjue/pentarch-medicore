@@ -16,7 +16,7 @@ const clean = p => p.map(x => x === undefined || x === '' ? null : typeof x === 
 const now = () => new Date().toISOString();
 const addDays = (iso, n) => { const d = new Date(iso); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
 const dateOnly = d => new Date(d).toISOString().slice(0, 10);
-const hashPin = pin => crypto.createHash('sha256').update('medicore:' + pin).digest('hex');
+const { hashPin, verifyPin } = require('./guard');
 
 // ================= registry =================
 const reg = new DatabaseSync(path.join(DATA_DIR, 'registry.db'));
@@ -328,6 +328,6 @@ function nextMrn() {
 
 module.exports = {
   get db() { return db; }, get currentBranch() { return currentBranch; },
-  R, hashPin, use, openBranch, all, get, run, tx, now, addDays, dateOnly,
+  R, hashPin, verifyPin, use, openBranch, all, get, run, tx, now, addDays, dateOnly,
   getConfig, setConfig, TYPES, ensureStructure, createBranchDb, clearSample, nextMrn, UPLOAD_DIR, dropBranch, DATA_DIR,
 };

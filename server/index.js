@@ -5,6 +5,7 @@ const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
 const D = require('./db');
+const G = require('./guard');
 const { R, all, get, run, tx, now, getConfig } = D;
 
 const app = express();
@@ -90,15 +91,20 @@ app.get('/api/login-users', wrap(() => {
   return { org: orgs[0], users: R.all("SELECT id,name,username,role FROM users WHERE org_id=? AND active=1 ORDER BY CASE role WHEN 'admin' THEN 0 ELSE 1 END, id", orgs[0].id) };
 }));
 app.post('/api/login', wrap(req => {
-  const u = R.get('SELECT * FROM users WHERE username=? AND active=1', String(req.body.username || '').trim().toLowerCase());
-  if (!u || u.pin_hash !== D.hashPin(String(req.body.pin || ''))) fail('Wrong username or PIN', 401);
+  const name = String(req.body.username || '').trim().toLowerCase(), keys = ['u:' + name, 'ip:' + req.ip];
+  G.check(keys);
+  const u = R.get('SELECT * FROM users WHERE username=? AND active=1', name);
+  if (!u || !D.verifyPin(u.pin_hash, req.body.pin)) { G.failed(keys); fail('Wrong username or PIN', 401); }
+  G.passed(keys);
+  if (G.isLegacy(u.pin_hash)) R.run('UPDATE users SET pin_hash=? WHERE id=?', D.hashPin(String(req.body.pin)), u.id); // upgrade older PIN hashes on sign-in
   return sessionFor(u);
 }));
 app.post('/api/logout', wrap(req => { R.run('DELETE FROM sessions WHERE token=?', req.get('x-token')); return { ok: true }; }));
 app.get('/api/me', wrap(req => profile(req.user)));
 app.post('/api/me/pin', wrap(req => {
   const { old_pin, new_pin } = req.body;
-  if (req.user.pin_hash !== D.hashPin(String(old_pin))) fail('Current PIN is wrong');
+  G.check(['u:' + req.user.username]);
+  if (!D.verifyPin(req.user.pin_hash, old_pin)) { G.failed(['u:' + req.user.username]); fail('Current PIN is wrong'); }
   if (!/^\d{4,8}$/.test(String(new_pin))) fail('PIN must be 4 to 8 digits');
   R.run('UPDATE users SET pin_hash=? WHERE id=?', D.hashPin(String(new_pin)), req.user.id);
   return { ok: true };

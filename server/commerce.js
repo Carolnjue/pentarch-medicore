@@ -1,5 +1,6 @@
 // Pentarch MediCore - shop-floor commerce: shifts and cash-up, returns, barcodes, purchase orders,
 // stock transfers between branches, expenses and profit. Registered by index.js.
+const G = require('./guard');
 module.exports = function commerce(app, H) {
   const { D, R, all, get, run, tx, now, today, wrap, fail, userOf, audit, deduct, fmtQty, stockOf, billTotals, addLine, pad, adminOnly, itemsWithStock, cfg } = H;
 
@@ -8,8 +9,11 @@ module.exports = function commerce(app, H) {
     if (['admin', 'superadmin'].includes(req.user.role)) return req.user.name;
     if (!pin) fail('A supervisor PIN is needed for this', 403);
     const orgId = req.user.org_id || req.branch?.org_id;
-    const u = R.all("SELECT * FROM users WHERE org_id=? AND active=1 AND role='admin'", orgId).find(x => x.pin_hash === D.hashPin(String(pin)));
-    if (!u) fail('That supervisor PIN is not correct', 403);
+    const keys = ['sup:' + req.user.id];
+    G.check(keys);
+    const u = R.all("SELECT * FROM users WHERE org_id=? AND active=1 AND role='admin'", orgId).find(x => D.verifyPin(x.pin_hash, pin));
+    if (!u) { G.failed(keys); fail('That supervisor PIN is not correct', 403); }
+    G.passed(keys);
     return u.name;
   }
   H.supervisor = supervisor;

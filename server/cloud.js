@@ -6,6 +6,7 @@ const crypto = require('crypto');
 const PRICING = require('./pricing');
 const LIC = require('./licence');
 
+const G = require('./guard');
 module.exports = function cloud(app, H) {
   const { D, R, wrap, fail, now, PHONE } = H;
   const today = () => new Date().toISOString().slice(0, 10);
@@ -44,7 +45,11 @@ module.exports = function cloud(app, H) {
   }));
   app.post('/api/public/portal/login', wrap(req => {
     const a = R.get('SELECT * FROM agents WHERE phone=?', normPhone(req.body.phone));
-    if (!a || a.pin_hash !== D.hashPin(String(req.body.pin || ''))) fail('Wrong phone number or PIN', 401);
+    const keys = ['p:' + String(req.body.phone || '').replace(/\D/g, ''), 'ip:' + req.ip];
+    G.check(keys);
+    if (!a || !D.verifyPin(a.pin_hash, req.body.pin)) { G.failed(keys); fail('Wrong phone number or PIN', 401); }
+    G.passed(keys);
+    if (G.isLegacy(a.pin_hash)) R.run('UPDATE agents SET pin_hash=? WHERE id=?', D.hashPin(String(req.body.pin)), a.id);
     if (a.status === 'pending') fail('Your application is still being reviewed. Pentarch will call you.', 403);
     if (a.status !== 'active') fail('This account is not active. Contact Pentarch.', 403);
     const token = crypto.randomBytes(24).toString('hex');
