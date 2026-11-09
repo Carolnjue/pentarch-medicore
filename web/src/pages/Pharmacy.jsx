@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, money, fmtDate, fmtDT, fmtQty, Empty, todayISO, PageHead, Tip, Icon, Stat, takeTab } from '../ui';
+import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, money, fmtDate, fmtDT, fmtQty, Empty, todayISO, PageHead, Tip, Icon, Stat, takeTab, downloadCSV } from '../ui';
 import { PayPanel, Receipt } from './Billing';
 import ProductArt from '../shared/ProductArt';
 import { ShiftBar, CustomerPicker, RefundDialog } from './Cash';
@@ -224,7 +224,7 @@ function Inventory() {
         <span style={{ position: 'absolute', left: 10, top: 10, color: 'var(--ink-3)' }}><Icon name="search" size={16} /></span></div>
       <select value={filter} onChange={e => setFilter(e.target.value)} style={{ width: 'auto' }}><option value="all">All stock</option><option value="low">Below reorder level</option><option value="out">Out of stock</option><option value="expiry">Expiring / expired</option></select>
       <div className="seg"><button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')} aria-label="Grid"><Icon name="grid" size={15} /></button><button className={view === 'list' ? 'on' : ''} onClick={() => setView('list')} aria-label="List"><Icon name="list" size={15} /></button></div>
-      <div className="right row"><button onClick={() => setAdding(true)}><Icon name="plus" size={15} />New item</button><button className="primary" onClick={() => setReceive({})}>Receive stock</button></div>
+      <div className="right row"><button onClick={() => downloadCSV(`stock-${todayISO()}.csv`, [['Code', 'code'], ['Item', 'name'], ['Category', 'shop_cat'], ['Unit', 'unit'], ['In stock (units)', 'stock'], ['Stock', 'stock_text'], ['Cost per unit', 'cost'], ['Value at cost', r => Math.round(r.stock * (r.cost || 0))], ['Selling price per unit', 'price'], ['Pack price', 'pack_price'], ['Reorder level', 'reorder_level'], ['Next expiry', 'next_expiry'], ['Expired units', 'expired_qty']], list)} title="Stock list with values, for your accountant"><Icon name="upload" size={15} />Export</button><button onClick={() => setAdding(true)}><Icon name="plus" size={15} />New item</button><button className="primary" onClick={() => setReceive({})}>Receive stock</button></div>
     </div>
     {filter !== 'all' && <div className="tip"><Icon name="info" size={16} /><div>Showing <b>{{ low: 'items below reorder level', out: 'out-of-stock items', expiry: 'items expiring within 90 days or with expired batches' }[filter]}</b> ({list.length}). <a href="#" onClick={e => { e.preventDefault(); setFilter('all'); }}>Show all stock</a></div></div>}
     {valueOpen && <StockValue items={all} onClose={() => setValueOpen(false)} />}

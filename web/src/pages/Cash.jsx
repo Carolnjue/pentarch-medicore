@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Badge, act, toast, money, fmtDT, fmtDate, fmtTime, Empty, Icon, Tip, todayISO, Stat } from '../ui';
+import { useData, Modal, Field, Badge, act, toast, money, fmtDT, fmtDate, fmtTime, Empty, Icon, Tip, todayISO, Stat, downloadCSV } from '../ui';
 import { askSupervisor } from '../shared/askPin';
 
 const METHOD = { cash: 'Cash', mpesa: 'M-Pesa', card: 'Card', sha: 'SHA', insurance: 'Insurance', bank: 'Bank', credit: 'Credit' };
@@ -297,8 +297,7 @@ export function Claims() {
   const rows = (d?.rows || []).filter(r => (!payer || r.payer === payer) && (f === 'all' || (f === 'open' ? r.outstanding > 0 : r.status === f)));
   const csv = () => {
     const keys = ['receipt_no', 'created_at', 'patient', 'mrn', 'payer', 'scheme', 'member_no', 'claim_no', 'amount', 'status', 'paid_amount', 'remittance', 'reason'];
-    const body = [keys.join(','), ...rows.map(r => keys.map(k => `"${String(r[k] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: 'text/csv' })); a.download = 'claims.csv'; a.click();
+    downloadCSV(`claims-${new Date().toISOString().slice(0, 10)}.csv`, keys.map(k => [k.replace(/_/g, ' '), k]), rows);
   };
   const save = async () => { await act(() => api.post('/claims/' + edit.payment_id, edit), 'Claim updated'); setEdit(null); reload(); };
   return <div className="stack">

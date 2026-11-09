@@ -201,3 +201,11 @@ export function PatientPicker({ onPick, placeholder = 'Search patient by name, p
 export function takeTab(allowed) {
   try { const t = sessionStorage.getItem('mc_tab'); sessionStorage.removeItem('mc_tab'); return allowed.includes(t) ? t : null; } catch { return null; }
 }
+
+// Download rows as a CSV file that opens in Excel (BOM so Kiswahili and symbols show correctly)
+export function downloadCSV(name, cols, rows) {
+  const cell = v => `"${String(v ?? '').replace(/"/g, '""')}"`;
+  const body = '﻿' + [cols.map(c => cell(c[0])).join(','), ...rows.map(r => cols.map(c => cell(typeof c[1] === 'function' ? c[1](r) : r[c[1]])).join(','))].join('\r\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+}
