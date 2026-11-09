@@ -737,6 +737,13 @@ module.exports = function commerce(app, H) {
     else if (belowN.length) push('info', `${belowN.length} item${belowN.length > 1 ? 's' : ''} below your target markup`, 'Review prices after the last deliveries', '#/pharmacy', 'prices');
     const count = get("SELECT MAX(posted_at) d FROM stock_counts WHERE status='posted'").d;
     if (!count || count < D.addDays(now(), -30)) push('info', count ? 'No stock count in the last 30 days' : 'No stock count yet', 'Count one category this week', '#/pharmacy', 'count');
+    // clinical items, for clinics and hospitals
+    const toValidate = get("SELECT COUNT(*) n FROM lab_orders WHERE status='resulted'").n;
+    if (toValidate) push('warn', `${toValidate} lab result${toValidate > 1 ? 's' : ''} waiting validation`, 'A second person checks before results are released', '#/lab', 'validate');
+    const waits = all("SELECT created_at FROM visits WHERE status IN ('waiting_triage','waiting_doctor') AND created_at>=?", t).filter(v => Date.now() - new Date(v.created_at) > 60 * 60e3);
+    if (waits.length) push('bad', `${waits.length} patient${waits.length > 1 ? 's' : ''} waiting over an hour`, 'Check the queue and call them in', '#/queue');
+    const noObs = all("SELECT a.id, a.visit_id FROM admissions a WHERE a.status='admitted'").filter(a => { const v = get('SELECT MAX(created_at) d FROM vitals WHERE visit_id=?', a.visit_id).d; return !v || Date.now() - new Date(v) > 8 * 3600e3; });
+    if (noObs.length) push('warn', `${noObs.length} admitted patient${noObs.length > 1 ? 's' : ''} without observations for 8 hours`, 'Record temperature, pulse, breathing and BP on the ward', '#/wards');
     const order = { bad: 0, warn: 1, info: 2 };
     return items.sort((a, b) => order[a.level] - order[b.level]);
   }));

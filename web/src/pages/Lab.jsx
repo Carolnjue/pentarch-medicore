@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Tabs, StatusBadge, FlagBadge, Badge, act, fmtDT, money, age, Empty, PageHead, Tip, Stat, Icon } from '../ui';
+import { useData, Modal, Field, Tabs, StatusBadge, FlagBadge, Badge, act, fmtDT, money, age, Empty, PageHead, Tip, Stat, Icon, takeTab } from '../ui';
 
 export const DEPT_COLOR = {
   Haematology: '#dc2626', Parasitology: '#16a34a', 'Clinical chemistry': '#2563eb', Hormones: '#9333ea', Serology: '#ea580c',
@@ -39,7 +39,7 @@ export function ResultEntry({ order, onClose, onDone }) {
 
 export default function Lab() {
   const c = useContext(ConfigContext);
-  const [tab, setTab] = useState('pending');
+  const [tab, setTab] = useState(() => takeTab(['pending', 'validate', 'done', 'catalogue']) || 'pending');
   const [pending, reloadP] = useData('/lab/orders');
   const [done, reloadD] = useData('/lab/orders?status=done');
   const [tests, reloadT] = useData('/lab/tests');
