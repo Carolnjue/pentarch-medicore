@@ -35,6 +35,12 @@ By **Pentarch Systems Solutions**.
 - **Lab**: 62 tests in 8 departments with sex-specific ranges, quick panels (fever work-up, antenatal profile…), in-house or outside lab, second-person validation.
 - **Pharmacy and stock**: 265 items (Kenya Essential Medicines List groups, supplies, devices, lab reagents) with product pictures, pack sizes and loose selling. Selling 10 tablets from a box of 100 updates stock straight away ("12 boxes + 40 tabs"). First-expiry-first-out batches, receiving by pack, stock counts, controlled-drugs register, photo upload per item.
 - **Billing**: automatic or manual charges, cash / M-Pesa / card / SHA / insurance, discounts with supervisor PIN, credit, printable receipts.
+- **Counter and cash control**: shifts with float and denomination cash-up, park and resume sales (F8), returns with supervisor PIN, barcodes and GS1 2D codes, purchase orders with part receiving, branch transfers, expenses.
+- **Stock control**: stock take by category with printable count sheets, expired and damaged stock write-off with witness and a printable disposal register, real batch-cost profit and loss with shrinkage.
+- **Money owed**: account customers with credit limits, statements and payments; supplier invoices from deliveries, credit terms, ageing and payments; SHA and insurance claims register (submit, paid, part-paid, rejected) with ageing and CSV export.
+- **Prices**: target markup, review of items below target or below cost after a supplier price rise, one-click suggested prices, price-change history.
+- **Owner tools**: a *To do today* list on the dashboard (each item opens the right screen), daily summary sent on WhatsApp, backup and restore of the whole facility as one `.mcbak` file.
+- **User manual** at `/manual/` (also a PDF there).
 - **Wards, maternity, referrals, appointments, MOH 705/711 reports, audit trail.**
 - **Facility website** (`/site?b=<branch>`): shop by category with product pictures and cart, services, lab menu by department, booking. Orders and bookings land in the system.
 
@@ -45,7 +51,7 @@ Prices are indicative Nairobi retail and editable per facility.
 1. Settings → Data → **Remove sample data** (keeps catalogue, prices and settings; sets stock to zero).
 2. Pharmacy → Inventory → **Receive stock** for what they actually hold.
 3. Add their staff under Settings → Staff & access.
-4. Back up the `data` folder weekly.
+4. Settings → Data & backup → **Download backup now**, weekly, to a flash drive or Google Drive.
 
 ## Development
 
