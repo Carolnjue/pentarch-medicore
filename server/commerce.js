@@ -779,7 +779,7 @@ module.exports = function commerce(app, H) {
   }));
 
   // ---------- the owner's to-do list: everything that needs a decision today, each with where to act ----------
-  app.get('/api/todo', adminOnly, wrap(req => {
+  app.get('/api/todo', stockLead, wrap(req => {
     const t = today(), items = [];
     const K = n => 'KES ' + Math.round(n).toLocaleString('en-KE');
     const push = (level, title, detail, href, tab) => items.push({ level, title, detail, href, tab });
@@ -813,6 +813,8 @@ module.exports = function commerce(app, H) {
     const noObs = all("SELECT a.id, a.visit_id FROM admissions a WHERE a.status='admitted'").filter(a => { const v = get('SELECT MAX(created_at) d FROM vitals WHERE visit_id=?', a.visit_id).d; return !v || Date.now() - new Date(v) > 8 * 3600e3; });
     if (noObs.length) push('warn', `${noObs.length} admitted patient${noObs.length > 1 ? 's' : ''} without observations for 8 hours`, 'Record temperature, pulse, breathing and BP on the ward', '#/wards');
     const order = { bad: 0, warn: 1, info: 2 };
-    return items.sort((a, b) => order[a.level] - order[b.level]);
+    // the pharmacist sees the stock side of the list; the owner sees everything
+    const mine = req.user.role === 'pharmacist' ? items.filter(i => i.href === '#/pharmacy') : items;
+    return mine.sort((a, b) => order[a.level] - order[b.level]);
   }));
 };

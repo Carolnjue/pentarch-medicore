@@ -23,7 +23,7 @@ export default function Dashboard() {
       {!d.sample && isAdmin && (!c.last_backup || Date.now() - new Date(c.last_backup) > 7 * 864e5) && <div className="alert warn row"><Icon name="alert" size={16} /><span>{c.last_backup ? `Last backup was ${Math.floor((Date.now() - new Date(c.last_backup)) / 864e5)} days ago.` : 'No backup has been made yet.'} Keep a copy of your records off this computer.</span><a className="btn sm right" href="#/settings">Back up now</a></div>}
       {d.sample && isAdmin && <div className="tip"><Icon name="info" size={16} /><div>This branch is running on <b>sample data</b> for demos and training. When the facility goes live, remove it in <a href="#/settings">Settings → Data</a>. The medicine catalogue and prices stay.</div></div>}
 
-      {isAdmin && <TodoPanel />}
+      {(isAdmin || c.user?.role === 'pharmacist') && <TodoPanel />}
       <div className="grid g-auto">
         <Stat icon="cash" label="Collected today" value={money(d.revenueToday)} hint={d.payToday.map(p => `${mname(p.method)} ${money(p.amt)}`).join(' · ') || 'No payments yet'} onClick={() => setOpen('revenue')} />
         <Stat icon="queue" label="Patients waiting" value={d.queue.length} hint={`${d.visitsToday} visits today · ${d.totalPatients} on file`} onClick={() => setOpen('queue')} />
