@@ -110,7 +110,7 @@ export default function Visit({ id }) {
           {d.referrals.length > 0 && <div className="card"><h3>Referrals</h3>{d.referrals.map(r => <div key={r.id} className="small"><b>{r.facility}</b> · {r.reason}</div>)}</div>}
         </div>
       </div>
-      {admit && <AdmitModal v={v} onClose={() => setAdmit(false)} onDone={() => { setAdmit(false); reload(); }} />}
+      {admit && <AdmitModal v={v} p={p} onClose={() => setAdmit(false)} onDone={() => { setAdmit(false); reload(); }} />}
       {refer && <ReferralForm patient={p} visitId={v.id} onClose={() => setRefer(false)} onSaved={() => { setRefer(false); reload(); }} />}
     </div>
   );
@@ -414,15 +414,26 @@ function Procedures({ v, d, reload }) {
   </div>;
 }
 
-function AdmitModal({ v, onClose, onDone }) {
+function AdmitModal({ v, p, onClose, onDone }) {
   const [wards] = useData('/wards');
   const [bed, setBed] = useState(null);
   const [reason, setReason] = useState(v.complaint || '');
   const go = async () => { await act(() => api.post(`/visits/${v.id}/admit`, { bed_id: bed, reason }), 'Patient admitted. Bed charges post daily.'); onDone(); };
+  // suggest the ward that fits the patient: newborns, children, mothers, then adults
+  const yrs = ageYears(p?.dob), female = p?.sex === 'Female';
+  const fit = w => { const n = w.name.toLowerCase();
+    if (/newborn|neonat|nbu/.test(n)) return yrs < 0.08 ? 2 : -1;
+    if (/paed|child/.test(n)) return yrs >= 0.08 && yrs < 13 ? 2 : -1;
+    if (/matern|postnatal|labour|antenatal/.test(n)) return female && yrs >= 12 && yrs <= 55 ? (/pregnan|labou?r|deliver|ANC|bleed/i.test(reason) ? 2 : 0) : -1;
+    if (/female/.test(n)) return female && yrs >= 13 ? 1 : -1;
+    if (/male/.test(n)) return !female && yrs >= 13 ? 1 : -1;
+    return yrs >= 13 ? 1 : 0; };
+  const list = [...(wards || [])].sort((a, b) => fit(b) - fit(a));
+  const best = list.find(w => fit(w) > 0 && w.beds.some(b => !b.admission_id));
   return <Modal title="Admit patient" onClose={onClose} wide footer={<><button onClick={onClose}>Cancel</button><button className="primary" disabled={!bed || !reason} onClick={go}>Admit</button></>}>
     <Field label="Reason for admission"><input value={reason} onChange={e => setReason(e.target.value)} /></Field>
-    {(wards || []).map(w => <div key={w.id} className="mt">
-      <b>{w.name}</b> <span className="faint small">{money(w.daily_rate)} per day · {w.beds.filter(b => !b.admission_id).length} free</span>
+    {list.map(w => <div key={w.id} className="mt" style={fit(w) < 0 ? { opacity: .55 } : null}>
+      <b>{w.name}</b> {best?.id === w.id && <Badge tone="good">Suggested for this patient</Badge>} {fit(w) < 0 && <span className="faint small">not usual for this patient&nbsp;·&nbsp;</span>}<span className="faint small">{money(w.daily_rate)} per day · {w.beds.filter(b => !b.admission_id).length} free</span>
       <div className="row" style={{ marginTop: 6 }}>{w.beds.map(b => <button key={b.id} className={'sm' + (bed === b.id ? ' primary' : '')} disabled={!!b.admission_id} onClick={() => setBed(b.id)} title={b.pname || 'Free'}>{b.label}</button>)}</div>
     </div>)}
   </Modal>;

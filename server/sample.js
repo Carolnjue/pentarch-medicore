@@ -327,13 +327,29 @@ function seedSample(D, cfg) {
     const prx = run(`INSERT INTO prescriptions(visit_id,patient_id,item_id,dose,frequency,days,qty,status,billed,prescriber,created_at,dispensed_at) VALUES(?,?,?,?,?,?,?,?,1,?,?,?)`,
       pn.v, ids[10], cef.id, '1g IV', 'OD', 5, 2, 'dispensed', 'Dr. Peter Maina', daysAgo(1), daysAgo(1)).lastInsertRowid;
     line(pn.bill, cef.name, 'drug', 'prescriptions', prx, 2, cef.price, daysAgo(1));
+    // ward chart: observations every few hours and the doses given so far
+    [[26, 39.1, 132, 38, 92], [20, 38.6, 126, 34, 93], [14, 38.0, 118, 30, 95], [8, 37.6, 112, 28, 96]].forEach(([h, t, pu, r, sp]) =>
+      run('INSERT INTO vitals(visit_id,patient_id,temp,pulse,resp,spo2,recorded_by,created_at) VALUES(?,?,?,?,?,?,?,?)', pn.v, ids[10], t, pu, r, sp, 'Nurse Jane Akinyi', new Date(Date.now() - h * 3600e3).toISOString()));
+    run('INSERT INTO med_admin(admission_id,prescription_id,status,reason,by_user,at) VALUES(?,?,?,?,?,?)', pn.a, prx, 'given', null, 'Nurse Jane Akinyi', new Date(Date.now() - 24 * 3600e3).toISOString());
+    const pcm = item('PCMSYR') || item('PCM500');
+    if (pcm) { const p2 = run(`INSERT INTO prescriptions(visit_id,patient_id,item_id,dose,frequency,days,qty,status,billed,prescriber,created_at,dispensed_at) VALUES(?,?,?,?,?,?,?,?,1,?,?,?)`,
+      pn.v, ids[10], pcm.id, pcm.unit === 'bottle' ? '10ml' : '500mg', 'TDS', 3, 1, 'dispensed', 'Dr. Peter Maina', daysAgo(1), daysAgo(1)).lastInsertRowid;
+      line(pn.bill, pcm.name, 'drug', 'prescriptions', p2, 1, pcm.pack_price || pcm.price, daysAgo(1));
+      [22, 14, 6].forEach((h, i) => run('INSERT INTO med_admin(admission_id,prescription_id,status,reason,by_user,at) VALUES(?,?,?,?,?,?)', pn.a, p2, i === 1 ? 'refused' : 'given', i === 1 ? 'Child asleep, temperature 37.6' : null, 'Nurse Jane Akinyi', new Date(Date.now() - h * 3600e3).toISOString())); }
     if (labour) {
       [[4, 140, 3], [5, 138, 3], [6, 142, 4], [7, 136, 4]].forEach(([cm, fhr, ctx], i) => run(
         'INSERT INTO partograph(admission_id,at,dilation,fhr,contractions,descent,sys,dia,by_user) VALUES(?,?,?,?,?,?,?,?,?)',
         labour.a, new Date(Date.now() - (5 - i) * 3600e3).toISOString(), cm, fhr, ctx, 4 - i, 118, 76, 'Midwife Rose Chebet'));
       run('INSERT INTO vitals(visit_id,patient_id,temp,sys,dia,pulse,resp,spo2,recorded_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)', labour.v, ids[2], 36.9, 118, 76, 88, 18, 99, 'Midwife Rose Chebet', daysAgo(0, 7));
     }
-    admit(ids[9], 'Uncontrolled hypertension - observation', 'General', 50, 'cash');
+    const htn = admit(ids[9], 'Uncontrolled hypertension - observation', 'General', 50, 'cash');
+    [[48, 182, 108], [36, 170, 102], [24, 158, 98], [12, 150, 94], [3, 146, 92]].forEach(([h, sy, di]) =>
+      run('INSERT INTO vitals(visit_id,patient_id,sys,dia,pulse,temp,recorded_by,created_at) VALUES(?,?,?,?,?,?,?,?)', htn.v, ids[9], sy, di, 84, 36.7, 'Nurse Jane Akinyi', new Date(Date.now() - h * 3600e3).toISOString()));
+    for (const [code, dose, fr] of [['AML10', '10mg', 'OD'], ['LOS50', '50mg', 'OD']]) { const it = item(code); if (!it) continue;
+      const rx = run(`INSERT INTO prescriptions(visit_id,patient_id,item_id,dose,frequency,days,qty,status,billed,prescriber,created_at,dispensed_at) VALUES(?,?,?,?,?,?,?,?,1,?,?,?)`,
+        htn.v, ids[9], it.id, dose, fr, 5, 5, 'dispensed', 'Dr. Peter Maina', daysAgo(2), daysAgo(2)).lastInsertRowid;
+      line(htn.bill, it.name, 'drug', 'prescriptions', rx, 5, it.price, daysAgo(2));
+      [46, 22].forEach(h => run('INSERT INTO med_admin(admission_id,prescription_id,status,reason,by_user,at) VALUES(?,?,?,?,?,?)', htn.a, rx, 'given', null, 'Nurse Jane Akinyi', new Date(Date.now() - h * 3600e3).toISOString())); }
   }
 
   // ---------- referrals, appointments, web orders ----------

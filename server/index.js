@@ -1021,7 +1021,12 @@ app.get('/api/admissions/:id', wrap(req => {
   if (!a) fail('Admission not found', 404);
   const bill = get('SELECT id FROM bills WHERE visit_id=? ORDER BY id DESC LIMIT 1', a.visit_id);
   return { ...a, notes: all('SELECT * FROM nursing_notes WHERE admission_id=? ORDER BY created_at DESC', a.id), bill: bill ? { id: bill.id, ...billTotals(bill.id) } : null,
-    vitals: all('SELECT * FROM vitals WHERE visit_id=? ORDER BY created_at DESC LIMIT 6', a.visit_id) };
+    vitals: all('SELECT * FROM vitals WHERE visit_id=? ORDER BY created_at DESC LIMIT 12', a.visit_id),
+    meds: all(`SELECT pr.*, i.name, i.unit, (SELECT COUNT(*) FROM med_admin m WHERE m.prescription_id=pr.id AND m.status='given') given,
+      (SELECT MAX(at) FROM med_admin m WHERE m.prescription_id=pr.id AND m.status='given') last_given FROM prescriptions pr JOIN items i ON i.id=pr.item_id WHERE pr.visit_id=? AND pr.status!='cancelled' ORDER BY pr.id`, a.visit_id),
+    mar: all('SELECT m.*, i.name, pr.dose FROM med_admin m JOIN prescriptions pr ON pr.id=m.prescription_id JOIN items i ON i.id=pr.item_id WHERE m.admission_id=? ORDER BY m.at DESC LIMIT 40', a.id),
+    patient: get('SELECT id, first_name, last_name, mrn, sex, dob, allergies FROM patients WHERE id=?', a.patient_id),
+    diagnosis: get("SELECT diagnosis, dx_code FROM notes WHERE visit_id=? AND diagnosis IS NOT NULL AND diagnosis!='' ORDER BY id DESC LIMIT 1", a.visit_id) || null };
 }));
 app.get('/api/admissions/:id/partograph', wrap(req => all('SELECT * FROM partograph WHERE admission_id=? ORDER BY at', req.params.id)));
 app.post('/api/admissions/:id/partograph', wrap(req => {
@@ -1033,6 +1038,18 @@ app.post('/api/admissions/:id/partograph', wrap(req => {
 app.post('/api/admissions/:id/note', wrap(req => {
   if (!req.body.note) fail('Write the note');
   run('INSERT INTO nursing_notes(admission_id,note,by_user,created_at) VALUES(?,?,?,?)', req.params.id, req.body.note, userOf(req), now());
+  return { ok: true };
+}));
+// medicine administration record: each dose given, withheld or refused, with who and when
+app.post('/api/admissions/:id/med', wrap(req => {
+  const a = get("SELECT * FROM admissions WHERE id=? AND status='admitted'", req.params.id);
+  if (!a) fail('This patient is no longer admitted');
+  const pr = get('SELECT * FROM prescriptions WHERE id=? AND visit_id=?', req.body.prescription_id, a.visit_id);
+  if (!pr) fail('Medicine not found on this admission');
+  const st = req.body.status || 'given';
+  if (!['given', 'withheld', 'refused'].includes(st)) fail('Unknown status');
+  if (st !== 'given' && !req.body.reason?.trim()) fail('Say why the dose was not given');
+  run('INSERT INTO med_admin(admission_id,prescription_id,status,reason,by_user,at) VALUES(?,?,?,?,?,?)', a.id, pr.id, st, req.body.reason || null, userOf(req), now());
   return { ok: true };
 }));
 app.post('/api/admissions/:id/transfer', wrap(req => {

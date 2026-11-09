@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Badge, act, money, fmtDT, age, Empty, PatientPicker } from '../ui';
+import { useData, Modal, Field, Badge, act, money, fmtDT, age, Empty, PatientPicker, Tabs } from '../ui';
 
 export default function Wards() {
   const c = useContext(ConfigContext);
@@ -50,31 +50,106 @@ function AdmitHere({ bed, onClose, onDone }) {
 }
 
 function AdmissionPanel({ bed, wards, maternity, onClose }) {
+  const c = useContext(ConfigContext);
   const [a, reload] = useData('/admissions/' + bed.admission_id);
   const [note, setNote] = useState('');
   const [discharge, setDischarge] = useState(null);
   const [transfer, setTransfer] = useState(false);
+  const [tab, setTab] = useState('obs');
   if (!a) return null;
   const free = wards.flatMap(w => w.beds.filter(b => !b.admission_id).map(b => ({ ...b, ward: w.name })));
   const addNote = async () => { await act(() => api.post(`/admissions/${a.id}/note`, { note }), 'Note added'); setNote(''); reload(); };
   const isLabour = maternity && /labou?r/i.test(a.reason || '');
+  const days = Math.max(1, Math.ceil((Date.now() - new Date(a.admitted_at)) / 864e5));
+  const draft = () => [
+    `Diagnosis: ${a.diagnosis ? `${a.diagnosis.diagnosis} (${a.diagnosis.dx_code || ''})` : ''}`,
+    `Reason for admission: ${a.reason || ''}`,
+    `Treatment given: ${a.meds.map(m => m.name).join(', ')}`,
+    'Condition on discharge: ',
+    'Medicines to take home: ',
+    'Follow-up: ',
+  ].join('\n');
   return <Modal wide title={`${bed.pname} · ${a.ward} ${a.bed}`} onClose={onClose} footer={<>
-    <button onClick={() => (window.location.hash = '#/visit/' + a.visit_id)}>Open clinical record (vitals, orders, Rx)</button>
+    <button onClick={() => (window.location.hash = '#/visit/' + a.visit_id)}>Open clinical record</button>
     <button onClick={() => setTransfer(true)}>Transfer bed</button>
-    <button className="primary" onClick={() => setDischarge('')}>Discharge</button></>}>
-    <div className="row" style={{ marginBottom: 12 }}><Badge tone="info">Admitted {fmtDT(a.admitted_at)}</Badge><span>{a.reason}</span><span className="right muted small">{money(a.daily_rate)} / day · bed charges post daily to the interim bill</span></div>
+    <button className="primary" onClick={() => setDischarge(draft())}>Discharge</button></>}>
+    <div className="row" style={{ marginBottom: 12 }}><Badge tone="info">Admitted {fmtDT(a.admitted_at)} · day {days}</Badge><span>{a.reason}</span>
+      {a.patient?.allergies && <Badge tone="bad">Allergy: {a.patient.allergies}</Badge>}
+      <span className="right muted small">{money(a.daily_rate)} / day · bed charges post daily to the interim bill</span></div>
     {isLabour && <Partograph admissionId={a.id} />}
-    <h3 className="mt">Nursing notes</h3>
-    <div className="row" style={{ margin: '8px 0' }}><input value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. 14:00 vitals stable, IV fluids running, patient comfortable" /><button className="primary" disabled={!note} onClick={addNote}>Add</button></div>
-    <div className="timeline">{a.notes.map(n => <div key={n.id} className="ev"><div className="small faint">{fmtDT(n.created_at)} · {n.by_user}</div>{n.note}</div>)}</div>
+    <Tabs value={tab} onChange={setTab} tabs={[['obs', `Observations (${a.vitals.length})`], ['meds', `Medicines (${a.meds.length})`], ['notes', `Nursing notes (${a.notes.length})`]]} />
+    {tab === 'obs' && <Observations a={a} reload={reload} />}
+    {tab === 'meds' && <MedChart a={a} reload={reload} />}
+    {tab === 'notes' && <>
+      <div className="row" style={{ margin: '8px 0' }}><input value={note} onChange={e => setNote(e.target.value)} placeholder="e.g. 14:00 IV fluids running, patient comfortable, mother at bedside" /><button className="primary" disabled={!note} onClick={addNote}>Add</button></div>
+      <div className="timeline">{a.notes.map(n => <div key={n.id} className="ev"><div className="small faint">{fmtDT(n.created_at)} · {n.by_user}</div>{n.note}</div>)}</div>
+      {!a.notes.length && <Empty icon="list">No nursing notes yet.</Empty>}
+    </>}
     {transfer && <div className="card mt"><b>Transfer to:</b><div className="row mt">{free.map(b => <button key={b.id} className="sm" onClick={async () => { await act(() => api.post(`/admissions/${a.id}/transfer`, { bed_id: b.id }), 'Transferred'); onClose(); }}>{b.ward} · {b.label}</button>)}</div></div>}
-    {discharge !== null && <Modal title="Discharge summary" onClose={() => setDischarge(null)} footer={<button className="primary" onClick={async () => {
+    {discharge !== null && <Modal title="Discharge summary" onClose={() => setDischarge(null)} footer={<><button onClick={() => printDischarge(a, discharge, c)}>Print</button><button className="primary" onClick={async () => {
       const r = await act(() => api.post(`/admissions/${a.id}/discharge`, { summary: discharge }), 'Discharged. Final bill is ready at the cashier.');
+      printDischarge(a, discharge, c);
       window.location.hash = '#/visit/' + r.visit_id;
-    }}>Discharge and send to cashier</button>}>
-      <Field label="Diagnosis, treatment given, condition on discharge, follow-up plan and medicines to take home"><textarea style={{ minHeight: 160 }} value={discharge} onChange={e => setDischarge(e.target.value)} /></Field>
+    }}>Discharge, print and send to cashier</button></>}>
+      <p className="small muted">Filled in from the record. Complete the condition on discharge, medicines to take home and follow-up date.</p>
+      <Field label="Discharge summary"><textarea style={{ minHeight: 200 }} value={discharge} onChange={e => setDischarge(e.target.value)} /></Field>
     </Modal>}
   </Modal>;
+}
+
+// Ward observations: quick entry and a chart of the readings, abnormal values flagged
+const OBS = [['temp', 'Temp °C', 36, 37.5], ['pulse', 'Pulse', 60, 100], ['resp', 'Resp /min', 12, 20], ['sys', 'BP sys', 90, 140], ['dia', 'BP dia', 60, 90], ['spo2', 'SpO₂ %', 94, 100]];
+function Observations({ a, reload }) {
+  const [f, setF] = useState({});
+  const save = async () => { await act(() => api.post(`/visits/${a.visit_id}/vitals`, f), 'Observations saved'); setF({}); reload(); };
+  const off = (k, v) => { const o = OBS.find(x => x[0] === k); return v != null && o && (v < o[2] || v > o[3]); };
+  return <div className="stack" style={{ marginTop: 10 }}>
+    <div className="row" style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
+      {OBS.map(([k, l]) => <Field key={k} label={l}><input type="number" step="any" style={{ width: 92 }} value={f[k] ?? ''} onChange={e => setF({ ...f, [k]: e.target.value })} /></Field>)}
+      <button className="primary" disabled={!Object.values(f).some(x => x !== '')} onClick={save}>Save</button>
+    </div>
+    {a.vitals.length ? <div className="tablewrap"><table className="table"><thead><tr><th>Time</th>{OBS.map(o => <th key={o[0]} className="num">{o[1]}</th>)}<th>By</th></tr></thead>
+      <tbody>{a.vitals.map(v => <tr key={v.id}><td className="nowrap">{fmtDT(v.created_at)}</td>{OBS.map(([k]) => <td key={k} className="num" style={off(k, v[k]) ? { color: 'var(--bad)', fontWeight: 700 } : null}>{v[k] ?? '-'}</td>)}<td className="small faint">{v.recorded_by}</td></tr>)}</tbody></table></div>
+      : <Empty icon="heart">No observations yet. Record the first set above.</Empty>}
+  </div>;
+}
+
+// Medicine administration record: every dose given, withheld or refused, by whom and when
+function MedChart({ a, reload }) {
+  const [why, setWhy] = useState(null);
+  const give = async (m, status = 'given', reason) => { await act(() => api.post(`/admissions/${a.id}/med`, { prescription_id: m.id, status, reason }), status === 'given' ? `${m.name}: dose recorded` : 'Recorded'); setWhy(null); reload(); };
+  const PER = { OD: 1, BD: 2, TDS: 3, QID: 4, Nocte: 1, Stat: 1 };
+  if (!a.meds.length) return <Empty icon="pharmacy">No medicines prescribed. Prescribe from the clinical record (Orders & prescriptions).</Empty>;
+  return <div className="stack" style={{ marginTop: 10 }}>
+    <div className="tablewrap"><table className="table"><thead><tr><th>Medicine</th><th>Dose</th><th>How often</th><th className="num">Doses given</th><th>Last given</th><th /></tr></thead>
+      <tbody>{a.meds.map(m => { const total = (PER[m.frequency] || 0) * (m.days || 1); const done = total && m.given >= total;
+        const gap = 24 / (PER[m.frequency] || 24), next = m.last_given ? new Date(new Date(m.last_given).getTime() + gap * 3600e3) : null, early = next && next - Date.now() > gap * 0.25 * 3600e3;
+        return <tr key={m.id}><td><b>{m.name}</b>{m.status !== 'dispensed' && <div className="small" style={{ color: 'var(--warn, #b45309)' }}>Not yet issued by the pharmacy</div>}</td><td>{m.dose}</td><td>{m.frequency} · {m.days} d</td>
+          <td className="num">{m.given}{total ? ` / ${total}` : ''}</td><td className="small">{m.last_given ? fmtDT(m.last_given) : '-'}{early && <div style={{ color: 'var(--warn, #b45309)' }}>Next due {next.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}</div>}</td>
+          <td className="nowrap">{done ? <Badge tone="good">Course complete</Badge> : <><button className={'sm' + (early ? '' : ' primary')} onClick={() => (!early || window.confirm(`${m.name} is not due until ${next.toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}. Record a dose now anyway?`)) && give(m)}>Given</button><button className="sm" onClick={() => setWhy({ m, status: 'withheld', reason: '' })}>Not given</button></>}</td></tr>; })}</tbody></table></div>
+    {why && <div className="card"><b>{why.m.name}: dose not given</b><div className="row mt">
+      <select value={why.status} onChange={e => setWhy({ ...why, status: e.target.value })} style={{ width: 'auto' }}><option value="withheld">Withheld</option><option value="refused">Patient refused</option></select>
+      <input placeholder="Reason, e.g. nil by mouth for theatre, vomiting, BP low" value={why.reason} onChange={e => setWhy({ ...why, reason: e.target.value })} />
+      <button className="primary" disabled={!why.reason.trim()} onClick={() => give(why.m, why.status, why.reason)}>Save</button><button onClick={() => setWhy(null)}>Cancel</button></div></div>}
+    {a.mar.length > 0 && <><h4 className="mt">Recent doses</h4><div className="timeline">{a.mar.slice(0, 12).map(x => <div key={x.id} className="ev"><div className="small faint">{fmtDT(x.at)} · {x.by_user}</div>
+      {x.status === 'given' ? <>{x.name} {x.dose} <b>given</b></> : <>{x.name} <b style={{ color: 'var(--bad)' }}>{x.status}</b>: {x.reason}</>}</div>)}</div></>}
+  </div>;
+}
+
+function printDischarge(a, text, c) {
+  const w = window.open('', '_blank', 'width=760,height=900'); if (!w) return;
+  const esc = t => String(t || '').replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+  w.document.write(`<html><head><title>Discharge summary</title><style>body{font:14px/1.5 Arial;margin:32px;color:#111}h1{font-size:18px;margin:0}h2{font-size:16px;margin:18px 0 6px}.m{color:#555}pre{white-space:pre-wrap;font:14px/1.6 Arial}table{border-collapse:collapse;width:100%}td{border-bottom:1px solid #ddd;padding:4px 6px}</style></head><body>
+  <h1>${esc(c.facility_name)}</h1><div class="m">${esc(c.location || '')} ${c.phone ? '· Tel ' + esc(c.phone) : ''}</div>
+  <h2>Discharge summary</h2>
+  <table><tr><td>Patient</td><td><b>${esc(a.patient?.first_name)} ${esc(a.patient?.last_name)}</b> · ${esc(a.patient?.mrn)} · ${esc(a.patient?.sex)}</td></tr>
+  <tr><td>Ward and bed</td><td>${esc(a.ward)} · ${esc(a.bed)}</td></tr><tr><td>Admitted</td><td>${new Date(a.admitted_at).toLocaleString('en-KE')}</td></tr><tr><td>Discharged</td><td>${new Date().toLocaleString('en-KE')}</td></tr>
+  ${a.patient?.allergies ? `<tr><td>Allergies</td><td><b>${esc(a.patient.allergies)}</b></td></tr>` : ''}</table>
+  <h2>Summary</h2><pre>${esc(text)}</pre>
+  <p style="margin-top:40px">Clinician: ______________________ &nbsp; Signature: ____________ &nbsp; Date: ________</p>
+  <p class="m">Come back at once if you feel worse, the fever returns, or you are worried.</p>
+  <script>print()</script></body></html>`);
+  w.document.close();
 }
 
 // WHO partograph: active labour from 4 cm; alert line at 1 cm/hour, action line 4 hours to its right

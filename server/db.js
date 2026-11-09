@@ -149,6 +149,7 @@ CREATE TABLE IF NOT EXISTS supplier_payments (
   id INTEGER PRIMARY KEY, supplier TEXT, invoice_id INTEGER, amount REAL, method TEXT, reference TEXT, date TEXT, by_user TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS price_changes (
   id INTEGER PRIMARY KEY, item_id INTEGER, old_price REAL, new_price REAL, old_pack_price REAL, new_pack_price REAL, cost REAL, reason TEXT, by_user TEXT, created_at TEXT);
+CREATE TABLE IF NOT EXISTS med_admin (id INTEGER PRIMARY KEY, admission_id INTEGER, prescription_id INTEGER, status TEXT, reason TEXT, by_user TEXT, at TEXT);
 CREATE TABLE IF NOT EXISTS claims (
   id INTEGER PRIMARY KEY, payment_id INTEGER UNIQUE, status TEXT, scheme TEXT, member_no TEXT, claim_no TEXT, submitted_at TEXT,
   paid_amount REAL, paid_at TEXT, remittance TEXT, reason TEXT, by_user TEXT, updated_at TEXT);
@@ -307,7 +308,7 @@ function clearSample({ zeroStock = true } = {}) {
   tx(() => {
     for (const t of ['patients', 'visits', 'vitals', 'notes', 'lab_orders', 'imaging_orders', 'prescriptions', 'procedures', 'bills', 'bill_lines',
       'payments', 'admissions', 'nursing_notes', 'partograph', 'pregnancies', 'anc_visits', 'deliveries', 'referrals', 'appointments', 'web_orders', 'audit',
-      'shifts', 'refunds', 'purchase_orders', 'po_lines', 'expenses', 'customers', 'stock_counts', 'stock_count_lines', 'disposals', 'supplier_invoices', 'supplier_payments', 'price_changes', 'claims']) run(`DELETE FROM ${t}`);
+      'shifts', 'refunds', 'purchase_orders', 'po_lines', 'expenses', 'customers', 'stock_counts', 'stock_count_lines', 'disposals', 'supplier_invoices', 'supplier_payments', 'price_changes', 'claims', 'med_admin']) run(`DELETE FROM ${t}`);
     if (zeroStock) { run('DELETE FROM batches'); run('DELETE FROM stock_moves'); }
   });
   R.run('UPDATE branches SET sample=0 WHERE id=?', currentBranch);
