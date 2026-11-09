@@ -421,6 +421,7 @@ export function Pricing() {
   };
   const per = r => r.pack_size > 1 && !r.sell_loose ? r.pack_name : r.unit;
   return <div className="stack">
+    <Tip id="pricing">When a supplier raises a cost, the selling price stays the same until you change it, so your margin shrinks quietly. After each delivery, check the items below target here and apply the suggested prices. Every change is kept with the old price, the cost and who made it.</Tip>
     <div className="grid g4">
       <div className="card stat"><span className="label">Target markup over cost</span><span className="row" style={{ flexWrap: 'nowrap' }}><input type="number" value={markup} onChange={e => setMarkup(Number(e.target.value) || 0)} style={{ width: 90, fontSize: 22, fontWeight: 700 }} /><b style={{ fontSize: 22 }}>%</b></span><span className="small muted">Default set in Settings → Facility</span></div>
       <div className="card stat stat-click" onClick={() => setOnly('below')}><span className="label">Below target</span><b className="value" style={{ color: d?.below ? 'var(--warn)' : null }}>{d?.below ?? '…'}</b><span className="small muted">more than 8 points under {markup}%</span></div>
