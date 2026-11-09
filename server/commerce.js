@@ -3,6 +3,8 @@
 const G = require('./guard');
 module.exports = function commerce(app, H) {
   const { D, R, all, get, run, tx, now, today, wrap, fail, userOf, audit, deduct, fmtQty, stockOf, billTotals, addLine, pad, adminOnly, itemsWithStock, cfg } = H;
+  // supplier balances: the owner and the pharmacist who orders stock
+  const stockLead = (req, res, next) => ['admin', 'superadmin', 'pharmacist'].includes(req.user.role) ? next() : res.status(403).json({ error: 'Only the pharmacist or an administrator can see supplier accounts' });
 
   // ---------- supervisor approval: any active administrator's PIN in this organisation ----------
   function supervisor(req, pin) {
@@ -385,7 +387,7 @@ module.exports = function commerce(app, H) {
   app.delete('/api/expenses/:id', adminOnly, wrap(req => { run('DELETE FROM expenses WHERE id=?', req.params.id); audit(req, 'expense deleted', 'expense', Number(req.params.id)); return { ok: true }; }));
 
   // ================= profit and loss =================
-  app.get('/api/reports/profit', wrap(req => {
+  app.get('/api/reports/profit', adminOnly, wrap(req => {
     const from = req.query.from || D.addDays(now(), -29), to = req.query.to || today();
     const range = [from, to + 'T23:59:59'];
     const sales = get("SELECT COALESCE(SUM(amount),0) a FROM bill_lines WHERE amount>0 AND kind NOT IN ('discount','refund') AND created_at BETWEEN ? AND ?", ...range).a;
@@ -503,7 +505,7 @@ module.exports = function commerce(app, H) {
   }));
 
   // ---------- the owner's end-of-day summary (also shared on WhatsApp) ----------
-  app.get('/api/reports/daily', wrap(req => {
+  app.get('/api/reports/daily', adminOnly, wrap(req => {
     const day = req.query.date || today();
     const range = [day, day + 'T23:59:59'];
     const pay = all('SELECT method, SUM(amount) amount FROM payments WHERE created_at BETWEEN ? AND ? GROUP BY method ORDER BY amount DESC', ...range);
@@ -585,7 +587,7 @@ module.exports = function commerce(app, H) {
 
   // ---------- supplier accounts: invoices from deliveries, payments, what is owed and when ----------
   const invBal = inv => inv.amount - get('SELECT COALESCE(SUM(amount),0) a FROM supplier_payments WHERE invoice_id=?', inv.id).a;
-  app.get('/api/supplier-accounts', wrap(() => {
+  app.get('/api/supplier-accounts', stockLead, wrap(() => {
     const names = [...new Set([...all('SELECT name FROM suppliers').map(r => r.name), ...all('SELECT DISTINCT supplier FROM supplier_invoices').map(r => r.supplier)])].filter(Boolean);
     const t = today();
     const rows = names.map(n => {
@@ -598,7 +600,7 @@ module.exports = function commerce(app, H) {
     }).sort((a, b) => b.owed - a.owed);
     return { rows, owed: rows.reduce((a, r) => a + r.owed, 0), overdue: rows.reduce((a, r) => a + r.overdue, 0), due_week: all('SELECT * FROM supplier_invoices WHERE due_date<=?', D.addDays(now(), 7).slice(0, 10)).reduce((a, i) => a + Math.max(0, invBal(i)), 0) };
   }));
-  app.get('/api/supplier-accounts/statement', wrap(req => {
+  app.get('/api/supplier-accounts/statement', stockLead, wrap(req => {
     const n = String(req.query.supplier || '');
     const rows = [
       ...all('SELECT * FROM supplier_invoices WHERE supplier=?', n).map(i => ({ at: i.date, kind: 'invoice', ref: i.invoice_no, due: i.due_date, amount: i.amount, id: i.id, balance_open: invBal(i) })),
@@ -777,7 +779,7 @@ module.exports = function commerce(app, H) {
   }));
 
   // ---------- the owner's to-do list: everything that needs a decision today, each with where to act ----------
-  app.get('/api/todo', wrap(req => {
+  app.get('/api/todo', adminOnly, wrap(req => {
     const t = today(), items = [];
     const K = n => 'KES ' + Math.round(n).toLocaleString('en-KE');
     const push = (level, title, detail, href, tab) => items.push({ level, title, detail, href, tab });

@@ -13,6 +13,7 @@ const pl = (w, n) => n === 1 ? w : /(x|s|ch|sh)$/.test(w) ? w + 'es' : w + 's';
 
 export default function Pharmacy() {
   const c = useContext(ConfigContext);
+  const lead = ['admin', 'superadmin', 'pharmacist'].includes(c.user.role);
   const [tab, setTab] = useState(() => takeTab(['dispense', 'pos', 'inventory', 'po', 'suppliers', 'prices', 'transfers', 'count', 'disposal', 'labels', 'web', 'controlled']) || (c.user.role === 'cashier' ? 'pos' : 'dispense'));
   const [queue, reloadQ] = useData('/pharmacy/queue');
   const [orders, reloadO] = useData('/web-orders');
@@ -20,8 +21,8 @@ export default function Pharmacy() {
   return (
     <div className="page">
       <PageHead icon="pharmacy" title={c.type === 'pharmacy' ? 'Pharmacy & stock' : 'Pharmacy & stores'} sub="Stock is counted in single pieces. Selling 10 tablets from a box of 100 updates stock straight away." />
-      <Tabs value={tab} onChange={setTab} tabs={[['dispense', `Prescriptions (${(queue || []).length})`], ['pos', 'Counter sale'], ['inventory', 'Inventory'], ['po', 'Purchase orders'], ['suppliers', 'Suppliers'], ['prices', 'Prices'],
-        (c.branches || []).length > 1 && ['transfers', 'Transfers'], ['count', 'Stock take'], ['disposal', 'Expired & disposal'], ['labels', 'Barcode labels'], ['web', `Website orders${newOrders ? ` (${newOrders})` : ''}`], ['controlled', 'Controlled drugs']]} />
+      <Tabs value={tab} onChange={setTab} tabs={[['dispense', `Prescriptions (${(queue || []).length})`], ['pos', 'Counter sale'], ['inventory', 'Inventory'], ['po', 'Purchase orders'], lead && ['suppliers', 'Suppliers'], lead && ['prices', 'Prices'],
+        (c.branches || []).length > 1 && ['transfers', 'Transfers'], ['count', 'Stock take'], lead && ['disposal', 'Expired & disposal'], ['labels', 'Barcode labels'], ['web', `Website orders${newOrders ? ` (${newOrders})` : ''}`], ['controlled', 'Controlled drugs']]} />
       {tab === 'dispense' && <Dispense queue={queue} reload={reloadQ} />}
       {tab === 'pos' && <POS />}
       {tab === 'inventory' && <Inventory />}

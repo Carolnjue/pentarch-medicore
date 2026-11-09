@@ -1206,7 +1206,7 @@ app.get('/api/reports/stock', wrap(() => {
     nearExpiry: all('SELECT b.*, i.name FROM batches b JOIN items i ON i.id=b.item_id WHERE b.qty>0 AND b.expiry BETWEEN ? AND ? ORDER BY b.expiry', today(), D.addDays(now(), 90)),
   };
 }));
-app.get('/api/audit', wrap(() => all('SELECT * FROM audit ORDER BY id DESC LIMIT 300')));
+app.get('/api/audit', adminOnly, wrap(() => all('SELECT * FROM audit ORDER BY id DESC LIMIT 300')));
 
 // ---------- public website API (per branch: ?b=<branch id>) ----------
 function publicBranch(req) {

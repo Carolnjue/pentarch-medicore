@@ -15,12 +15,13 @@ function csv(name, rows) {
 
 export default function Reports() {
   const c = useContext(ConfigContext);
-  const [tab, setTab] = useState('daily');
+  const owner = ['admin', 'superadmin'].includes(c.user?.role);
+  const [tab, setTab] = useState(owner ? 'daily' : 'finance');
   return (
     <div className="page">
       <div className="pagehead"><div><h1>Reports</h1><p className="sub">Management reports and MOH monthly summaries, generated from what staff already recorded.</p></div>
         <div className="actions"><button onClick={() => window.print()}><Icon name="print" size={15} />Print</button></div></div>
-      <Tabs value={tab} onChange={setTab} tabs={[['daily', 'Daily summary'], ['profit', 'Profit & loss'], ['finance', 'Revenue'], ['sales', 'Sales & cashiers'], ['stock', 'Stock'], ['moh705', 'MOH 705 (OPD morbidity)'], c.type !== 'pharmacy' && ['moh711', 'MOH 711 / service summary'], c.lab !== 'none' && ['lab', 'Lab workload'], ['audit', 'Audit trail']]} />
+      <Tabs value={tab} onChange={setTab} tabs={[owner && ['daily', 'Daily summary'], owner && ['profit', 'Profit & loss'], ['finance', 'Revenue'], ['sales', 'Sales & cashiers'], ['stock', 'Stock'], ['moh705', 'MOH 705 (OPD morbidity)'], c.type !== 'pharmacy' && ['moh711', 'MOH 711 / service summary'], c.lab !== 'none' && ['lab', 'Lab workload'], owner && ['audit', 'Audit trail']]} />
       <div className="printable">
         {tab === 'daily' && <Daily />}
         {tab === 'profit' && <Profit />}
