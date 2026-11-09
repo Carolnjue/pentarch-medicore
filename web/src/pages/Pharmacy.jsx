@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, money, fmtDate, fmtDT, fmtQty, Empty, todayISO, PageHead, Tip, Icon, Stat, takeTab, downloadCSV } from '../ui';
+import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, money, fmtDate, fmtDT, fmtQty, Empty, todayISO, PageHead, Tip, Icon, Stat, takeTab, downloadCSV, escObj } from '../ui';
 import { PayPanel, Receipt } from './Billing';
 import ProductArt from '../shared/ProductArt';
 import { ShiftBar, CustomerPicker, RefundDialog } from './Cash';
@@ -66,6 +66,7 @@ function Dispense({ queue, reload }) {
 }
 
 function printLabels(g, c = {}) {
+  g = escObj(g); c = escObj(c);
   if (!g.items.length) return;
   const w = window.open('', '_blank', 'width=420,height=600');
   if (!w) return;

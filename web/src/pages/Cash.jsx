@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Badge, act, toast, money, fmtDT, fmtDate, fmtTime, Empty, Icon, Tip, todayISO, Stat, downloadCSV } from '../ui';
+import { useData, Modal, Field, Badge, act, toast, money, fmtDT, fmtDate, fmtTime, Empty, Icon, Tip, todayISO, Stat, downloadCSV, escObj } from '../ui';
 import { askSupervisor } from '../shared/askPin';
 
 const METHOD = { cash: 'Cash', mpesa: 'M-Pesa', card: 'Card', sha: 'SHA', insurance: 'Insurance', bank: 'Bank', credit: 'Credit' };
@@ -263,7 +263,8 @@ function Statement({ id, onClose }) {
   const take = async () => { const r = await act(() => api.post(`/customers/${id}/pay`, pay), 'Payment recorded'); toast(r.remaining > 0 ? `Still owes ${money(r.remaining)}` : 'Account cleared'); load(); };
   const print = () => {
     const w = window.open('', '_blank');
-    w.document.write(`<title>Statement ${d.customer.name}</title><style>body{font:13px Arial;margin:28px}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ccc;padding:6px;text-align:left}.n{text-align:right}</style><h2>${d.facility || ''}</h2><h3>Statement: ${d.customer.name} · ${d.customer.phone}</h3><p>Printed ${new Date().toLocaleString('en-KE')}</p><table><tr><th>Date</th><th>Details</th><th class=n>Charged</th><th class=n>Paid</th><th class=n>Balance</th></tr>${d.rows.map(r => `<tr><td>${new Date(r.at).toLocaleDateString('en-KE')}</td><td>${r.kind === 'bill' ? 'Purchase ' + r.ref : 'Payment ' + r.ref}</td><td class=n>${r.amount > 0 ? r.amount.toLocaleString('en-KE') : ''}</td><td class=n>${r.amount < 0 ? (-r.amount).toLocaleString('en-KE') : ''}</td><td class=n>${r.balance.toLocaleString('en-KE')}</td></tr>`).join('')}</table><h3 style="text-align:right">Amount due: KES ${Math.round(d.owed).toLocaleString('en-KE')}</h3>`);
+    const E = escObj(d);
+    w.document.write(`<title>Statement ${E.customer.name}</title><style>body{font:13px Arial;margin:28px}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ccc;padding:6px;text-align:left}.n{text-align:right}</style><h2>${E.facility || ''}</h2><h3>Statement: ${E.customer.name} · ${E.customer.phone}</h3><p>Printed ${new Date().toLocaleString('en-KE')}</p><table><tr><th>Date</th><th>Details</th><th class=n>Charged</th><th class=n>Paid</th><th class=n>Balance</th></tr>${E.rows.map(r => `<tr><td>${new Date(r.at).toLocaleDateString('en-KE')}</td><td>${r.kind === 'bill' ? 'Purchase ' + r.ref : 'Payment ' + r.ref}</td><td class=n>${r.amount > 0 ? r.amount.toLocaleString('en-KE') : ''}</td><td class=n>${r.amount < 0 ? (-r.amount).toLocaleString('en-KE') : ''}</td><td class=n>${r.balance.toLocaleString('en-KE')}</td></tr>`).join('')}</table><h3 style="text-align:right">Amount due: KES ${Math.round(E.owed).toLocaleString('en-KE')}</h3>`);
     w.document.close(); w.print();
   };
   return <Modal title={`${d.customer.name} · account`} onClose={onClose} wide footer={<><button onClick={print}><Icon name="print" size={15} />Print statement</button><button onClick={onClose}>Close</button></>}>

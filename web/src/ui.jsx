@@ -216,3 +216,11 @@ export function downloadCSV(name, cols, rows) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: 'text/csv;charset=utf-8' })); a.download = name; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
+
+// Copy of data with every string made safe for HTML, for the print windows built with document.write
+export function escObj(v) {
+  if (typeof v === 'string') return v.replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  if (Array.isArray(v)) return v.map(escObj);
+  if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, escObj(x)]));
+  return v;
+}

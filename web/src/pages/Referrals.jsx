@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { api } from '../api';
-import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, fmtDT, Empty, PatientPicker } from '../ui';
+import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, fmtDT, Empty, PatientPicker, escObj } from '../ui';
 
 const FACILITIES = ['Kenyatta National Hospital', 'Mama Lucy Kibaki Hospital', 'Mbagathi County Hospital', 'Pumwani Maternity Hospital', 'Nairobi Women\'s Hospital', 'Aga Khan University Hospital', 'Lancet Kenya', 'Plaza Imaging Centre'];
 
@@ -26,6 +26,7 @@ export function ReferralForm({ patient, visitId, onClose, onSaved }) {
 }
 
 function printReferral(r, p) {
+  r = escObj(r); p = escObj(p);
   const w = window.open('', '_blank', 'width=700,height=800');
   w.document.write(`<html><head><title>Referral</title></head><body style="font-family:system-ui;padding:24px;max-width:640px">
     <h2>Referral note</h2><p><b>To:</b> ${r.facility}<br/><b>Urgency:</b> ${r.urgency}<br/><b>Date:</b> ${new Date(r.created_at).toLocaleString('en-KE')}</p>

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Badge, FlagBadge, StatusBadge, TriageBadge, TRIAGE, Modal, Field, Tabs, act, age, ageYears, fmtDT, fmtTime, money, fmtQty, Empty, Icon } from '../ui';
+import { useData, Badge, FlagBadge, StatusBadge, TriageBadge, TRIAGE, Modal, Field, Tabs, act, age, ageYears, fmtDT, fmtTime, money, fmtQty, Empty, Icon, escObj } from '../ui';
 import { HealthBar, VITAL_RANGES, childRanges } from './PatientView';
 import { ReferralForm } from './Referrals';
 import { ResultEntry, DEPT_COLOR } from './Lab';
@@ -336,6 +336,7 @@ function Orders({ v, d, reload }) {
 }
 
 function printRequisition(d, c) {
+  d = escObj(d); c = escObj(c);
   const labs = d.labs.filter(l => l.mode === 'outsourced');
   const w = window.open('', '_blank', 'width=700,height=800');
   if (!w) return alert('Allow pop-ups to print the requisition.');

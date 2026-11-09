@@ -1,7 +1,7 @@
 import React, { useContext, useMemo, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Badge, act, toast, money, fmtDT, fmtDate, Empty, Icon, Tip, todayISO, StatusBadge } from '../ui';
+import { useData, Modal, Field, Badge, act, toast, money, fmtDT, fmtDate, Empty, Icon, Tip, todayISO, StatusBadge, escObj } from '../ui';
 import ProductArt from '../shared/ProductArt';
 import { Barcode, barcodeSvg, printLabelSheet, parseGS1 } from '../shared/barcode';
 
@@ -147,7 +147,7 @@ export function Labels() {
   const print = async () => {
     await generate();
     const fresh = await api.get('/items');
-    const html = sel.flatMap(s => { const it = fresh.find(i => i.id === s.id); const price = s.mode === 'pack' || it.pack_size === 1 ? it.pack_price : it.price; const per = s.mode === 'pack' || it.pack_size === 1 ? (it.pack_size > 1 ? it.pack_name : it.unit) : it.unit;
+    const html = sel.flatMap(s => { const it = escObj(fresh.find(i => i.id === s.id)); const price = s.mode === 'pack' || it.pack_size === 1 ? it.pack_price : it.price; const per = s.mode === 'pack' || it.pack_size === 1 ? (it.pack_size > 1 ? it.pack_name : it.unit) : it.unit;
       return Array.from({ length: Math.max(1, Number(s.copies) || 1) }, () => `<div class="lbl"><b>${it.name}</b><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="p">KES ${Number(price).toLocaleString()}</span><small>/${per}</small></div>${barcodeSvg(it.barcode)}<small>${c.facility_name}</small></div>`); }).join('');
     printLabelSheet(html, size);
   };
@@ -229,7 +229,8 @@ function CountSheet({ id, admin, onBack }) {
     (only === 'all' || (only === 'todo' ? vals[l.id] === '' || vals[l.id] == null : vals[l.id] !== '' && Number(vals[l.id]) !== l.expected)));
   const printSheet = () => {
     const w = window.open('', '_blank');
-    w.document.write(`<title>${sc.count_no} count sheet</title><style>body{font:13px Arial;margin:24px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:6px;text-align:left}th{background:#eee}.c{width:110px}</style><h2>Stock count ${sc.count_no} · ${sc.scope}</h2><p>Counted by: ____________________ Date: ____________</p><table><tr><th>Item</th><th>Batch</th><th>Expiry</th><th>Location</th><th class=c>Counted</th></tr>${sc.lines.map(l => `<tr><td>${l.name}</td><td>${l.batch_no || ''}</td><td>${l.expiry || ''}</td><td>${l.location || ''}</td><td></td></tr>`).join('')}</table>`);
+    const E = escObj(sc);
+    w.document.write(`<title>${E.count_no} count sheet</title><style>body{font:13px Arial;margin:24px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:6px;text-align:left}th{background:#eee}.c{width:110px}</style><h2>Stock count ${E.count_no} · ${E.scope}</h2><p>Counted by: ____________________ Date: ____________</p><table><tr><th>Item</th><th>Batch</th><th>Expiry</th><th>Location</th><th class=c>Counted</th></tr>${E.lines.map(l => `<tr><td>${l.name}</td><td>${l.batch_no || ''}</td><td>${l.expiry || ''}</td><td>${l.location || ''}</td><td></td></tr>`).join('')}</table>`);
     w.document.close(); w.print();
   };
   return <div className="stack">
@@ -300,7 +301,7 @@ export function Disposal() {
   };
   const printReg = () => {
     const w = window.open('', '_blank');
-    w.document.write(`<title>Disposal register</title><style>body{font:12px Arial;margin:24px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:5px;text-align:left}th{background:#eee}</style><h2>${c.facility_name} · Disposal register</h2><table><tr><th>No.</th><th>Date</th><th>Item</th><th>Batch</th><th>Expiry</th><th>Quantity</th><th>Value (cost)</th><th>Reason</th><th>Method</th><th>Witness</th><th>Recorded by</th></tr>${(reg?.rows || []).map(d => `<tr><td>${d.disp_no}</td><td>${new Date(d.created_at).toLocaleDateString('en-KE')}</td><td>${d.name}${d.controlled ? ' (controlled)' : ''}</td><td>${d.batch_no || ''}</td><td>${d.expiry || ''}</td><td>${d.qty_text}</td><td>${d.value.toLocaleString('en-KE')}</td><td>${d.reason}</td><td>${d.method}</td><td>${d.witness}</td><td>${d.by_user}</td></tr>`).join('')}</table><p style="margin-top:30px">Superintendent pharmacist: ______________________ Signature: ____________ Date: __________</p>`);
+    w.document.write(`<title>Disposal register</title><style>body{font:12px Arial;margin:24px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:5px;text-align:left}th{background:#eee}</style><h2>${escObj(c.facility_name || '')} · Disposal register</h2><table><tr><th>No.</th><th>Date</th><th>Item</th><th>Batch</th><th>Expiry</th><th>Quantity</th><th>Value (cost)</th><th>Reason</th><th>Method</th><th>Witness</th><th>Recorded by</th></tr>${escObj(reg?.rows || []).map(d => `<tr><td>${d.disp_no}</td><td>${new Date(d.created_at).toLocaleDateString('en-KE')}</td><td>${d.name}${d.controlled ? ' (controlled)' : ''}</td><td>${d.batch_no || ''}</td><td>${d.expiry || ''}</td><td>${d.qty_text}</td><td>${d.value.toLocaleString('en-KE')}</td><td>${d.reason}</td><td>${d.method}</td><td>${d.witness}</td><td>${d.by_user}</td></tr>`).join('')}</table><p style="margin-top:30px">Superintendent pharmacist: ______________________ Signature: ____________ Date: __________</p>`);
     w.document.close(); w.print();
   };
   return <div className="stack">
