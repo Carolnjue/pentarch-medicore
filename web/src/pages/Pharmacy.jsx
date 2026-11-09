@@ -207,6 +207,7 @@ function Inventory() {
   const [receive, setReceive] = useState(null);
   const [adding, setAdding] = useState(false);
   const [valueOpen, setValueOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
   const cats = useCategories(items);
   const soon = new Date(Date.now() + 90 * 864e5).toISOString().slice(0, 10);
   const list = (items || []).filter(i => (cat === 'All' || i.shop_cat === cat) && (i.name + ' ' + (i.grp || '') + ' ' + (i.code || '')).toLowerCase().includes(q.toLowerCase()))
@@ -224,7 +225,7 @@ function Inventory() {
         <span style={{ position: 'absolute', left: 10, top: 10, color: 'var(--ink-3)' }}><Icon name="search" size={16} /></span></div>
       <select value={filter} onChange={e => setFilter(e.target.value)} style={{ width: 'auto' }}><option value="all">All stock</option><option value="low">Below reorder level</option><option value="out">Out of stock</option><option value="expiry">Expiring / expired</option></select>
       <div className="seg"><button className={view === 'grid' ? 'on' : ''} onClick={() => setView('grid')} aria-label="Grid"><Icon name="grid" size={15} /></button><button className={view === 'list' ? 'on' : ''} onClick={() => setView('list')} aria-label="List"><Icon name="list" size={15} /></button></div>
-      <div className="right row"><button onClick={() => downloadCSV(`stock-${todayISO()}.csv`, [['Code', 'code'], ['Item', 'name'], ['Category', 'shop_cat'], ['Unit', 'unit'], ['In stock (units)', 'stock'], ['Stock', 'stock_text'], ['Cost per unit', 'cost'], ['Value at cost', r => Math.round(r.stock * (r.cost || 0))], ['Selling price per unit', 'price'], ['Pack price', 'pack_price'], ['Reorder level', 'reorder_level'], ['Next expiry', 'next_expiry'], ['Expired units', 'expired_qty']], list)} title="Stock list with values, for your accountant"><Icon name="upload" size={15} />Export</button><button onClick={() => setAdding(true)}><Icon name="plus" size={15} />New item</button><button className="primary" onClick={() => setReceive({})}>Receive stock</button></div>
+      <div className="right row"><button onClick={() => downloadCSV(`stock-${todayISO()}.csv`, [['Code', 'code'], ['Item', 'name'], ['Category', 'shop_cat'], ['Unit', 'unit'], ['In stock (units)', 'stock'], ['Stock', 'stock_text'], ['Cost per unit', 'cost'], ['Value at cost', r => Math.round(r.stock * (r.cost || 0))], ['Selling price per unit', 'price'], ['Pack price', 'pack_price'], ['Reorder level', 'reorder_level'], ['Next expiry', 'next_expiry'], ['Expired units', 'expired_qty']], list)} title="Stock list with values, for your accountant"><Icon name="upload" size={15} />Export</button><button onClick={() => setImporting(true)} title="Load the shop's stock list from Excel when going live"><Icon name="upload" size={15} />Import stock</button><button onClick={() => setAdding(true)}><Icon name="plus" size={15} />New item</button><button className="primary" onClick={() => setReceive({})}>Receive stock</button></div>
     </div>
     {filter !== 'all' && <div className="tip"><Icon name="info" size={16} /><div>Showing <b>{{ low: 'items below reorder level', out: 'out-of-stock items', expiry: 'items expiring within 90 days or with expired batches' }[filter]}</b> ({list.length}). <a href="#" onClick={e => { e.preventDefault(); setFilter('all'); }}>Show all stock</a></div></div>}
     {valueOpen && <StockValue items={all} onClose={() => setValueOpen(false)} />}
@@ -250,6 +251,7 @@ function Inventory() {
     {open && <ItemDetail id={open} onReceive={it => setReceive({ item_id: it.id })} onClose={() => { setOpen(null); reload(); }} />}
     {receive && <ReceiveStock items={all} initial={receive} onClose={() => setReceive(null)} onDone={() => { setReceive(null); reload(); }} />}
     {adding && <NewItem onClose={() => setAdding(false)} onDone={() => { setAdding(false); reload(); }} />}
+    {importing && <ImportStock onClose={() => setImporting(false)} onDone={() => { setImporting(false); reload(); }} />}
   </div>;
 }
 
@@ -437,3 +439,59 @@ function BarcodeBox({ item, onChange }) {
 // Plain-language dosing for medicine labels, English and Kiswahili
 const FW = { OD: ['once a day', 'mara moja kwa siku'], BD: ['twice a day', 'mara mbili kwa siku'], TDS: ['three times a day', 'mara tatu kwa siku'], QID: ['four times a day', 'mara nne kwa siku'],
   Nocte: ['at night', 'usiku'], PRN: ['when needed', 'inapohitajika'], Stat: ['take now, once', 'meza sasa, mara moja'], 'As directed': ['as directed', 'kama ulivyoelekezwa'] };
+
+// ---------- opening stock from the shop's own list (Excel saved as CSV) ----------
+const IMPORT_COLS = { code: ['code', 'item code', 'sku'], name: ['name', 'item', 'item name', 'product', 'description', 'drug'], barcode: ['barcode', 'ean', 'gtin'],
+  packs: ['packs', 'boxes', 'cartons', 'qty packs', 'packs in stock'], qty: ['qty', 'quantity', 'units', 'pieces', 'loose', 'loose units', 'stock', 'qty units'],
+  batch: ['batch', 'batch no', 'lot', 'batch number'], expiry: ['expiry', 'expiry date', 'exp', 'expires', 'exp date'], cost: ['cost', 'unit cost', 'cost per unit', 'buying price per unit'],
+  pack_cost: ['pack cost', 'cost per pack', 'buying price', 'buying price per pack'], price: ['price', 'unit price', 'selling price', 'price per unit', 'selling price per unit'],
+  pack_price: ['pack price', 'price per pack', 'selling price per pack'], pack_size: ['pack size', 'units per pack'], unit: ['unit'] };
+function parseCSV(text) {
+  const rows = []; let row = [], cell = '', q = false;
+  text = text.replace(/^\ufeff/, '');
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (q) { if (ch === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += ch; continue; }
+    if (ch === '"') q = true; else if (ch === ',' || ch === ';' || ch === '\t') { row.push(cell); cell = ''; } else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(cell); rows.push(row); row = []; cell = ''; } else cell += ch;
+  }
+  if (cell || row.length) { row.push(cell); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim()));
+}
+function ImportStock({ onClose, onDone }) {
+  const [rows, setRows] = useState(null);
+  const [map, setMap] = useState({});
+  const [create, setCreate] = useState(false);
+  const [res, setRes] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const load = async f => {
+    const all = parseCSV(await f.text()); if (all.length < 2) return toast('That file has no rows under the headings', true);
+    const head = all[0].map(h => h.trim().toLowerCase()), m = {};
+    for (const [k, names] of Object.entries(IMPORT_COLS)) { const i = head.findIndex(h => names.includes(h)); if (i >= 0) m[k] = i; }
+    if (m.name == null && m.code == null) return toast('Add a column called "Name" (or "Code") with the item names', true);
+    setMap(m); setRows(all.slice(1).map(r => Object.fromEntries(Object.entries(m).map(([k, i]) => [k, (r[i] || '').trim()])))); setRes(null);
+  };
+  const check = async (apply = false) => {
+    setBusy(true);
+    try { const r = await api.post('/stock/import', { rows, create_missing: create, apply }); setRes(r); if (apply) { toast(`${r.applied} lines added to stock`); onDone(); } }
+    catch (e) { toast(e.message, true); } finally { setBusy(false); }
+  };
+  const template = () => downloadCSV('MediCore-stock-template.csv', [['Code', 'code'], ['Name', 'name'], ['Packs', 'packs'], ['Loose units', 'qty'], ['Batch', 'batch'], ['Expiry', 'expiry'], ['Cost per pack', 'pack_cost'], ['Price per pack', 'pack_price']],
+    [{ code: 'AMX500', name: 'Amoxicillin 500mg capsules', packs: 3, qty: 40, batch: 'AM2291', expiry: '2027-08-31', pack_cost: 240, pack_price: 350 }, { code: '', name: 'Your item name', packs: 2, qty: 0, batch: '', expiry: '31/12/2027', pack_cost: '', pack_price: '' }]);
+  const tone = { ok: 'good', new: 'info', missing: 'warn', error: 'bad' };
+  return <Modal wide title="Import stock from a list" onClose={onClose} footer={<><button onClick={onClose}>Cancel</button>
+    {rows && <button disabled={busy} onClick={() => check(false)}>Check the list</button>}
+    {res && <button className="primary" disabled={busy || !(res.ok + res.new)} onClick={() => check(true)}>Add {res.ok + res.new} lines to stock</button>}</>}>
+    <div className="stack">
+      <p className="muted" style={{ margin: 0 }}>Use this when going live. In Excel, keep one row per batch with the item name (or code), how many packs and loose units, batch and expiry, then <b>File → Save As → CSV</b>. MediCore matches each row to the medicine list and shows you the result before anything changes.</p>
+      <div className="row"><input type="file" accept=".csv,text/csv" onChange={e => e.target.files[0] && load(e.target.files[0])} style={{ maxWidth: 320 }} /><button className="sm" onClick={template}>Download a template</button></div>
+      {rows && <p className="small" style={{ margin: 0 }}>{rows.length} rows read. Columns found: {Object.keys(map).join(', ')}.</p>}
+      {rows && <label className="row small"><input type="checkbox" checked={create} onChange={e => { setCreate(e.target.checked); setRes(null); }} style={{ width: 'auto' }} />Add items that are not in the catalogue as new items (needs a selling price)</label>}
+      {res && <>
+        <div className="row"><Badge tone="good">{res.ok} matched</Badge>{res.new > 0 && <Badge tone="info">{res.new} new items</Badge>}{res.missing > 0 && <Badge tone="warn">{res.missing} not found</Badge>}{res.errors > 0 && <Badge tone="bad">{res.errors} to fix</Badge>}<span className="right small">Value at cost {money(res.value)}</span></div>
+        <div className="tablewrap" style={{ maxHeight: 340, overflow: 'auto' }}><table className="table"><thead><tr><th>Row</th><th>In your list</th><th>Matched to</th><th>Quantity</th><th>Expiry</th><th /></tr></thead>
+          <tbody>{res.rows.map(r => <tr key={r.line}><td className="faint">{r.line}</td><td>{r.name}</td><td>{r.item || '-'}</td><td>{r.qty_text}</td><td className="nowrap">{r.expiry || '-'}</td><td><Badge tone={tone[r.status]}>{r.status}</Badge>{r.note && <div className="small faint">{r.note}</div>}</td></tr>)}</tbody></table></div>
+        {(res.missing + res.errors) > 0 && <p className="small muted" style={{ margin: 0 }}>Rows marked "not found" or "to fix" are skipped. Fix them in Excel and import them again later; nothing is added twice by checking.</p>}
+      </>}
+    </div>
+  </Modal>;
+}

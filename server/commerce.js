@@ -710,6 +710,72 @@ module.exports = function commerce(app, H) {
     return { ok: true };
   }));
 
+  // ---------- opening stock import: the shop's own list (CSV from Excel) matched to the catalogue ----------
+  const normDate = v => {
+    v = String(v || '').trim(); let m;
+    if ((m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))) return `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}`;
+    if ((m = v.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{2,4})$/))) { const y = m[3].length === 2 ? '20' + m[3] : m[3]; return `${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`; }
+    if ((m = v.match(/^(\d{1,2})[\/.-](\d{4})$/))) { const d = new Date(Date.UTC(+m[2], +m[1], 0)); return d.toISOString().slice(0, 10); } // month/year: last day of that month
+    return null;
+  };
+  const num = v => { const n = Number(String(v ?? '').replace(/[, ]|KES|ksh/gi, '')); return Number.isFinite(n) ? n : NaN; };
+  app.post('/api/stock/import', wrap(req => {
+    if (!['admin', 'superadmin', 'pharmacist'].includes(req.user.role)) fail('Only a pharmacist or administrator can import stock');
+    const rows = (req.body.rows || []).slice(0, 5000), apply = !!req.body.apply, create = !!req.body.create_missing;
+    if (!rows.length) fail('The file has no rows');
+    const items = all('SELECT * FROM items WHERE active=1');
+    const byCode = new Map(items.map(i => [String(i.code).toLowerCase(), i])), byBar = new Map(items.filter(i => i.barcode).map(i => [String(i.barcode), i]));
+    const byName = new Map(items.map(i => [i.name.toLowerCase().trim(), i]));
+    const find = r => {
+      if (r.code && byCode.get(String(r.code).toLowerCase().trim())) return byCode.get(String(r.code).toLowerCase().trim());
+      if (r.barcode && byBar.get(String(r.barcode).trim())) return byBar.get(String(r.barcode).trim());
+      const n = String(r.name || '').toLowerCase().trim(); if (!n) return null;
+      if (byName.get(n)) return byName.get(n);
+      const words = n.split(/[^a-z0-9.\/]+/).filter(w => w.length > 1);
+      const hits = items.filter(i => words.every(w => i.name.toLowerCase().includes(w)));
+      return hits.length === 1 ? { ...hits[0], _guess: true } : null;
+    };
+    const t = today();
+    const out = rows.map((r, i) => {
+      const line = i + 2, it = find(r);
+      const qty = (num(r.packs) > 0 && it ? num(r.packs) * it.pack_size : 0) + (num(r.qty) > 0 ? num(r.qty) : 0);
+      const expiry = normDate(r.expiry);
+      const res = { line, name: r.name || r.code, item_id: it?.id || null, item: it?.name || null, qty, qty_text: it ? fmtQty(it, qty) : String(qty), expiry, batch: r.batch || '', status: 'ok', note: '' };
+      if (!it && !create) return { ...res, status: 'missing', note: 'Not in the catalogue. Tick "add missing items" or fix the name.' };
+      if (!it && !(num(r.price) > 0 || num(r.pack_price) > 0)) return { ...res, status: 'error', note: 'New item needs a selling price' };
+      if (!(qty > 0)) return { ...res, status: 'error', note: 'Quantity missing' };
+      if (!expiry) return { ...res, status: 'error', note: 'Expiry date missing or unreadable (use 2027-03-31 or 31/03/2027)' };
+      if (expiry <= t) return { ...res, status: 'error', note: 'Already expired. Write it off instead of importing.' };
+      return { ...res, status: it ? 'ok' : 'new', note: it?._guess ? 'Matched by similar name: check it is right' : '' };
+    });
+    const good = out.filter(o => o.status === 'ok' || o.status === 'new');
+    if (apply) tx(() => {
+      for (const o of good) {
+        const r = rows[o.line - 2];
+        let it = o.item_id && get('SELECT * FROM items WHERE id=?', o.item_id);
+        if (!it) {
+          const pack = Math.max(1, num(r.pack_size) || 1), packPrice = num(r.pack_price) || num(r.price) * pack, unitPrice = num(r.price) || packPrice / pack;
+          const id = run(`INSERT INTO items(code,name,form,category,grp,shop_cat,unit,pack_size,pack_name,price,pack_price,cost,reorder_level,web,sell_loose,barcode) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,1,?,?)`,
+            r.code || 'I' + Date.now().toString().slice(-5) + o.line, String(r.name).trim(), 'tablet', 'drug', 'Other', 'Prescription medicines', r.unit || (pack > 1 ? 'tab' : 'pc'), pack, pack > 1 ? 'box' : (r.unit || 'pc'),
+            unitPrice, packPrice, num(r.cost) || unitPrice * 0.7, pack * 2, pack > 1 ? 1 : 0, r.barcode || null).lastInsertRowid;
+          it = get('SELECT * FROM items WHERE id=?', id); o.item_id = id; o.item = it.name;
+        }
+        const cost = num(r.cost) > 0 ? num(r.cost) : num(r.pack_cost) > 0 ? num(r.pack_cost) / it.pack_size : it.cost;
+        const bid = run('INSERT INTO batches(item_id,batch_no,expiry,qty,cost,supplier,received_at) VALUES(?,?,?,?,?,?,?)', it.id, o.batch || 'OPEN' + o.line, o.expiry, o.qty, cost, 'Opening stock', now()).lastInsertRowid;
+        run('INSERT INTO stock_moves(item_id,batch_id,qty,type,ref,by_user,created_at) VALUES(?,?,?,?,?,?,?)', it.id, bid, o.qty, 'receive', 'Opening stock import', userOf(req), now());
+        const upd = [];
+        if (num(r.cost) > 0 || num(r.pack_cost) > 0) upd.push(['cost', cost]);
+        if (num(r.price) > 0 && o.status === 'ok') upd.push(['price', num(r.price)]);
+        if (num(r.pack_price) > 0 && o.status === 'ok') upd.push(['pack_price', num(r.pack_price)]);
+        if (r.barcode && !it.barcode) upd.push(['barcode', String(r.barcode)]);
+        for (const [k, v] of upd) run(`UPDATE items SET ${k}=? WHERE id=?`, v, it.id);
+      }
+      audit(req, `opening stock import: ${good.length} lines`, 'stock', null);
+    });
+    return { rows: out, ok: out.filter(o => o.status === 'ok').length, new: out.filter(o => o.status === 'new').length, missing: out.filter(o => o.status === 'missing').length, errors: out.filter(o => o.status === 'error').length, applied: apply ? good.length : 0,
+      value: Math.round(good.reduce((a, o) => { const r = rows[o.line - 2]; const it = o.item_id && get('SELECT cost, pack_size FROM items WHERE id=?', o.item_id); return a + o.qty * (num(r.cost) > 0 ? num(r.cost) : num(r.pack_cost) > 0 && it ? num(r.pack_cost) / it.pack_size : it?.cost || 0); }, 0)) };
+  }));
+
   // ---------- the owner's to-do list: everything that needs a decision today, each with where to act ----------
   app.get('/api/todo', wrap(req => {
     const t = today(), items = [];
