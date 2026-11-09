@@ -23,6 +23,8 @@ export default function Dashboard() {
       {!d.sample && isAdmin && (!c.last_backup || Date.now() - new Date(c.last_backup) > 7 * 864e5) && <div className="alert warn row"><Icon name="alert" size={16} /><span>{c.last_backup ? `Last backup was ${Math.floor((Date.now() - new Date(c.last_backup)) / 864e5)} days ago.` : 'No backup has been made yet.'} Keep a copy of your records off this computer.</span><a className="btn sm right" href="#/settings">Back up now</a></div>}
       {d.sample && isAdmin && <div className="tip"><Icon name="info" size={16} /><div>This branch is running on <b>sample data</b> for demos and training. When the facility goes live, remove it in <a href="#/settings">Settings → Data</a>. The medicine catalogue and prices stay.</div></div>}
 
+      {isAdmin && new Date().getHours() >= 18 && (() => { try { return localStorage.getItem('mc_summary_sent') !== new Date().toISOString().slice(0, 10); } catch { return false; } })() &&
+        <div className="tip"><Icon name="info" size={16} /><div>End of the day: check today's figures and send the summary to the owner. <a href="#/reports">Open the daily summary →</a></div></div>}
       {(isAdmin || c.user?.role === 'pharmacist') && <TodoPanel />}
       <div className="grid g-auto">
         <Stat icon="cash" label="Collected today" value={money(d.revenueToday)} hint={d.payToday.map(p => `${mname(p.method)} ${money(p.amt)}`).join(' · ') || 'No payments yet'} onClick={() => setOpen('revenue')} />

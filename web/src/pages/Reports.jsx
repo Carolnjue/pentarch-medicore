@@ -219,7 +219,7 @@ function Daily() {
   return <div className="stack">
     <div className="row noprint">
       <input type="date" aria-label="Day" value={day} max={todayISO()} onChange={e => setDay(e.target.value)} style={{ width: 170 }} />
-      {d && <><a className="btn primary right" href={wa} target="_blank" rel="noreferrer"><Icon name="upload" size={15} />Send on WhatsApp</a>
+      {d && <><a className="btn primary right" href={wa} target="_blank" rel="noreferrer" onClick={() => { try { localStorage.setItem('mc_summary_sent', new Date().toISOString().slice(0, 10)); } catch {} }}><Icon name="upload" size={15} />Send on WhatsApp</a>
         <button onClick={() => { navigator.clipboard?.writeText(d.text); }}>Copy text</button></>}
     </div>
     {!d ? <div className="card">Loading…</div> : <>
