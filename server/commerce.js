@@ -297,7 +297,9 @@ module.exports = function commerce(app, H) {
       run('UPDATE purchase_orders SET status=?, closed_at=? WHERE id=?', open ? 'partial' : 'received', open ? null : now(), po.id);
     });
     audit(req, 'receive ' + po.po_no, 'purchase_order', po.id);
-    return poView(get('SELECT * FROM purchase_orders WHERE id=?', po.id));
+    const markup = Number(cfg().default_markup ?? 33);
+    const under = got.map(l => get('SELECT i.* FROM po_lines l JOIN items i ON i.id=l.item_id WHERE l.id=?', l.line_id)).filter(it => { const sell = it.pack_size > 1 && !it.sell_loose ? it.pack_price / it.pack_size : it.price; return it.cost > 0 && (sell - it.cost) / it.cost * 100 < markup - 8; }).length;
+    return { ...poView(get('SELECT * FROM purchase_orders WHERE id=?', po.id)), price_review: under };
   }));
 
   // ================= stock transfers between branches of one organisation =================
@@ -625,4 +627,44 @@ module.exports = function commerce(app, H) {
     run('UPDATE suppliers SET phone=?, email=?, contact=?, terms_days=?, paybill=? WHERE id=?', req.body.phone ?? s0.phone, req.body.email ?? s0.email, req.body.contact ?? s0.contact, Number(req.body.terms_days ?? s0.terms_days ?? 30), req.body.paybill ?? s0.paybill, s0.id);
     return { ok: true };
   }));
+
+  // ---------- pricing: keep every item at the facility's markup over its latest cost ----------
+  const roundUp = (v, step) => Math.ceil(v / step) * step;
+  const suggest = (it, markup) => {
+    const unit = it.cost * (1 + markup / 100);
+    const step = unit >= 1000 ? 50 : unit >= 100 ? 10 : unit >= 20 ? 5 : 1;
+    const price = roundUp(unit, step);
+    const pack = it.pack_size > 1 ? roundUp(it.cost * it.pack_size * (1 + markup / 100), it.cost * it.pack_size >= 1000 ? 50 : 10) : price;
+    return { price, pack_price: pack };
+  };
+  app.get('/api/pricing/review', wrap(req => {
+    const markup = Number(req.query.markup ?? cfg().default_markup ?? 33);
+    const min = Number(req.query.min ?? Math.max(0, markup - 8));
+    const rows = all("SELECT * FROM items WHERE active=1 AND cost>0 AND category NOT IN ('service') ORDER BY name").map(it => {
+      const sell = it.pack_size > 1 && !it.sell_loose ? it.pack_price / it.pack_size : it.price;
+      const margin = sell > 0 ? Math.round((sell - it.cost) / sell * 1000) / 10 : -100;
+      const mk = it.cost > 0 ? Math.round((sell - it.cost) / it.cost * 1000) / 10 : 0;
+      const sug = suggest(it, markup);
+      return { id: it.id, name: it.name, code: it.code, unit: it.unit, pack_size: it.pack_size, pack_name: it.pack_name, sell_loose: it.sell_loose, cost: it.cost, pack_cost: it.cost * it.pack_size,
+        price: it.price, pack_price: it.pack_price, margin, markup: mk, below: mk < min, loss: sell < it.cost, suggested: sug,
+        last_change: get('SELECT created_at FROM price_changes WHERE item_id=? ORDER BY id DESC LIMIT 1', it.id)?.created_at || null };
+    });
+    return { markup, min, rows, below: rows.filter(r => r.below).length, loss: rows.filter(r => r.loss).length };
+  }));
+  app.post('/api/pricing/apply', adminOnly, wrap(req => {
+    const list = (req.body.items || []).filter(x => Number(x.price) > 0);
+    if (!list.length) fail('Choose at least one item');
+    tx(() => {
+      for (const x of list) {
+        const it = get('SELECT * FROM items WHERE id=?', x.id); if (!it) continue;
+        const np = Number(x.price), npp = Number(x.pack_price || it.pack_price);
+        if (np === it.price && npp === it.pack_price) continue;
+        run('UPDATE items SET price=?, pack_price=? WHERE id=?', np, npp, it.id);
+        run('INSERT INTO price_changes(item_id,old_price,new_price,old_pack_price,new_pack_price,cost,reason,by_user,created_at) VALUES(?,?,?,?,?,?,?,?,?)', it.id, it.price, np, it.pack_price, npp, it.cost, req.body.reason || 'Markup review', userOf(req), now());
+      }
+    });
+    audit(req, `prices updated for ${list.length} items`, 'pricing', null);
+    return { ok: true, updated: list.length };
+  }));
+  app.get('/api/pricing/history', wrap(() => all('SELECT p.*, i.name FROM price_changes p JOIN items i ON i.id=p.item_id ORDER BY p.id DESC LIMIT 200')));
 };

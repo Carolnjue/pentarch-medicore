@@ -86,7 +86,7 @@ function PODetail({ id, onClose }) {
           <td className="num">{l.received ? l.received_text : '-'}</td><td className="num">{money(l.pack_cost)}</td><td className="num">{money(l.total)}</td><td className="small">{l.stock_text}</td></tr>)}
           <tr><td colSpan={4}><b>Total</b></td><td className="num"><b>{money(po.total)}</b></td><td /></tr></tbody></table>
     </div>
-    {recv && <Modal xl title={`Receive ${po.po_no}`} onClose={() => setRecv(null)} footer={<><button onClick={() => setRecv(null)}>Cancel</button><button className="primary" onClick={async () => { await act(() => api.post(`/purchase-orders/${id}/receive`, { lines: recv, invoice: recv.invoice }), 'Delivery received into stock'); setRecv(null); reload(); }}>Receive into stock</button></>}>
+    {recv && <Modal xl title={`Receive ${po.po_no}`} onClose={() => setRecv(null)} footer={<><button onClick={() => setRecv(null)}>Cancel</button><button className="primary" onClick={async () => { const r = await act(() => api.post(`/purchase-orders/${id}/receive`, { lines: recv, invoice: recv.invoice }), 'Delivery received into stock'); setRecv(null); reload(); if (r?.price_review) toast(`${r.price_review} item${r.price_review > 1 ? 's are' : ' is'} now below your markup after the new cost. Check Pharmacy → Prices.`, true); }}>Receive into stock</button></>}>
       <Tip id="grn">Check each item against the delivery note. Scan the 2D code on the pack to fill in the batch and expiry automatically. Leave quantity 0 for anything that did not come.</Tip>
       <Field label="Supplier invoice number"><input value={recv.invoice || ''} onChange={e => { const r = [...recv]; r.invoice = e.target.value; setRecv(r); }} style={{ maxWidth: 240 }} /></Field>
       <table className="table mt"><thead><tr><th>Item</th><th style={{ width: 90 }}>Packs</th><th style={{ width: 120 }}>Cost each</th><th>Scan pack (optional)</th><th style={{ width: 130 }}>Batch</th><th style={{ width: 160 }}>Expiry *</th></tr></thead>
@@ -388,4 +388,48 @@ function SupplierStatement({ name, onClose }) {
           <td className="num">{r.amount > 0 ? money(r.amount) : ''}</td><td className="num">{r.amount < 0 ? money(-r.amount) : ''}</td><td className="num">{money(r.balance)}</td></tr>)}</tbody></table></div>
     </div>}
   </Modal>;
+}
+
+// ---------------- Prices: keep each item at the facility's markup over its latest cost ----------------
+export function Pricing() {
+  const c = useContext(ConfigContext);
+  const admin = c.user.role === 'admin' || c.user.role === 'superadmin';
+  const [markup, setMarkup] = useState(c.default_markup ?? 33);
+  const [d, reload] = useData('/pricing/review?markup=' + markup, [markup]);
+  const [only, setOnly] = useState('below');
+  const [q, setQ] = useState('');
+  const [sel, setSel] = useState({});
+  const [hist] = useData('/pricing/history');
+  const rows = (d?.rows || []).filter(r => (only === 'all' || (only === 'below' ? r.below : r.loss)) && (!q || r.name.toLowerCase().includes(q.toLowerCase())));
+  const chosen = rows.filter(r => sel[r.id]);
+  const apply = async () => {
+    if (!confirm(`Update selling prices for ${chosen.length} item${chosen.length > 1 ? 's' : ''} to ${markup}% over cost?`)) return;
+    await act(() => api.post('/pricing/apply', { items: chosen.map(r => ({ id: r.id, ...r.suggested })), reason: `Markup ${markup}%` }), 'Prices updated'); setSel({}); reload();
+  };
+  const per = r => r.pack_size > 1 && !r.sell_loose ? r.pack_name : r.unit;
+  return <div className="stack">
+    <div className="grid g4">
+      <div className="card stat"><span className="label">Target markup over cost</span><span className="row" style={{ flexWrap: 'nowrap' }}><input type="number" value={markup} onChange={e => setMarkup(Number(e.target.value) || 0)} style={{ width: 90, fontSize: 22, fontWeight: 700 }} /><b style={{ fontSize: 22 }}>%</b></span><span className="small muted">Default set in Settings → Facility</span></div>
+      <div className="card stat stat-click" onClick={() => setOnly('below')}><span className="label">Below target</span><b className="value" style={{ color: d?.below ? 'var(--warn)' : null }}>{d?.below ?? '…'}</b><span className="small muted">more than 8 points under {markup}%</span></div>
+      <div className="card stat stat-click" onClick={() => setOnly('loss')}><span className="label">Selling at a loss</span><b className="value" style={{ color: d?.loss ? 'var(--bad)' : null }}>{d?.loss ?? '…'}</b><span className="small muted">price lower than cost</span></div>
+      <div className="card stat stat-click" onClick={() => setOnly('all')}><span className="label">Items with a cost</span><b className="value">{d?.rows?.length ?? '…'}</b></div>
+    </div>
+    <div className="row">
+      <input placeholder="Find item" value={q} onChange={e => setQ(e.target.value)} style={{ maxWidth: 260 }} />
+      <div className="seg">{[['below', 'Below target'], ['loss', 'At a loss'], ['all', 'All']].map(([k, l]) => <button key={k} className={only === k ? 'on' : ''} onClick={() => setOnly(k)}>{l}</button>)}</div>
+      {admin && <><button className="right" onClick={() => setSel(Object.fromEntries(rows.map(r => [r.id, true])))} disabled={!rows.length}>Select all shown</button>
+        <button className="primary" disabled={!chosen.length} onClick={apply}>Apply suggested prices ({chosen.length})</button></>}
+    </div>
+    <div className="card" style={{ padding: 0 }}><div className="tablewrap"><table className="table"><thead><tr>{admin && <th />}<th>Item</th><th className="num">Cost</th><th className="num">Selling now</th><th className="num">Markup now</th><th className="num">Suggested</th><th>Last change</th></tr></thead>
+      <tbody>{rows.slice(0, 300).map(r => <tr key={r.id}>{admin && <td><input type="checkbox" checked={!!sel[r.id]} onChange={e => setSel({ ...sel, [r.id]: e.target.checked })} /></td>}
+        <td><b>{r.name}</b> <span className="faint small">per {per(r)}</span></td>
+        <td className="num">{money(r.pack_size > 1 && !r.sell_loose ? r.pack_cost : r.cost)}</td>
+        <td className="num">{money(r.pack_size > 1 && !r.sell_loose ? r.pack_price : r.price)}</td>
+        <td className="num" style={{ color: r.loss ? 'var(--bad)' : r.below ? 'var(--warn)' : null, fontWeight: r.below ? 700 : 400 }}>{r.markup}%</td>
+        <td className="num">{money(r.pack_size > 1 && !r.sell_loose ? r.suggested.pack_price : r.suggested.price)}{r.pack_size > 1 && r.sell_loose ? <span className="faint small"> · {money(r.suggested.pack_price)}/{r.pack_name}</span> : null}</td>
+        <td className="small muted">{r.last_change ? fmtDate(r.last_change) : '-'}</td></tr>)}</tbody></table>
+      {d && !rows.length && <Empty icon="check">{only === 'all' ? 'No items with a cost yet.' : 'Every item is at or near your target markup.'}</Empty>}</div></div>
+    {hist?.length > 0 && <div className="card"><h3>Recent price changes</h3><div className="tablewrap"><table className="table small"><thead><tr><th>When</th><th>Item</th><th className="num">Was</th><th className="num">Now</th><th>Why</th><th>By</th></tr></thead>
+      <tbody>{hist.slice(0, 30).map(h => <tr key={h.id}><td>{fmtDT(h.created_at)}</td><td>{h.name}</td><td className="num">{money(h.old_price)}</td><td className="num">{money(h.new_price)}</td><td>{h.reason}</td><td>{h.by_user}</td></tr>)}</tbody></table></div></div>}
+  </div>;
 }
