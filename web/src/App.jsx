@@ -137,6 +137,7 @@ export default function App() {
             {nav.map(([k, label, icon]) => <a key={k} href={'#/' + k} className={current === k || (k === 'queue' && current === 'visit') ? 'on' : ''}><Icon name={icon} />{label}</a>)}
             <div className="sep">Public</div>
             <a href={'/site?b=' + branch} target="_blank" rel="noreferrer"><Icon name="globe" />Facility website</a>
+            <a href="/manual/" target="_blank" rel="noreferrer"><Icon name="book" />User manual</a>
             <div className="ver">MediCore v{boot?.version || ''}</div>
           </nav>
           <div className="me">

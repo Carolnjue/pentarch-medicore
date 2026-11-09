@@ -1,0 +1,776 @@
+<title>MediCore User Manual</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: sticky chapter rail on the left, one reading column, screenshots break wider than the text column. */
+:root{
+  --bg:#fbf9f4; --paper:#ffffff; --ink:#122321; --ink-2:#44585a; --ink-3:#7a8c8c; --line:#dfe7e5;
+  --brand:#0f766e; --brand-2:#0b5f58; --brand-soft:#e3f3f0; --rail:#f3eee3; --rail-ink:#3d5052;
+  --amber:#b45309; --amber-soft:#fdf2df; --violet:#6d28d9; --violet-soft:#efe9fd; --red:#b91c1c; --red-soft:#fde7e7;
+  --display:'Bricolage Grotesque','Segoe UI',system-ui,sans-serif; --body:'Figtree','Segoe UI',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  --shadow:0 18px 40px -26px rgba(13,40,38,.45); color-scheme:light;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:400 16.5px/1.65 var(--body);-webkit-font-smoothing:antialiased}
+a{color:var(--brand)}
+h1,h2,h3{font-family:var(--display);letter-spacing:-.02em;line-height:1.12;text-wrap:balance;margin:0}
+code,kbd,.mono{font-family:var(--mono);font-size:.86em}
+kbd{background:var(--paper);border:1px solid var(--line);border-bottom-width:2px;border-radius:6px;padding:1px 6px}
+code{overflow-wrap:anywhere;background:var(--brand-soft);color:var(--brand-2);padding:1px 6px;border-radius:5px}
+.layout{display:grid;grid-template-columns:290px minmax(0,1fr);min-height:100vh}
+/* rail */
+.rail{border-right:1px solid #e4dccb;background:var(--rail);color:var(--rail-ink);position:sticky;top:0;height:100vh;overflow:auto;padding:26px 18px 30px;font-size:14.5px}
+.rail .brand{display:flex;gap:11px;align-items:center;color:var(--ink);margin-bottom:20px}
+.rail .mk{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#0f766e,#14a38c);display:grid;place-items:center;flex:none}
+.rail .brand b{display:block;font-family:var(--display);font-size:18px}
+.rail .brand small{color:var(--rail-ink);font-size:12px}
+.rail input{width:100%;background:#fff;border:1px solid #e0d8c6;color:var(--ink);border-radius:10px;padding:10px 12px;font:500 14px var(--body);margin-bottom:12px}
+.rail input:focus{outline:2px solid #2bb3a3;outline-offset:1px}
+.roles{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px}
+.roles button{background:#fff;border:1px solid #e0d8c6;color:var(--rail-ink);border-radius:99px;padding:4px 10px;font:600 12px var(--body);cursor:pointer}
+.roles button.on{background:#0f766e;border-color:#0f766e;color:#fff}
+.rail .lbl{font:600 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#8a7f68;margin:16px 0 6px}
+.rail nav a{display:flex;gap:10px;align-items:baseline;color:var(--rail-ink);text-decoration:none;padding:6px 8px;border-radius:8px;transition:background .15s,color .15s}
+.rail nav a span{font:500 11.5px var(--mono);color:#9a8f77;min-width:22px}
+.rail nav a:hover{background:#fff;color:var(--ink)}
+.rail nav a.on{background:var(--brand-soft);color:var(--brand-2);font-weight:600}
+.rail nav a.dim{opacity:.32}
+.rail nav a.hide{display:none}
+/* main */
+main{min-width:0;padding-block:0 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.col{max-width:820px;margin:0 auto}
+.wide{max-width:1060px;margin-left:auto;margin-right:auto}
+.cover{padding-block:70px 40px}
+.cover .eyebrow{font:600 12px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--brand)}
+.cover h1{font-size:clamp(40px,6vw,68px);font-weight:800;margin:14px 0 16px}
+.cover p.lead{font-size:20px;color:var(--ink-2);max-width:640px}
+.meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}
+.meta span{background:var(--paper);border:1px solid var(--line);border-radius:99px;padding:6px 12px;font-size:13.5px;color:var(--ink-2)}
+.rolegrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:30px}
+.rolecard{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}
+.rolecard b{display:block;font-family:var(--display);font-size:17px;margin-bottom:4px}
+.rolecard p{margin:0;color:var(--ink-2);font-size:14.5px}
+section.ch{padding-top:64px;scroll-margin-top:10px}
+.ch-head{display:flex;gap:16px;align-items:flex-start;margin-bottom:18px}
+.ch-num{font:600 13px var(--mono);color:var(--brand);background:var(--brand-soft);border-radius:10px;padding:8px 10px;flex:none;margin-top:4px}
+.ch h2{font-size:clamp(28px,3.4vw,38px);font-weight:800}
+.ch .who{font-size:13.5px;color:var(--ink-3);margin-top:6px}
+.ch h3{font-size:21px;font-weight:700;margin:34px 0 10px}
+.ch p{margin:0 0 14px}
+.ch ul,.ch ol{padding-left:22px;margin:0 0 16px}
+.ch li{margin-bottom:6px;overflow-wrap:break-word;min-width:0}
+ol.steps{counter-reset:st;list-style:none;padding:0}
+ol.steps>li{counter-increment:st;position:relative;padding-left:44px;margin-bottom:12px}
+ol.steps>li::before{content:counter(st);position:absolute;left:0;top:-1px;width:30px;height:30px;border-radius:9px;background:var(--brand);color:#fff;font:700 14px/30px var(--mono);text-align:center}
+.ui{font-weight:700;color:var(--ink)}
+/* figures */
+figure.shot{margin:22px 0 28px}
+.frame{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--paper);box-shadow:var(--shadow)}
+.frame::before{content:'';display:block;height:26px;background:linear-gradient(var(--line),var(--line)) 0 100%/100% 1px no-repeat,var(--paper)}
+.frame::after{content:'';position:absolute;left:12px;top:9px;width:8px;height:8px;border-radius:50%;background:#e8776b;box-shadow:13px 0 #e9b949,26px 0 #5cb76a}
+.frame img{display:block;width:100%;height:auto}
+.frame .addr{position:absolute;top:5px;left:60px;font:500 11px var(--mono);color:var(--ink-3)}
+.pin{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;background:#e8590c;color:#fff;font:700 13px/28px var(--mono);text-align:center;box-shadow:0 0 0 4px rgba(232,89,12,.25),0 6px 14px rgba(0,0,0,.25)}
+figcaption{font-size:14px;color:var(--ink-3);margin-top:10px}
+.legend{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:8px}
+.legend li{position:relative;padding-left:34px;font-size:15px;margin:0;min-height:24px}
+.legend li b.n{position:absolute;left:0;top:1px;width:24px;height:24px;border-radius:50%;background:#e8590c;color:#fff;font:700 12px/24px var(--mono);text-align:center}
+.pair{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+@media (max-width:760px){.pair{grid-template-columns:1fr}}
+/* callouts */
+.note{border-radius:12px;padding:14px 16px 14px 48px;margin:18px 0;position:relative;font-size:15.5px}
+.note::before{position:absolute;left:16px;top:13px;font:700 15px var(--mono)}
+.note p:last-child{margin:0}
+.tip{background:var(--brand-soft)}.tip::before{content:'✓';color:var(--brand)}
+.warn{background:var(--amber-soft)}.warn::before{content:'!';color:var(--amber)}
+.demo{background:var(--violet-soft)}.demo::before{content:'◇';color:var(--violet)}
+.stop{background:var(--red-soft)}.stop::before{content:'✕';color:var(--red)}
+.note b.t{display:block;margin-bottom:2px}
+/* tables */
+.tw{overflow-x:auto;margin:16px 0 22px;border:1px solid var(--line);border-radius:12px;background:var(--paper)}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:600 11.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);background:var(--bg)}
+tr:last-child td{border-bottom:0}
+td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3);text-align:center}
+.check{list-style:none;padding:0}
+.check li{padding-left:30px;position:relative}
+.check li::before{content:'';position:absolute;left:0;top:4px;width:17px;height:17px;border:2px solid var(--brand);border-radius:5px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 16px}
+.chips span{font-size:13px;border-radius:99px;padding:3px 10px;background:var(--paper);border:1px solid var(--line)}
+.lvl{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0 20px}
+.lvl div{border-radius:12px;padding:14px;border:2px solid}
+.lvl b{display:block;font-family:var(--display);font-size:18px}
+.lvl .e{border-color:#dc2626;background:var(--red-soft)}.lvl .p{border-color:#d97706;background:var(--amber-soft)}.lvl .q{border-color:#16a34a;background:var(--brand-soft)}
+@media (max-width:640px){.lvl{grid-template-columns:1fr}}
+.foot{margin-top:70px;padding-top:24px;border-top:1px solid var(--line);color:var(--ink-3);font-size:14px}
+.mtop{display:none}
+@media (max-width:980px){
+  .layout{grid-template-columns:1fr}
+  .rail{position:fixed;inset:0 auto 0 0;width:min(320px,86vw);z-index:30;transform:translateX(-102%);transition:transform .25s;height:100%}
+  .rail.open{transform:none;box-shadow:0 0 0 100vmax rgba(0,0,0,.25)}
+  .mtop{display:flex;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--rail);color:var(--ink);border-bottom:1px solid #e4dccb;align-items:center;gap:10px;margin:0 calc(-1*max(16px,env(safe-area-inset-left,0px))) 0;padding:10px max(16px,env(safe-area-inset-left,0px))}
+  .mtop button{background:#0f766e;color:#fff;border:0;border-radius:8px;padding:8px 12px;font:600 14px var(--body)}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:25;background:var(--rail)}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media print{
+  .rail,.mtop{display:none!important}.layout{display:block}
+  body{background:#fff;color:#122321;font-size:11.5pt}
+  section.ch{padding-top:0;break-before:page}
+  .frame{box-shadow:none;break-inside:avoid}figure.shot{break-inside:avoid}.note,.tw{break-inside:avoid}
+  .cover{padding-top:30mm}.cover h1{font-size:34pt}.rolegrid{grid-template-columns:repeat(4,1fr);gap:8px}.cover .note{margin:10px 0}.rolecard{padding:10px}.rolecard p{font-size:9.5pt}
+  .frame{width:fit-content;max-width:100%;margin:0 auto}.frame img{max-height:118mm;width:auto;max-width:100%}
+  .pair{grid-template-columns:1fr 1fr}.pair .frame img{max-height:80mm}
+  main{padding:0 6mm}
+  a{color:#0f766e;text-decoration:none}
+}
+</style>
+
+<div class="layout">
+<aside class="rail" id="rail">
+  <div class="brand"><span class="mk"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><div><b>MediCore manual</b><small>Version 2.1 · Pentarch Systems Solutions</small></div></div>
+  <a href="Pentarch-MediCore-User-Manual.pdf" download style="display:block;margin:0 0 14px;font-weight:600;font-size:13px">⬇ Download the PDF (for printing)</a>
+  <label for="q" class="lbl" style="display:block;margin-top:0">Find a topic</label>
+  <input id="q" type="search" placeholder="e.g. receive stock, discount, PIN">
+  <div class="lbl">Show chapters for</div>
+  <div class="roles" id="roles">
+    <button data-r="all" class="on">Everyone</button><button data-r="owner">Owner / admin</button><button data-r="reception">Reception</button><button data-r="nurse">Nurse</button><button data-r="clinician">Clinician</button><button data-r="lab">Lab</button><button data-r="pharmacist">Pharmacist</button><button data-r="cashier">Cashier</button><button data-r="pentarch">Pentarch</button>
+  </div>
+  <div class="lbl">Chapters</div>
+  <nav id="toc"></nav>
+</aside>
+
+<main>
+<div class="mtop"><button type="button" id="menuBtn">Chapters</button><b>MediCore manual</b></div>
+
+<header class="cover col" id="top">
+  <div class="eyebrow">Pentarch MediCore · User manual · Version 2.1</div>
+  <h1>Run your pharmacy, clinic or hospital on MediCore</h1>
+  <p class="lead">Step-by-step instructions for every screen, with pictures, for owners, front desk, nurses, clinicians, lab, pharmacy and cashiers. Start with the chapter for your job, or use the search on the left.</p>
+  <div class="meta"><span>Works offline on your own network</span><span>Pharmacy · Clinic · Hospital</span><span>Updated 30 October 2026</span></div>
+  <div class="note demo"><b class="t">This is the demonstration edition</b><p>M-Pesa, KRA eTIMS, SHA claims and SMS are simulated and marked “demo” on screen. Everything else works for real. The pictures in this manual use the built-in sample data (a SPENSA-style pharmacy and a TopCare-style clinic). No real patients are shown.</p></div>
+  <div class="rolegrid">
+    <div class="rolecard"><b>Owner or administrator</b><p>Chapters 1–5, 12 and 13, then 16–22. You set up the facility, staff, prices and branches, and you go live.</p></div>
+    <div class="rolecard"><b>Reception</b><p>Chapters 4–7, 11 and 15. Register patients, add them to the queue, book appointments and take payments.</p></div>
+    <div class="rolecard"><b>Nurse or midwife</b><p>Chapters 4–7 and 14. Triage, vital signs, wards and the partograph.</p></div>
+    <div class="rolecard"><b>Clinical officer or doctor</b><p>Chapters 4–9, 14 and 15. Consult, order tests, prescribe, refer and admit.</p></div>
+    <div class="rolecard"><b>Laboratory</b><p>Chapters 4, 5 and 9. Collect samples, enter and validate results.</p></div>
+    <div class="rolecard"><b>Pharmacist</b><p>Chapters 4, 5, 10, 12 and 13. Dispense, sell at the counter, keep stock right.</p></div>
+    <div class="rolecard"><b>Cashier</b><p>Chapters 4, 5, 10 (counter sale), 11 and 12. Check patients out and close the day.</p></div>
+  </div>
+</header>
+
+<!-- 1 -->
+<section class="ch col" id="basics" data-roles="owner pentarch">
+  <div class="ch-head"><span class="ch-num">01</span><div><h2>Before you start</h2><div class="who">For: owner, administrator, Pentarch installer</div></div></div>
+  <p>MediCore runs on <b>one main computer</b> at the facility. Every other computer, tablet and phone opens it in a web browser over the facility Wi-Fi. It does not need the internet to work, so power and the router are what keep it running.</p>
+  <h3>What you need</h3>
+  <div class="tw"><table><thead><tr><th>Item</th><th>Minimum</th><th>Why</th></tr></thead><tbody>
+    <tr><td>Main computer</td><td>Windows 10 or 11, 4 GB RAM (8 GB better), 20 GB free disk</td><td>Holds the system and all the data</td></tr>
+    <tr><td>Node.js 22 LTS</td><td>Version 22.13 or newer, from nodejs.org</td><td>The engine MediCore runs on. Main computer only</td></tr>
+    <tr><td>Wi-Fi router</td><td>Any home or office router</td><td>Connects the other devices to the main computer</td></tr>
+    <tr><td>Other devices</td><td>Any phone, tablet or PC with Chrome or Edge</td><td>Nothing to install on them</td></tr>
+    <tr><td>Backup</td><td>A flash disk or external drive</td><td>Weekly backup file from Settings</td></tr>
+    <tr><td>Power backup</td><td>A UPS for the main computer and router</td><td>Keeps the system up during short outages</td></tr>
+  </tbody></table></div>
+  <h3>Words used in this manual</h3>
+  <ul>
+    <li><b>Facility</b>: the client business, for example SPENSA Pharmacy. It has an owner and staff.</li>
+    <li><b>Branch</b>: one location of that facility. A facility can have many branches, and each can be a pharmacy, a clinic or a hospital.</li>
+    <li><b>Role</b>: what a staff member does (cashier, nurse…). The role decides which menus they see.</li>
+    <li><b>Sample data</b>: practice patients, sales and stock for demos and training. You remove it before going live (Chapter 21).</li>
+    <li><b>Automatic billing</b>: charges are added to the patient's bill as services happen. With manual billing, the cashier adds them.</li>
+  </ul>
+</section>
+
+<!-- 2 -->
+<section class="ch col" id="install" data-roles="owner pentarch">
+  <div class="ch-head"><span class="ch-num">02</span><div><h2>Install, start, update</h2><div class="who">For: owner, Pentarch installer · about 15 minutes the first time</div></div></div>
+  <h3>Install on the main computer</h3>
+  <ol class="steps">
+    <li>Go to <b>nodejs.org</b>, download the <b>LTS</b> version for Windows and install it with the default options.</li>
+    <li>Get MediCore: on GitHub, open the <b>pentarch-medicore</b> repository, click <span class="ui">Code → Download ZIP</span>.</li>
+    <li>Unzip it to a short path such as <code>C:\MediCore</code>. Avoid the Downloads or Desktop folders, which some cleaners empty.</li>
+    <li>Double-click <code>start-medicore.bat</code>. If Windows shows a blue warning, click <span class="ui">More info → Run anyway</span>.</li>
+    <li>The first run installs and builds the system. This needs internet for 3 to 5 minutes. When it finishes, the browser opens on the setup wizard (Chapter 3).</li>
+    <li>If Windows Firewall asks, tick <b>Private networks</b> and click <span class="ui">Allow</span>. Without this, other devices cannot connect.</li>
+  </ol>
+  <div class="note warn"><b class="t">Keep the black window open</b><p>The black window titled “Pentarch MediCore” is the system running. Minimise it, but do not close it while people are working. Closing it stops MediCore for every device.</p></div>
+  <h3>Start it every day</h3>
+  <ol class="steps">
+    <li>Switch on the main computer and the router.</li>
+    <li>Double-click <code>start-medicore.bat</code>. It opens in a few seconds and needs no internet.</li>
+    <li>Other devices open the bookmarked address (next section).</li>
+  </ol>
+  <div class="note tip"><b class="t">Start it automatically</b><p>Press <kbd>Win</kbd>+<kbd>R</kbd>, type <code>shell:startup</code> and press Enter. Put a shortcut to <code>start-medicore.bat</code> in the folder that opens. MediCore then starts whenever the computer starts.</p></div>
+  <h3>Connect other devices</h3>
+  <ol class="steps">
+    <li>Connect the phone, tablet or PC to the same Wi-Fi as the main computer.</li>
+    <li>On the main computer, open <span class="ui">Settings → Other devices</span> and read the address, for example <code>http://192.168.1.20:4000</code>. The black window shows it too.</li>
+    <li>Type that address in Chrome or Edge on the other device and bookmark it. Each person signs in with their own username and PIN.</li>
+  </ol>
+  <figure class="shot"><div class="frame"><span class="addr">Settings → Other devices</span><img src="img/settings_devices.jpg" alt="Settings, Other devices tab, showing the network address" loading="lazy"></div><figcaption>The address other devices type in. Ask the router to always give the main computer the same IP address (“DHCP reservation”) so it never changes.</figcaption></figure>
+  <h3>Update to a new version</h3>
+  <ol class="steps">
+    <li>Close the black window to stop MediCore.</li>
+    <li>Copy the <code>data</code> folder somewhere safe first. It holds all patients, stock and money.</li>
+    <li>Download the new ZIP and unzip it <b>over the same folder</b>, replacing files when Windows asks. Your <code>data</code> folder stays.</li>
+    <li>Double-click <code>start-medicore.bat</code>. It sees the new version number, installs it (internet for a few minutes), then starts.</li>
+    <li>Check the version at the bottom of the menu, for example <b>MediCore v2.1.0</b>.</li>
+  </ol>
+  <div class="note warn"><b class="t">Still seeing the old screens?</b><p>If you unzipped to a new folder, copy your old <code>data</code> folder into it. If the menu shows no version number, you are still on the first demo: update as above, then press <kbd>Ctrl</kbd>+<kbd>F5</kbd> in the browser.</p></div>
+</section>
+
+<!-- 3 -->
+<section class="ch col" id="setup" data-roles="owner pentarch">
+  <div class="ch-head"><span class="ch-num">03</span><div><h2>First-time setup wizard</h2><div class="who">For: owner or Pentarch installer · 3 minutes</div></div></div>
+  <p>The wizard appears the first time MediCore opens. It asks only what is needed to start. Everything else can be changed later in Settings.</p>
+  <h3>Step 1: type of facility</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/setup_1_type.jpg" alt="Setup step 1: choose pharmacy, clinic or hospital" loading="lazy"><b class="pin" style="left:50%;top:50%">1</b></div>
+  <ul class="legend"><li><b class="n">1</b>Choose <b>Pharmacy</b>, <b>Clinic</b> or <b>Hospital</b>. Each comes pre-filled from a sample: a SPENSA-style pharmacy, a TopCare-style clinic or a general hospital.</li></ul></figure>
+  <h3>Step 2: services</h3>
+  <p>Tick what the facility offers: laboratory (in-house, sent out or both), imaging, procedures, maternity, admissions and number of beds, theatre, and billing style. The choices for the type you picked are already set.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/setup_2_services.jpg" alt="Setup step 2: services" loading="lazy"></div><figcaption>Not sure? Keep the defaults. You can change all of these in Settings → Type &amp; services without losing data.</figcaption></figure>
+  <h3>Step 3: facility and owner details</h3>
+  <p>Enter the facility name, owner name, phone, email and location, then choose the <b>administrator username and a 4 to 6 digit PIN</b>. Write the username down; the PIN should stay private.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/setup_3_details.jpg" alt="Setup step 3: details and administrator account" loading="lazy"></div></figure>
+  <h3>Step 4: sample data or empty</h3>
+  <div class="pair">
+    <div class="note demo"><b class="t">With sample data</b><p>40+ patients, stock, lab results, sales and practice staff accounts with PIN <code>1234</code>. Use it for demos and training.</p></div>
+    <div class="note tip"><b class="t">Empty</b><p>The full medicine list (265 items), lab menu and price list, with zero stock. Use it for a real facility.</p></div>
+  </div>
+  <figure class="shot wide"><div class="frame"><img src="img/setup_4_sample.jpg" alt="Setup step 4: sample data or empty" loading="lazy"></div></figure>
+</section>
+
+<!-- 4 -->
+<section class="ch col" id="signin" data-roles="owner reception nurse clinician lab pharmacist cashier pentarch">
+  <div class="ch-head"><span class="ch-num">04</span><div><h2>Signing in and out</h2><div class="who">For: everyone</div></div></div>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/login_quick.jpg" alt="Sign-in screen with staff list" loading="lazy"></div><figcaption>Quick sign-in: tap your name, type your PIN.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="img/login_username.jpg" alt="Sign-in with username and PIN" loading="lazy"></div><figcaption>Not listed? Use <b>Sign in with your username</b>.</figcaption></figure>
+  </div>
+  <ol class="steps">
+    <li>Tap your name in the list (or choose <span class="ui">Sign in with your username</span> and type it).</li>
+    <li>Type your PIN and press <span class="ui">Sign in</span>.</li>
+    <li>To sign out, click the door icon next to your name at the bottom of the menu. Always sign out on a shared computer.</li>
+  </ol>
+  <div class="note warn"><b class="t">Never share PINs</b><p>Everything you do is recorded under your name in the audit trail (Chapter 16). Change your PIN in <span class="ui">Settings → My account</span>. A forgotten PIN is reset by the administrator in <span class="ui">Settings → Staff &amp; access</span>.</p></div>
+  <div class="tw"><table><thead><tr><th>Sample account (sample data only)</th><th>Username</th><th>PIN</th></tr></thead><tbody>
+    <tr><td>Owner you created in the wizard</td><td>what you chose</td><td>what you chose</td></tr>
+    <tr><td>Practice staff</td><td>shown in the sign-in list</td><td><code>1234</code></td></tr>
+    <tr><td>Pentarch super administrator</td><td><code>pentarch</code></td><td><code>2026</code> (change for real installs)</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- 5 -->
+<section class="ch col" id="dashboard" data-roles="owner reception nurse clinician lab pharmacist cashier">
+  <div class="ch-head"><span class="ch-num">05</span><div><h2>The dashboard and getting around</h2><div class="who">For: everyone</div></div></div>
+  <p>After signing in you land on the dashboard: what is happening today, what needs attention, and where the money is.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/dash_main.jpg" alt="Dashboard" loading="lazy">
+    <b class="pin" style="left:3%;top:5.5%">1</b><b class="pin" style="left:2%;top:26%">2</b><b class="pin" style="left:39.2%;top:27%">3</b><b class="pin" style="left:62%;top:17.5%">4</b><b class="pin" style="left:23%;top:40.5%">5</b><b class="pin" style="left:73.5%;top:40%">6</b><b class="pin" style="left:73.5%;top:80%">7</b></div>
+    <ul class="legend">
+      <li><b class="n">1</b>Your facility and type. With more than one branch, a branch selector appears just below.</li>
+      <li><b class="n">2</b>The menu. You only see the pages your role uses.</li>
+      <li><b class="n">3</b>Today's cards: money collected, patients waiting, lab tests pending (or beds), unpaid bills. <b>Click any card</b> for the full breakdown.</li>
+      <li><b class="n">4</b>Reminder that the branch is on sample data, with a link to remove it.</li>
+      <li><b class="n">5</b>Live queue, emergencies first. Click a patient to open the visit.</li>
+      <li><b class="n">6</b>Abnormal lab results from the last three days, to act on.</li>
+      <li><b class="n">7</b>Stock below reorder level and batches expiring within 90 days.</li>
+    </ul></figure>
+  <h3>Card details</h3>
+  <p>Each card opens a breakdown with the list behind the number. Click a row to jump straight to that bill, visit or test.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/dash_detail_revenue.jpg" alt="Collections today detail" loading="lazy"><b class="pin" style="left:18%;top:19%">1</b><b class="pin" style="left:17%;top:30%">2</b><b class="pin" style="left:17%;top:51%">3</b><b class="pin" style="left:72%;top:92%">4</b></div>
+    <ul class="legend"><li><b class="n">1</b>Today against yesterday and the 7-day average.</li><li><b class="n">2</b>Split by payment method and by what was billed (medicines, lab, procedures).</li><li><b class="n">3</b>Every payment received today, with reference and who took it.</li><li><b class="n">4</b>Jump to the full page.</li></ul></figure>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/dash_detail_queue.jpg" alt="Patients waiting detail" loading="lazy"></div><figcaption>Patients waiting: triage counts, where people are stuck, and how long each has waited (red after 1 hour).</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="img/dash_detail_bills.jpg" alt="Unpaid bills detail" loading="lazy"></div><figcaption>Unpaid bills: open bills (still in the facility) and credit (to follow up).</figcaption></figure>
+  </div>
+  <div class="note tip"><b class="t">Tips on screens</b><p>Many pages show a short green tip the first time. Click its ✕ to hide it for good on that device.</p></div>
+</section>
+
+<!-- 6 -->
+<section class="ch col" id="patients" data-roles="reception nurse clinician owner">
+  <div class="ch-head"><span class="ch-num">06</span><div><h2>Patients</h2><div class="who">For: reception, nurses, clinicians</div></div></div>
+  <h3>Find a patient first</h3>
+  <p>Always search before registering, so one person never has two files. Search by name, MRN (file number), phone, ID or SHA number.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/patients_list.jpg" alt="Patients list" loading="lazy"></div></figure>
+  <h3>Register a new patient</h3>
+  <ol class="steps">
+    <li>Open <span class="ui">Patients</span> and click <span class="ui">Register patient</span>.</li>
+    <li>Enter first and last name, sex and date of birth. If the patient does not know the date, type the <b>age</b> and MediCore estimates it.</li>
+    <li>Add the phone (for example <code>0712 345 678</code>), ID and SHA number if available, county, allergies and next of kin.</li>
+    <li>Click <span class="ui">Register and add to queue</span>. The patient goes straight to the triage queue.</li>
+  </ol>
+  <figure class="shot wide"><div class="frame"><img src="img/patients_register.jpg" alt="Register patient form" loading="lazy"></div></figure>
+  <div class="note warn"><b class="t">The system stops common mistakes</b><p>It refuses a date of birth in the future, a phone number that is not Kenyan, and an ID number that is already registered. If it says the patient already exists, search for them instead.</p></div>
+  <h3>The patient dashboard</h3>
+  <p>Click a patient to see their health at a glance: health bars against normal ranges, blood pressure, sugar and weight trends, lab history, current pregnancy, allergies and every visit.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/patient_overview.jpg" alt="Patient health overview" loading="lazy"></div><figcaption>Bars turn amber or red when a value is outside the normal range for the patient's age and sex.</figcaption></figure>
+  <figure class="shot wide"><div class="frame"><img src="img/patient_timeline.jpg" alt="Patient timeline" loading="lazy"></div><figcaption>Timeline: every visit, note, result, prescription, payment and referral in date order.</figcaption></figure>
+</section>
+
+<!-- 7 -->
+<section class="ch col" id="triage" data-roles="reception nurse clinician">
+  <div class="ch-head"><span class="ch-num">07</span><div><h2>Queue and triage</h2><div class="who">For: reception, nurses, clinicians</div></div></div>
+  <p>The service queue shows every patient in the facility today as a ticket, grouped by stage. It refreshes on its own.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/queue_board.jpg" alt="Queue board" loading="lazy"></div><figcaption>Coloured edges show triage level. Emergencies always sit at the top of each column.</figcaption></figure>
+  <h3>Triage levels (Kenya ETAT+)</h3>
+  <div class="lvl"><div class="e"><b>Emergency</b>Treat now: airway, breathing, circulation, coma, convulsion, severe dehydration, heavy bleeding.</div><div class="p"><b>Priority</b>Seen next: very high fever, severe pain, pallor, infant under 2 months, trauma, pregnancy with danger signs.</div><div class="q"><b>Queue</b>Stable: seen in turn.</div></div>
+  <h3>Triage a patient</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/visit_triage_empty.jpg" alt="Visit screen, triage tab" loading="lazy">
+    <b class="pin" style="left:22%;top:10.5%">1</b><b class="pin" style="left:51%;top:18.5%">2</b><b class="pin" style="left:21%;top:32%">3</b><b class="pin" style="left:21%;top:49%">4</b><b class="pin" style="left:21%;top:80%">5</b><b class="pin" style="left:72%;top:33%">6</b><b class="pin" style="left:72%;top:59%">7</b></div>
+    <ul class="legend">
+      <li><b class="n">1</b>Who the patient is, their queue number, triage level and stage.</li>
+      <li><b class="n">2</b>Move the patient on: to lab, pharmacy, cashier, or refer them.</li>
+      <li><b class="n">3</b>The steps of the visit, as tabs.</li>
+      <li><b class="n">4</b>Tick every danger sign you see.</li>
+      <li><b class="n">5</b>The level is set for you from the signs. You can still change it.</li>
+      <li><b class="n">6</b>Latest vitals.</li>
+      <li><b class="n">7</b>The bill so far. With automatic billing, charges appear as services are given.</li>
+    </ul></figure>
+  <ol class="steps">
+    <li>Open the patient from the queue.</li>
+    <li>Tick the danger signs. The level updates.</li>
+    <li>Type the main complaint and the pain score.</li>
+    <li>Enter vital signs: temperature, blood pressure, pulse, breathing rate, SpO₂, weight, height, and sugar or MUAC if taken.</li>
+    <li>Click <span class="ui">Save triage</span>. The patient moves to “Waiting clinician”.</li>
+  </ol>
+  <figure class="shot wide"><div class="frame"><img src="img/visit_triage_filled.jpg" alt="Triage filled in" loading="lazy"></div><figcaption>BMI, MUAC and fever flags appear as you type. Impossible values (for example a temperature of 60) are refused.</figcaption></figure>
+</section>
+
+<!-- 8 -->
+<section class="ch col" id="consult" data-roles="clinician">
+  <div class="ch-head"><span class="ch-num">08</span><div><h2>Consultation, orders and prescriptions</h2><div class="who">For: clinical officers, doctors, pharmacists giving consultations</div></div></div>
+  <h3>Notes and diagnosis</h3>
+  <ol class="steps"><li>Open the <span class="ui">Consultation</span> tab.</li><li>Write the history and examination findings.</li><li>Pick the diagnosis from the list (ICD-10 coded, used for MOH 705) and write the plan.</li><li>Click <span class="ui">Save note</span>.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/visit_consult.jpg" alt="Consultation tab" loading="lazy"></div></figure>
+  <h3>Order lab tests</h3>
+  <p>In <span class="ui">Orders &amp; prescriptions</span>, the test picker opens on the <b>common tests</b>. Switch to a department or search. A <b>panel</b> such as “Fever work-up” ticks a whole set in one click.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/visit_orders_panel.jpg" alt="Lab test picker with fever work-up selected" loading="lazy"></div><figcaption>Choose in-house or a partner lab for each test, then click <b>Order</b>. The lab sees it at once.</figcaption></figure>
+  <h3>Prescribe</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/visit_rx.jpg" alt="Prescription" loading="lazy"><b class="pin" style="left:40%;top:12%">1</b><b class="pin" style="left:42%;top:23%">2</b><b class="pin" style="left:43%;top:49%">3</b><b class="pin" style="left:21%;top:55.5%">4</b></div>
+    <ul class="legend"><li><b class="n">1</b>Search by name or group, for example “antimalarial”.</li><li><b class="n">2</b>Set dose, how often and for how many days.</li><li><b class="n">3</b>The quantity is worked out for you in pieces, with price and stock.</li><li><b class="n">4</b>Send to the pharmacy. The charge posts when the pharmacist dispenses.</li></ul></figure>
+  <div class="note tip"><b class="t">Pieces, not boxes</b><p>A course of 15 paracetamol tablets is dispensed as 15 tablets, and stock drops by 15 straight away. Nobody has to wait for a box to finish.</p></div>
+  <h3>Procedures, results, imaging, referral and admission</h3>
+  <ul>
+    <li><b>Procedures</b> (circumcision, dressing, suturing…): record consent, notes and the supplies used. Supplies come off stock and the fee goes on the bill.</li>
+    <li><b>Results</b>: validated lab results for this visit, flagged high, low or critical.</li>
+    <li><b>Imaging</b>: request an ultrasound or X-ray, in-house or at a partner centre. Type the report when it comes back.</li>
+    <li><b>Refer</b>: the referral letter is filled in from the visit (vitals, diagnosis, results). Print or send it.</li>
+    <li><b>Admit</b> (clinics and hospitals): choose ward and bed; the admission fee posts.</li>
+  </ul>
+  <figure class="shot wide"><div class="frame"><img src="img/visit_procedures.jpg" alt="Procedures tab" loading="lazy"></div></figure>
+</section>
+
+<!-- 9 -->
+<section class="ch col" id="lab" data-roles="lab clinician">
+  <div class="ch-head"><span class="ch-num">09</span><div><h2>Laboratory</h2><div class="who">For: lab technicians and technologists</div></div></div>
+  <p>The workflow follows good laboratory practice: <b>collect sample → enter result → a second person validates</b> before the result is released to the clinician and patient.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/lab_worklist.jpg" alt="Lab worklist" loading="lazy"></div><figcaption>Click a card at the top to show only those tests. Department colours match the test menu.</figcaption></figure>
+  <ol class="steps">
+    <li>Click <span class="ui">Collect sample</span> when you take the sample. The time is recorded.</li>
+    <li>Click <span class="ui">Enter result</span>. Numbers are checked against the normal range for the patient's sex; choices such as Positive/Negative are one tap.</li>
+    <li>Save. The result waits in <span class="ui">To validate</span>.</li>
+    <li>A second person checks it and clicks <span class="ui">Validate</span>. It is now released.</li>
+  </ol>
+  <figure class="shot wide"><div class="frame"><img src="img/lab_result_entry.jpg" alt="Result entry" loading="lazy"></div></figure>
+  <div class="note warn"><b class="t">Critical values</b><p>Results beyond the critical limits are marked <b>Critical</b> in red and shown on the dashboard. Phone the clinician straight away and record that you did in the comment.</p></div>
+  <h3>Tests sent to a partner lab</h3>
+  <p>Order the test as “Partner lab”. It shows as <b>Sent out</b>. When the result comes back on paper or by email, open the test and enter it as normal, so it sits in the patient's record.</p>
+  <h3>The test menu</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/lab_menu.jpg" alt="Lab test menu" loading="lazy"></div><figcaption>62 tests in 8 departments, with prices, sample type, turnaround time and normal ranges. Administrators can edit any test or add new ones.</figcaption></figure>
+</section>
+
+<!-- 10 -->
+<section class="ch col" id="pharmacy" data-roles="pharmacist cashier owner">
+  <div class="ch-head"><span class="ch-num">10</span><div><h2>Pharmacy and stock</h2><div class="who">For: pharmacists, pharmaceutical technologists, cashiers (counter sale)</div></div></div>
+  <h3>Dispense prescriptions</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/pharm_dispense.jpg" alt="Prescriptions to dispense" loading="lazy"></div></figure>
+  <ol class="steps"><li>Open <span class="ui">Pharmacy &amp; stock → Prescriptions</span>.</li><li>Check each line: medicine, dose, quantity and allergies shown at the top.</li><li>Click <span class="ui">Dispense</span>. Stock is taken from the batch that expires first, the charge posts, and the label prints.</li></ol>
+  <h3>Counter sale (walk-in customers)</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/pharm_pos.jpg" alt="Counter sale" loading="lazy"></div><figcaption>Tap a product, choose <b>pieces</b> or <b>pack</b>, set the quantity, then <b>Take payment</b>.</figcaption></figure>
+  <ol class="steps">
+    <li>Search or scan the barcode, or filter by category.</li>
+    <li>Tap the product. Switch between pieces and full pack; the price changes to match.</li>
+    <li>Prescription-only items (marked <b>Rx</b>) need a prescription reference before payment.</li>
+    <li>Click <span class="ui">Take payment</span>, choose Cash, M-Pesa or Card, and record. Print or close the receipt.</li>
+  </ol>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/pharm_pos_pay.jpg" alt="Payment" loading="lazy"></div><figcaption>Cash shows the change to give.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="img/pharm_receipt.jpg" alt="Receipt" loading="lazy"></div><figcaption>Receipt, ready to print.</figcaption></figure>
+  </div>
+  <h3>Inventory</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/pharm_inventory.jpg" alt="Inventory grid" loading="lazy"></div><figcaption>Every item has a picture. Stock shows as packs plus loose pieces, for example “12 boxes + 40 tabs”.</figcaption></figure>
+  <p>Click the cards at the top: <b>Below reorder level</b> lists what to order, <b>Expiring</b> lists batches to sell first or return, and <b>Stock value</b> breaks the money down by category.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/pharm_inventory_low.jpg" alt="Items below reorder level" loading="lazy"></div><figcaption>Below reorder level, as a list.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="img/pharm_stock_value.jpg" alt="Stock value by category" loading="lazy"></div><figcaption>Stock value and margin by category.</figcaption></figure>
+  </div>
+  <h3>One item: photo, batches, count</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/pharm_item.jpg" alt="Item detail" loading="lazy"></div><figcaption>Click an item to edit its price and pack size, <b>upload a real photo</b> (it also shows on the website), see batches and expiry, and every stock movement.</figcaption></figure>
+  <ul><li><b>Stock count</b>: for one item, use <span class="ui">Adjust</span>, enter what you counted and the reason. For a shelf or category, use <span class="ui">Stock take</span> (Chapter 12). Both are recorded in the audit trail.</li><li><b>Expired stock</b> is never sold: it is skipped automatically and listed under <span class="ui">Expired &amp; disposal</span> (Chapter 13).</li></ul>
+  <h3>Receive stock from a supplier</h3>
+  <ol class="steps"><li>Click <span class="ui">Receive stock</span>.</li><li>Choose the supplier and type the invoice number.</li><li>For each item: packs received (and loose pieces if any), cost per pack, batch number and expiry date.</li><li>Save. Stock and stock value update immediately.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/pharm_receive.jpg" alt="Receive stock" loading="lazy"></div></figure>
+  <div class="note tip"><b class="t">Good practice</b><p>Always enter the real batch number and expiry. That is what makes first-expiry-first-out and recalls work.</p></div>
+  <h3>Website orders and controlled drugs</h3>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/pharm_weborders.jpg" alt="Website orders" loading="lazy"></div><figcaption>Orders from the facility website. Rx items wait for the pharmacist's review.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="img/pharm_controlled.jpg" alt="Controlled drugs register" loading="lazy"></div><figcaption>Controlled drugs register: every movement, with running balance.</figcaption></figure>
+  </div>
+</section>
+
+<!-- 11 -->
+<section class="ch col" id="billing" data-roles="cashier reception pharmacist owner">
+  <div class="ch-head"><span class="ch-num">11</span><div><h2>Billing and checkout</h2><div class="who">For: cashiers, reception, administrators</div></div></div>
+  <p>With <b>automatic billing</b> (the default) every consultation, test, medicine, procedure and bed-day lands on the patient's bill as it happens. The cashier only checks and takes payment. With <b>manual billing</b>, the cashier adds the items.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/billing_open.jpg" alt="Open bills" loading="lazy"></div></figure>
+  <h3>Check a patient out</h3>
+  <ol class="steps">
+    <li>Open <span class="ui">Billing &amp; checkout</span> and click the patient's bill.</li>
+    <li>Check the lines with the patient. Add an item with the search box if something is missing.</li>
+    <li>Choose who pays: cash, SHA, insurance or company.</li>
+    <li>Take payment: <b>Cash</b> (change is shown), <b>M-Pesa</b> (sends a prompt to the patient's phone), <b>Card</b>. Split payments are fine.</li>
+    <li>When the balance is zero the bill closes and the receipt is ready.</li>
+  </ol>
+  <figure class="shot wide"><div class="frame"><img src="img/billing_checkout.jpg" alt="Checkout" loading="lazy"></div></figure>
+  <figure class="shot wide"><div class="frame"><img src="img/billing_mpesa.jpg" alt="M-Pesa payment" loading="lazy"></div><figcaption>M-Pesa prompt (simulated in the demo). In the live version, payment confirms itself when the customer enters their M-Pesa PIN.</figcaption></figure>
+  <h3>Discounts, removing lines and credit</h3>
+  <ul>
+    <li><b>Discount</b>: needs a supervisor PIN and a reason. Both are recorded.</li>
+    <li><b>Remove a line</b>: supervisor only, with a reason.</li>
+    <li><b>Credit</b>: if a patient cannot pay in full, put the balance on credit. It appears under <span class="ui">Credit / debtors</span> and on the dashboard until settled.</li>
+  </ul>
+  <figure class="shot wide"><div class="frame"><img src="img/billing_credit.jpg" alt="Credit and debtors" loading="lazy"></div></figure>
+  <div class="note warn"><b class="t">Close the day</b><p>At closing, open <span class="ui">Reports → Revenue</span> for today and count the cash drawer against the cash total. M-Pesa should match the M-Pesa statement.</p></div>
+</section>
+
+<!-- 12 new -->
+<section class="ch col" id="control" data-roles="owner pharmacist cashier">
+  <div class="ch-head"><span class="ch-num">12</span><div><h2>Counter, cash and stock control</h2><div class="who">For: owners, administrators, pharmacists, cashiers</div></div></div>
+  <p>These tools stop money and stock from quietly going missing. Every action carries a name and a time, and differences need a reason.</p>
+
+  <h3>Shifts and cash-up</h3>
+  <ol class="steps"><li>At the start of the day, open <span class="ui">Pharmacy &amp; stock → Counter sale</span> and click <span class="ui">Open shift</span>. Count the float in the drawer and type it in.</li>
+    <li>Sell as normal. Cash and M-Pesa payments are linked to the open shift.</li>
+    <li>At closing, open <span class="ui">Billing &amp; checkout → Shifts &amp; cash-up</span> and click <span class="ui">Close shift</span>. Count each note and coin. MediCore shows what should be in the drawer and the difference.</li>
+    <li>If the cash is over or short by KES 1 or more, type the reason. Print the Z-report for the file.</li></ol>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/cashup.jpg" alt="Closing a shift: counting notes and coins" loading="lazy"></div><figcaption>Count by denomination; the variance is worked out for you.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="img/billing_shifts.jpg" alt="List of shifts with variances" loading="lazy"></div><figcaption>Every shift, with who closed it and any variance.</figcaption></figure>
+  </div>
+  <div class="note tip"><b class="t">One cashier per drawer</b><p>If two people share a drawer, nobody can be held to the count. Give each cashier their own shift.</p></div>
+
+  <h3>Parking a sale</h3>
+  <p>A customer has gone to fetch money and the queue is growing. Press <kbd>F8</kbd> or click <span class="ui">Park sale</span>. The cart is saved on this counter. Serve the next customer, then click the parked sale above the cart to bring it back.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/pos_parked.jpg" alt="Counter sale with a parked sale shown above the cart" loading="lazy"></div></figure>
+
+  <h3>Returns and refunds</h3>
+  <ol class="steps"><li>At the counter, click <span class="ui">Return</span> and find the receipt by number, customer or phone.</li>
+    <li>Enter the quantity coming back, choose the reason and whether the stock goes back on the shelf.</li>
+    <li>A supervisor enters their PIN. The refund goes back to the original batch and shows on the shift and in reports.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/refund_lines.jpg" alt="Choosing items to refund" loading="lazy"></div></figure>
+
+  <h3>Barcodes and labels</h3>
+  <p>Scan an item's barcode at the counter or when receiving. The square 2D codes on medicine packs also carry the batch and expiry, which MediCore fills in for you. For items without a barcode, open the item and click <span class="ui">Generate</span> under Barcode, then print labels from the <span class="ui">Barcode labels</span> tab.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/item_barcode.jpg" alt="An item's barcode" loading="lazy"></div></figure>
+    <figure class="shot"><div class="frame"><img src="img/labels.jpg" alt="Printing barcode labels" loading="lazy"></div></figure>
+  </div>
+
+  <h3>Purchase orders and receiving</h3>
+  <ol class="steps"><li>Open <span class="ui">Purchase orders</span> and start a new order. Use the suggestion to fill in what is below its reorder level.</li>
+    <li>Send it to the supplier by WhatsApp or print it.</li>
+    <li>When the delivery arrives, open the order and click <span class="ui">Receive</span>. Scan each pack, check batch and expiry, and save. A part delivery leaves the rest open.</li></ol>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/po_new.jpg" alt="New purchase order" loading="lazy"></div></figure>
+    <figure class="shot"><div class="frame"><img src="img/po_receive.jpg" alt="Receiving a delivery" loading="lazy"></div></figure>
+  </div>
+
+  <h3>Stock take</h3>
+  <ol class="steps"><li>Open <span class="ui">Pharmacy &amp; stock → Stock take</span>. Choose a category or shelf, or the whole store, and click <span class="ui">Create count sheet</span>.</li>
+    <li>Count what is on the shelf and type it in boxes and pieces. You can print the sheet, count on paper and type the numbers in later.</li>
+    <li>Click <span class="ui">Save counts</span> as you go. The sheet shows short and over lines and the value of the difference at cost.</li>
+    <li>An administrator checks the differences and clicks <span class="ui">Post count</span>. Stock changes to the counted quantities, and any loss shows as shrinkage in Profit &amp; loss.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/stocktake_sheet.jpg" alt="Stock count sheet with differences" loading="lazy"></div></figure>
+  <div class="note tip"><b class="t">Count a little, often</b><p>Count one category each week rather than the whole shop once a year. A difference found early is easier to explain.</p></div>
+
+  <h3>Expenses and branch transfers</h3>
+  <p>Record rent, salaries, power and other costs under <span class="ui">Billing &amp; checkout → Expenses</span>, so the profit report shows the true net. Cash paid out of the drawer lowers the cash expected at cash-up. Facilities with several branches move stock with <span class="ui">Transfers</span>: the sending branch dispatches, the receiving branch confirms, and nothing disappears in between.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/billing_expenses.jpg" alt="Recording expenses" loading="lazy"></div></figure>
+
+  <h3>The owner's daily summary</h3>
+  <p><span class="ui">Reports → Daily summary</span> shows the day on one screen: money collected by method, gross profit, expenses, each cashier's cash-up, top sellers, and what is out of stock or expiring. Click <span class="ui">Send on WhatsApp</span> to send it to the owner. Add the owner's number in <span class="ui">Settings → Facility</span> and it opens straight to their chat.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/daily_summary.jpg" alt="Daily summary report" loading="lazy"></div></figure>
+
+  <h3>Profit and loss</h3>
+  <p><span class="ui">Reports → Profit &amp; loss</span> uses the real cost of each batch sold, so the margin stays true when supplier prices change. It also lists the least profitable items and stock that has not sold in 90 days.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/rep_profit.jpg" alt="Profit and loss report" loading="lazy"></div></figure>
+</section>
+
+<!-- 13 new -->
+<section class="ch col" id="accounts" data-roles="owner pharmacist cashier">
+  <div class="ch-head"><span class="ch-num">13</span><div><h2>Money owed, prices and backups</h2><div class="who">For: owners, administrators, pharmacists, cashiers</div></div></div>
+  <p>This chapter covers the money that sits outside the till: customers who buy on account, suppliers you owe, SHA and insurance claims, and selling prices that drift when suppliers change their costs. It ends with the backup that protects all of it.</p>
+
+  <h3>The to-do list on the dashboard</h3>
+  <p>Administrators see <span class="ui">To do today</span> at the top of the dashboard. It lists only what needs a decision: expired stock on the shelf, items selling below cost, overdue supplier invoices, claims to submit or chase, customer debts, short stock and an overdue stock count. The most urgent items come first. Click an item to open the screen where you deal with it.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/todo_panel.jpg" alt="To do today panel on the dashboard" loading="lazy"></div><figcaption>Red items need action today; the others can wait for the end of the day.</figcaption></figure>
+
+  <h3>Customers who buy on account</h3>
+  <ol class="steps"><li>Open <span class="ui">Billing &amp; checkout → Customers</span> and click <span class="ui">New customer</span>, or <span class="ui">Edit</span> an existing one. Set a <b>credit limit</b>: how much they may owe at any time.</li>
+    <li>At the counter, pick the customer and click <span class="ui">Put on … account</span>. They can also pay part now and put the rest on account. MediCore refuses a sale that would take them over their limit.</li>
+    <li>When they pay, click <span class="ui">Statement · pay</span> next to their name, enter the amount and method and click <span class="ui">Record payment</span>. The payment clears their oldest purchases first.</li>
+    <li>Click <span class="ui">Print statement</span> to give them a dated statement with every purchase, payment and the balance.</li></ol>
+  <div class="pair"><figure class="shot"><div class="frame"><img src="img/customers.jpg" alt="Customer list with balances" loading="lazy"></div><figcaption>Who owes what, and their limit.</figcaption></figure><figure class="shot"><div class="frame"><img src="img/customer_statement.jpg" alt="A customer statement with a payment being recorded" loading="lazy"></div><figcaption>Payments clear the oldest bills first.</figcaption></figure></div>
+
+  <h3>Suppliers and what you owe them</h3>
+  <p>When you receive a delivery against a purchase order, MediCore adds the supplier's invoice for you, with a due date from that supplier's credit terms. You can also add an invoice by hand with <span class="ui">Record supplier invoice</span>.</p>
+  <ol class="steps"><li>Open <span class="ui">Pharmacy &amp; stock → Suppliers</span>. The top cards show the total owed, what is overdue and what falls due in the next 7 days.</li>
+    <li>Click <span class="ui">Pay</span> to record a payment by bank, M-Pesa or cash. Pay the oldest invoice first.</li>
+    <li>Click <span class="ui">Statement</span> to see every invoice and payment for that supplier. Compare it with the statement the supplier sends you at month end.</li>
+    <li>Use <span class="ui">Edit</span> to set the supplier's credit terms in days, contact person and Paybill.</li></ol>
+  <div class="pair"><figure class="shot"><div class="frame"><img src="img/suppliers.jpg" alt="Supplier balances" loading="lazy"></div><figcaption>Overdue amounts are in red.</figcaption></figure><figure class="shot"><div class="frame"><img src="img/supplier_statement.jpg" alt="Supplier statement" loading="lazy"></div><figcaption>Check it against the statement the supplier sends.</figcaption></figure></div>
+
+  <h3>Keeping prices right</h3>
+  <p>Supplier costs go up. If your shelf prices do not follow, you sell at a thinner margin, and sometimes at a loss, without noticing. When a delivery comes in at a higher cost, MediCore tells you which prices to check.</p>
+  <ol class="steps"><li>Open <span class="ui">Pharmacy &amp; stock → Prices</span>. Set your target markup over cost (33% is a common retail figure; set your own default in <span class="ui">Settings → Facility</span>).</li>
+    <li>The list shows items below target, and those selling below cost, with a suggested price rounded to a sensible figure.</li>
+    <li>Tick the items to change and click <span class="ui">Apply suggested prices</span>. Each change is recorded with the old price, new price, cost and who made it.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/pricing.jpg" alt="Price review list" loading="lazy"></div><figcaption>Items selling at a loss show a negative markup in red.</figcaption></figure>
+  <div class="note tip"><b class="t">Check after every delivery</b><p>A price review takes two minutes after receiving stock and protects the margin on everything you sell until the next delivery.</p></div>
+
+  <h3>Expired and damaged stock</h3>
+  <ol class="steps"><li>Open <span class="ui">Pharmacy &amp; stock → Expired &amp; disposal</span>. Batches that have expired, or expire within 60 days, are listed with their value at cost.</li>
+    <li>Type how many pieces are going out (or click <span class="ui">All</span>), choose the reason and how it will be disposed of, and enter the witness's name.</li>
+    <li>The stock comes off straight away and the loss shows in Profit &amp; loss. Click <span class="ui">Print register</span> for the disposal record that Pharmacy and Poisons Board inspectors ask to see.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/disposal.jpg" alt="Expired and expiring batches ready for write-off" loading="lazy"></div></figure>
+
+  <h3>SHA and insurance claims</h3>
+  <p>Every bill paid by SHA or a private insurer becomes a claim. Open <span class="ui">Billing &amp; checkout → SHA &amp; insurance claims</span>. The cards show what is owed and how old it is.</p>
+  <ol class="steps"><li><b>To submit</b>: once you send the claim to the payer, click <span class="ui">Mark submitted</span> and enter the claim number.</li>
+    <li><b>Submitted</b>: when money arrives, click <span class="ui">Record payment</span> and enter the amount and remittance number. A part payment stays open for the balance.</li>
+    <li><b>Rejected</b>: record the payer's reason. Fix the problem (for example, the member was not active) and resubmit, or bill the patient.</li>
+    <li>Click <span class="ui">Export CSV</span> to send a list to the payer or your accountant.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/claims.jpg" alt="Claims register with ageing" loading="lazy"></div><figcaption>Follow up anything older than 30 days.</figcaption></figure>
+
+  <h3>Backups</h3>
+  <p>A backup is one file holding every branch's patients, stock, sales, staff and settings. Make one at least once a week, and keep it away from this computer, on a flash drive or Google Drive, so a stolen or broken computer does not take your records with it.</p>
+  <ol class="steps"><li>Open <span class="ui">Settings → Data &amp; backup</span> and click <span class="ui">Download backup now</span>. The file ends in <code>.mcbak</code> and carries the facility name and date.</li>
+    <li>Copy the file to your flash drive or Google Drive.</li>
+    <li>To restore, open <span class="ui">Restore from a backup file</span>, choose the file and type <code>RESTORE</code> to confirm. This replaces what is in MediCore now with the copy in the file, so only do it after a computer failure or on Pentarch's advice.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/backup.jpg" alt="Data and backup settings" loading="lazy"></div></figure>
+  <div class="note warn"><b class="t">The dashboard reminds you</b><p>If no backup has been made for 7 days, administrators see a reminder on the dashboard until they make one.</p></div>
+</section>
+
+<!-- 14 -->
+<section class="ch col" id="wards" data-roles="nurse clinician owner">
+  <div class="ch-head"><span class="ch-num">14</span><div><h2>Wards, beds and maternity</h2><div class="who">For: clinics and hospitals with admissions · nurses, midwives, clinicians</div></div></div>
+  <figure class="shot wide"><div class="frame"><img src="img/wards.jpg" alt="Wards and beds" loading="lazy"></div><figcaption>Each ward shows its beds: free beds are plain, occupied beds show the patient and reason. Click a free bed to admit.</figcaption></figure>
+  <h3>Inside an admission</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/wards_admission.jpg" alt="Admission with partograph" loading="lazy"><b class="pin" style="left:20%;top:24%">1</b><b class="pin" style="left:20%;top:60%">2</b><b class="pin" style="left:19%;top:74%">3</b><b class="pin" style="left:65%;top:93%">4</b></div>
+    <ul class="legend"><li><b class="n">1</b>Partograph (WHO) for women in labour, with alert and action lines. It warns when labour crosses the alert line.</li><li><b class="n">2</b>Plot cervical dilation, fetal heart rate, contractions and blood pressure.</li><li><b class="n">3</b>Nursing notes, timed and signed by the user.</li><li><b class="n">4</b>Open the full record, transfer to another bed, or discharge with a summary.</li></ul></figure>
+  <ul><li>Bed charges post daily at the ward's rate. Use <span class="ui">Post today's bed charges</span> once a day if you need them earlier.</li><li>At discharge, write the summary and send the patient to the cashier.</li></ul>
+  <h3>Maternity</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/maternity.jpg" alt="Maternity" loading="lazy"></div><figcaption>Active pregnancies with gestation and due date, antenatal visits, and delivery records (outcome, baby weight, APGAR).</figcaption></figure>
+</section>
+
+<!-- 15 -->
+<section class="ch col" id="appointments" data-roles="reception clinician nurse">
+  <div class="ch-head"><span class="ch-num">15</span><div><h2>Appointments and referrals</h2><div class="who">For: reception, clinicians</div></div></div>
+  <figure class="shot wide"><div class="frame"><img src="img/appointments.jpg" alt="Appointments" loading="lazy"></div><figcaption>Bookings for the day, including those made on the website (marked “web”). Click <b>Check in</b> when the patient arrives to add them to the queue.</figcaption></figure>
+  <figure class="shot wide"><div class="frame"><img src="img/referrals.jpg" alt="Referrals" loading="lazy"></div><figcaption>Referrals out (to labs, imaging centres, hospitals) and in. Mark them received when the results or feedback come back.</figcaption></figure>
+</section>
+
+<!-- 16 -->
+<section class="ch col" id="reports" data-roles="owner clinician pharmacist cashier">
+  <div class="ch-head"><span class="ch-num">16</span><div><h2>Reports</h2><div class="who">For: administrators, clinicians, pharmacists, cashiers</div></div></div>
+  <div class="tw"><table><thead><tr><th>Report</th><th>Shows</th><th>Use it for</th></tr></thead><tbody>
+    <tr><td>Daily summary</td><td>Today's collections, profit, cash-ups, stock alerts</td><td>The owner's end-of-day check, sent on WhatsApp</td></tr>
+    <tr><td>Profit &amp; loss</td><td>Sales, cost of goods, gross and net profit, shrinkage</td><td>Knowing what the business really made</td></tr>
+    <tr><td>Sales &amp; cashiers</td><td>Takings by cashier and hour, items sold, refunds</td><td>Staffing, spotting unusual refunds</td></tr>
+    <tr><td>Revenue</td><td>Collections by day, method and service; debtors</td><td>Daily cash-up, monthly accounts</td></tr>
+    <tr><td>Stock</td><td>Value at cost and selling price, reorder list, expiry</td><td>Ordering, stock-take, disposal</td></tr>
+    <tr><td>MOH 705</td><td>Outpatient morbidity by diagnosis, under and over 5 years</td><td>Monthly Ministry of Health reporting</td></tr>
+    <tr><td>MOH 711</td><td>Service summary (ANC, deliveries, FP…)</td><td>Clinics and hospitals</td></tr>
+    <tr><td>Lab workload</td><td>Tests done, by department and turnaround</td><td>Lab planning</td></tr>
+    <tr><td>Audit trail</td><td>Who did what and when</td><td>Investigating errors and fraud</td></tr>
+  </tbody></table></div>
+  <figure class="shot wide"><div class="frame"><img src="img/reports_revenue.jpg" alt="Revenue report" loading="lazy"></div></figure>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/reports_moh705.jpg" alt="MOH 705" loading="lazy"></div><figcaption>MOH 705, ready to copy into KHIS.</figcaption></figure>
+    <figure class="shot"><div class="frame"><img src="img/reports_audit.jpg" alt="Audit trail" loading="lazy"></div><figcaption>Audit trail.</figcaption></figure>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="ch col" id="branches" data-roles="owner pentarch">
+  <div class="ch-head"><span class="ch-num">17</span><div><h2>Branches</h2><div class="who">For: owners and administrators</div></div></div>
+  <p>A facility can add as many branches as it needs, of any type. Each branch keeps its own patients, stock and money. The <b>All branches</b> page combines what matters.</p>
+  <ol class="steps"><li>Open <span class="ui">Branches</span> and click <span class="ui">Add branch</span>.</li><li>Choose the type, type the name and location, and decide whether to load sample data.</li><li>Click <span class="ui">Create branch</span>. Switch to it with the selector at the top of the menu.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/branches_add.jpg" alt="Add branch" loading="lazy"></div></figure>
+  <figure class="shot wide"><div class="frame"><img src="img/branches_all.jpg" alt="All branches" loading="lazy"><b class="pin" style="left:17%;top:15%">1</b><b class="pin" style="left:36%;top:22%">2</b><b class="pin" style="left:22%;top:33%">3</b><b class="pin" style="left:21%;top:73%">4</b></div>
+    <ul class="legend"><li><b class="n">1</b>Branch selector: everything you open after this is for that branch.</li><li><b class="n">2</b>Combined totals. Click a card to compare branches side by side.</li><li><b class="n">3</b>Collections per branch, last 7 days.</li><li><b class="n">4</b>One card per branch. <b>Open branch</b> switches to it.</li></ul></figure>
+  <figure class="shot wide"><div class="frame"><img src="img/branches_breakdown.jpg" alt="Branch comparison" loading="lazy"></div></figure>
+  <figure class="shot wide"><div class="frame"><img src="img/clinic_dashboard.jpg" alt="Clinic branch dashboard" loading="lazy"></div><figcaption>A clinic branch shows bed occupancy and maternity alongside the usual cards.</figcaption></figure>
+</section>
+
+<!-- 18 -->
+<section class="ch col" id="settings" data-roles="owner pentarch">
+  <div class="ch-head"><span class="ch-num">18</span><div><h2>Settings</h2><div class="who">For: administrators (everyone has My account and Other devices)</div></div></div>
+  <div class="tw"><table><thead><tr><th>Tab</th><th>What you do there</th></tr></thead><tbody>
+    <tr><td>Facility details</td><td>Name, website tagline, phone, email, location, KMHFR facility code, KRA PIN, brand colour, and the partner labs, imaging centres and hospitals you refer to</td></tr>
+    <tr><td>Type &amp; services</td><td>Switch pharmacy / clinic / hospital and turn services on or off. <b>No data is lost</b>; only menus change, and wards are created if admissions are switched on.</td></tr>
+    <tr><td>Service prices</td><td>Consultation, procedure, bed and other fees. Add new services.</td></tr>
+    <tr><td>Staff &amp; access</td><td>Add staff, set role and branch, reset PINs, deactivate leavers</td></tr>
+    <tr><td>Data &amp; backup</td><td>Remove sample data, backup guidance</td></tr>
+    <tr><td>My account</td><td>Change your own PIN</td></tr>
+    <tr><td>Other devices</td><td>The address for phones, tablets and other PCs</td></tr>
+  </tbody></table></div>
+  <figure class="shot wide"><div class="frame"><img src="img/settings_type.jpg" alt="Type and services" loading="lazy"></div></figure>
+  <h3>Staff and what each role can open</h3>
+  <figure class="shot wide"><div class="frame"><img src="img/settings_staff.jpg" alt="Staff and access" loading="lazy"></div></figure>
+  <div class="tw"><table><thead><tr><th>Page</th><th>Admin</th><th>Reception</th><th>Nurse</th><th>Clinician</th><th>Lab</th><th>Pharmacist</th><th>Cashier</th></tr></thead><tbody>
+    <tr><td>Dashboard</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>Patients</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">–</td></tr>
+    <tr><td>Queue and visits</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">–</td><td class="y">✓</td><td class="n">–</td></tr>
+    <tr><td>Laboratory, imaging</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td><td class="y">✓</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td></tr>
+    <tr><td>Pharmacy &amp; stock</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>Billing</td><td class="y">✓</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>Wards, maternity</td><td class="y">✓</td><td class="n">–</td><td class="y">✓</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td><td class="n">–</td></tr>
+    <tr><td>Appointments, referrals</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td><td class="n">–</td></tr>
+    <tr><td>Reports</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td><td class="y">✓</td><td class="n">–</td><td class="y">✓</td><td class="y">✓</td></tr>
+    <tr><td>Settings, branches</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td></tr>
+  </tbody></table></div>
+  <figure class="shot wide"><div class="frame"><img src="img/settings_data.jpg" alt="Data and backup" loading="lazy"></div><figcaption>Remove sample data: type DELETE to confirm. The medicine list, prices, lab menu and settings stay.</figcaption></figure>
+</section>
+
+<!-- 19 -->
+<section class="ch col" id="website" data-roles="owner pentarch">
+  <div class="ch-head"><span class="ch-num">19</span><div><h2>Websites</h2><div class="who">For: owners, Pentarch</div></div></div>
+  <h3>The built-in facility website</h3>
+  <p>Every branch has a shop-style website inside MediCore at <code>/site</code>, for example <code>http://192.168.1.20:4000/site</code>. Customers on the facility Wi-Fi can browse products with pictures and prices, add to cart, book appointments and see the lab menu. Orders and bookings land straight in MediCore.</p>
+  <div class="pair">
+    <figure class="shot"><div class="frame"><img src="img/site_home.jpg" alt="Built-in website" loading="lazy"></div></figure>
+    <figure class="shot"><div class="frame"><img src="img/site_quick.jpg" alt="Product quick view" loading="lazy"></div></figure>
+  </div>
+  <h3>The online website (WordPress)</h3>
+  <p>For the public internet, Pentarch builds a WordPress site on the facility's own domain, with real product photos, shop, services, lab prices and WhatsApp ordering. Pentarch installs it; the owner only edits prices and contact details. Orders arrive on the pharmacy's WhatsApp.</p>
+  <div class="note demo"><b class="t">Coming with cloud sync</b><p>When MediCore's cloud sync is switched on, online orders and bookings will also flow into MediCore automatically, and stock on the website will follow the system.</p></div>
+</section>
+
+<!-- 20 -->
+<section class="ch col" id="console" data-roles="pentarch">
+  <div class="ch-head"><span class="ch-num">20</span><div><h2>Pentarch console</h2><div class="who">For: Pentarch staff only</div></div></div>
+  <p>Signing in as the super administrator opens the console: every client and branch on this installation, with patients, collections and stock alerts.</p>
+  <figure class="shot wide"><div class="frame"><img src="img/console.jpg" alt="Pentarch console" loading="lazy"></div></figure>
+  <ul><li><b>New facility</b> runs the setup wizard for a new client.</li><li><b>Open</b> works inside any branch as administrator, for support and demos.</li><li><b>Add branch</b> adds a branch to a client.</li><li><b>Remove</b> deletes a client and all its data after you type its name. This cannot be undone.</li></ul>
+  <div class="note stop"><b class="t">Change the super PIN on real installs</b><p>Start the server with the environment variable <code>MEDICORE_SUPER_PIN</code> set to a private PIN. Never leave <code>2026</code> on a client's computer.</p></div>
+</section>
+
+<!-- 21 -->
+<section class="ch col" id="golive" data-roles="owner pentarch">
+  <div class="ch-head"><span class="ch-num">21</span><div><h2>Going live checklist</h2><div class="who">For: owner and Pentarch, on the day the facility starts real use</div></div></div>
+  <ul class="check">
+    <li>Train staff on the sample data first (one or two days).</li>
+    <li>Settings → Facility details: correct name, phone, email, location, KMHFR code, KRA PIN and partner list.</li>
+    <li>Settings → Data &amp; backup → <b>Remove sample data</b>.</li>
+    <li>Settings → Staff &amp; access: add every real staff member with the right role; deactivate practice accounts.</li>
+    <li>Settings → Service prices and Lab → Test menu: confirm your prices.</li>
+    <li>Pharmacy → Inventory → <b>Receive stock</b> for everything on the shelves, with batch and expiry.</li>
+    <li>Change the Pentarch super PIN on this computer.</li>
+    <li>Reserve the main computer's IP address in the router; bookmark it on every device.</li>
+    <li>Set up the weekly backup (Chapter 13) and do the first one today.</li>
+  </ul>
+</section>
+
+<!-- 22 -->
+<section class="ch col" id="routines" data-roles="owner pharmacist cashier lab nurse reception clinician">
+  <div class="ch-head"><span class="ch-num">22</span><div><h2>Daily, weekly and monthly routines</h2><div class="who">For: everyone, owner checks</div></div></div>
+  <div class="tw"><table><thead><tr><th>When</th><th>Who</th><th>Do this</th></tr></thead><tbody>
+    <tr><td>Every morning</td><td>Admin</td><td>Start MediCore; check the dashboard for stock alerts and appointments</td></tr>
+    <tr><td>Every morning</td><td>Lab</td><td>Clear the “To validate” list from the night before</td></tr>
+    <tr><td>Every morning</td><td>Owner / admin</td><td>Work through <b>To do today</b> on the dashboard</td></tr>
+    <tr><td>Every evening</td><td>Cashier</td><td>Close the shift and count the cash; settle or put remaining open bills on account</td></tr>
+    <tr><td>Every evening</td><td>Owner</td><td>Read the daily summary (Reports → Daily summary, or on WhatsApp)</td></tr>
+    <tr><td>Every evening</td><td>Pharmacist</td><td>Dispense or cancel waiting prescriptions; check website orders</td></tr>
+    <tr><td>Weekly</td><td>Admin</td><td>Download a backup (below); review the reorder list and order; pay suppliers due this week; submit SHA and insurance claims</td></tr>
+    <tr><td>Monthly</td><td>Pharmacist</td><td>Stock take of one or two categories and controlled drugs; write off expired stock; review prices</td></tr>
+    <tr><td>Monthly</td><td>Clinician / admin</td><td>Submit MOH 705 (and 711) figures; send statements to account customers; chase claims over 30 days</td></tr>
+  </tbody></table></div>
+  <h3>How to back up</h3>
+  <ol class="steps"><li>Open <span class="ui">Settings → Data &amp; backup</span> and click <span class="ui">Download backup now</span>. You do not need to stop MediCore.</li><li>Copy the file to a flash disk or Google Drive. Keep the last four weekly copies, one of them away from the premises.</li><li>If the black window can be closed at the end of the day, a copy of the whole <code>data</code> folder is a second safe backup.</li></ol>
+  <div class="note warn"><b class="t">To restore</b><p>Use <span class="ui">Restore from a backup file</span> in Settings → Data &amp; backup (Chapter 13). For a folder copy: stop MediCore, rename the current <code>data</code> folder to <code>data-old</code>, copy the backup in as <code>data</code>, and start MediCore.</p></div>
+</section>
+
+<!-- 23 -->
+<section class="ch col" id="trouble" data-roles="owner pentarch reception nurse clinician lab pharmacist cashier">
+  <div class="ch-head"><span class="ch-num">23</span><div><h2>Troubleshooting</h2><div class="who">For: everyone</div></div></div>
+  <div class="tw"><table><thead><tr><th>Problem</th><th>What to do</th></tr></thead><tbody>
+    <tr><td>Other devices say “site can't be reached”</td><td>Is the black window open on the main computer? Are both on the same Wi-Fi? Allow Node.js through Windows Firewall (Private networks). Check the address in Settings → Other devices.</td></tr>
+    <tr><td>The address changed</td><td>The router gave the main computer a new IP. Reserve its IP in the router settings and update bookmarks.</td></tr>
+    <tr><td>Screens look old, no version number in the menu</td><td>You are running an older copy. Update (Chapter 2) and press Ctrl+F5.</td></tr>
+    <tr><td>“Node.js is not installed”</td><td>Install Node.js 22 LTS from nodejs.org on the main computer, then run start-medicore.bat again.</td></tr>
+    <tr><td>Setup did not finish</td><td>The first install needs internet. Connect and run start-medicore.bat again.</td></tr>
+    <tr><td>Forgot PIN</td><td>The administrator resets it in Settings → Staff &amp; access.</td></tr>
+    <tr><td>Can't sell an item: “not enough stock”</td><td>Check the item's batches. Expired batches are not sold. Receive stock or adjust after a count.</td></tr>
+    <tr><td>Rx item blocked at the counter</td><td>Enter the prescription reference, or let the pharmacist review it.</td></tr>
+    <tr><td>“Something went wrong on this screen”</td><td>Click Reload. Your data is safe. If it repeats, note what you clicked and tell Pentarch support.</td></tr>
+    <tr><td>A menu is missing</td><td>Your role does not include it, or the service is switched off in Settings → Type &amp; services.</td></tr>
+  </tbody></table></div>
+</section>
+
+<!-- 24 -->
+<section class="ch col" id="glossary" data-roles="owner reception nurse clinician lab pharmacist cashier pentarch">
+  <div class="ch-head"><span class="ch-num">24</span><div><h2>Glossary</h2></div></div>
+  <div class="tw"><table><tbody>
+    <tr><td><b>ANC</b></td><td>Antenatal care: check-ups during pregnancy</td></tr>
+    <tr><td><b>ETAT+</b></td><td>Emergency Triage Assessment and Treatment, the Kenyan triage standard</td></tr>
+    <tr><td><b>FEFO</b></td><td>First expiry, first out: the batch that expires first is sold first</td></tr>
+    <tr><td><b>ICD-10</b></td><td>International code for diagnoses, used in MOH reports</td></tr>
+    <tr><td><b>MOH 705 / 711</b></td><td>Ministry of Health monthly reporting forms for outpatient morbidity and services</td></tr>
+    <tr><td><b>MRN</b></td><td>Medical record number: the patient's file number</td></tr>
+    <tr><td><b>MUAC</b></td><td>Mid-upper arm circumference, a child nutrition check</td></tr>
+    <tr><td><b>Partograph</b></td><td>Chart of labour progress with alert and action lines</td></tr>
+    <tr><td><b>Reorder level</b></td><td>Stock quantity at which you should order more</td></tr>
+    <tr><td><b>Rx</b></td><td>Prescription-only medicine</td></tr>
+    <tr><td><b>SHA</b></td><td>Social Health Authority, Kenya's public health insurer</td></tr>
+    <tr><td><b>Validation</b></td><td>A second person checking a lab result before release</td></tr>
+  </tbody></table></div>
+  <div class="foot">Pentarch MediCore · User manual version 2.1 · Pentarch Systems Solutions, Nairobi. Support: your Pentarch contact. Screens may differ slightly after updates.</div>
+</section>
+</main>
+</div>
+
+<script>
+(function(){
+  var secs = Array.prototype.slice.call(document.querySelectorAll('section.ch'));
+  var toc = document.getElementById('toc');
+  toc.innerHTML = secs.map(function(s){ return '<a href="#' + s.id + '" data-id="' + s.id + '"><span>' + s.querySelector('.ch-num').textContent + '</span>' + s.querySelector('h2').textContent + '</a>'; }).join('');
+  var links = Array.prototype.slice.call(toc.querySelectorAll('a'));
+  var rail = document.getElementById('rail');
+  document.getElementById('menuBtn').onclick = function(){ rail.classList.toggle('open'); };
+  links.forEach(function(a){ a.addEventListener('click', function(){ rail.classList.remove('open'); }); });
+  // role filter
+  var role = 'all'; try { role = localStorage.getItem('mc_manual_role') || 'all'; } catch(e){}
+  function applyRole(r){ role = r;
+    document.querySelectorAll('#roles button').forEach(function(b){ b.classList.toggle('on', b.getAttribute('data-r') === r); });
+    links.forEach(function(a, i){ var rs = (secs[i].getAttribute('data-roles') || '').split(' '); a.classList.toggle('dim', r !== 'all' && rs.indexOf(r) < 0); });
+    try { localStorage.setItem('mc_manual_role', r); } catch(e){}
+  }
+  document.querySelectorAll('#roles button').forEach(function(b){ b.onclick = function(){ applyRole(b.getAttribute('data-r')); }; });
+  applyRole(role);
+  // search chapters by their text
+  var q = document.getElementById('q');
+  q.addEventListener('input', function(){ var t = q.value.trim().toLowerCase();
+    links.forEach(function(a, i){ a.classList.toggle('hide', !!t && secs[i].textContent.toLowerCase().indexOf(t) < 0); }); });
+  // highlight current chapter
+  if ('IntersectionObserver' in window){
+    var io = new IntersectionObserver(function(es){ es.forEach(function(e){ if (e.isIntersecting){ links.forEach(function(a){ a.classList.toggle('on', a.getAttribute('data-id') === e.target.id); }); } }); }, {rootMargin:'-20% 0px -70% 0px'});
+    secs.forEach(function(s){ io.observe(s); });
+  }
+})();
+</script>
