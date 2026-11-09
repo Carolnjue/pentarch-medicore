@@ -10,6 +10,12 @@ const { R, all, get, run, tx, now, getConfig } = D;
 
 const app = express();
 app.use(express.json({ limit: '8mb' }));
+// basic browser protections: no content sniffing, no leaking full addresses, the system cannot be framed by other sites
+app.use((req, res, next) => {
+  res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'strict-origin-when-cross-origin', 'Permissions-Policy': 'geolocation=(self), camera=(self), microphone=()' });
+  if (!req.path.startsWith('/site') && !req.path.startsWith('/api/public')) res.set('X-Frame-Options', 'SAMEORIGIN');
+  next();
+});
 app.set('trust proxy', true); // behind the host's web server, use the visitor's real address
 // The Pentarch website may post the "Try the demo" form straight to this server
 app.use('/api/public', (req, res, next) => {
