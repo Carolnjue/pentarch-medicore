@@ -12,11 +12,12 @@ export default function Wards() {
   if (!wards) return <div className="page">Loading…</div>;
   const total = wards.reduce((a, w) => a + w.beds.length, 0);
   const occ = wards.reduce((a, w) => a + w.beds.filter(b => b.admission_id).length, 0);
+  const dueN = (wards || []).flatMap(w => w.beds).filter(b => b.admission_id && (b.obs_due || b.doses_due > 0)).length;
   const days = t => Math.max(1, Math.ceil((Date.now() - new Date(t)) / 864e5));
   return (
     <div className="page">
       <div className="pagehead">
-        <div><h1>Wards & beds</h1><p className="sub">{occ} of {total} beds occupied ({Math.round(occ / Math.max(1, total) * 100)}%). Click a bed to manage the patient or admit.</p></div>
+        <div><h1>Wards & beds</h1><p className="sub">{occ} of {total} beds occupied ({Math.round(occ / Math.max(1, total) * 100)}%). Click a bed to manage the patient or admit.{dueN > 0 && <b style={{ color: 'var(--bad)' }}> {dueN} patient{dueN > 1 ? 's' : ''} need observations or medicines now.</b>}</p></div>
         <div className="actions"><button onClick={async () => { const r = await act(() => api.post('/wards/charge')); alert(`${r.posted} bed-day charge(s) posted to interim bills.`); }}>Post today's bed charges</button></div>
       </div>
       <div className="stack">{wards.map(w => <div key={w.id} className="card">
@@ -25,7 +26,8 @@ export default function Wards() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 8 }}>
           {w.beds.map(b => b.admission_id
             ? <button key={b.id} className="choice on" style={{ padding: 10 }} onClick={() => setOpen(b)}><b className="small">{b.label} · {b.pname}</b>
-              <span className="small muted">{b.sex} · {age(b.dob)} · day {days(b.admitted_at)}</span><div className="small" style={{ marginTop: 2 }}>{b.reason}</div></button>
+              <span className="small muted">{b.sex} · {age(b.dob)} · day {days(b.admitted_at)}</span><div className="small" style={{ marginTop: 2 }}>{b.reason}</div>
+              {(b.obs_due || b.doses_due > 0) && <div className="row" style={{ gap: 4, marginTop: 6 }}>{b.obs_due && <Badge tone="warn">Obs due</Badge>}{b.doses_due > 0 && <Badge tone="bad">{b.doses_due} dose{b.doses_due > 1 ? 's' : ''} due</Badge>}</div>}</button>
             : <button key={b.id} className="choice" style={{ padding: 10, borderStyle: 'dashed' }} onClick={() => setAdmitBed(b)}><b className="small">{b.label}</b><span className="small faint">Free · admit</span></button>)}
         </div>
       </div>)}</div>

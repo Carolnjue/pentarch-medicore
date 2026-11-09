@@ -1014,6 +1014,15 @@ app.get('/api/wards', wrap(() => {
   const wards = all('SELECT * FROM wards ORDER BY id');
   for (const w of wards) w.beds = all(`SELECT b.*, a.id admission_id, a.patient_id, a.reason, a.admitted_at, a.visit_id, p.first_name||' '||p.last_name pname, p.mrn, p.sex, p.dob
       FROM beds b LEFT JOIN admissions a ON a.bed_id=b.id AND a.status='admitted' LEFT JOIN patients p ON p.id=a.patient_id WHERE b.ward_id=? ORDER BY b.label`, w.id);
+  // nursing prompts on each occupied bed: observations older than 6 hours, doses due now
+  const PER = { OD: 1, BD: 2, TDS: 3, QID: 4, Nocte: 1 };
+  for (const w of wards) for (const b of w.beds) {
+    if (!b.admission_id) continue;
+    const lastObs = get('SELECT MAX(created_at) d FROM vitals WHERE visit_id=?', b.visit_id).d;
+    b.obs_due = !lastObs || Date.now() - new Date(lastObs) > 6 * 3600e3;
+    b.doses_due = all("SELECT pr.id, pr.frequency, pr.days, (SELECT MAX(at) FROM med_admin m WHERE m.prescription_id=pr.id) last, (SELECT COUNT(*) FROM med_admin m WHERE m.prescription_id=pr.id AND m.status='given') given FROM prescriptions pr WHERE pr.visit_id=? AND pr.status='dispensed'", b.visit_id)
+      .filter(m => PER[m.frequency] && m.given < PER[m.frequency] * (m.days || 1) && (!m.last || Date.now() - new Date(m.last) >= (24 / PER[m.frequency]) * 3600e3 * 0.9)).length;
+  }
   return wards;
 }));
 app.post('/api/wards', adminOnly, wrap(req => {
