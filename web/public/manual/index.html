@@ -492,8 +492,8 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
   </div>
 
   <h3>Importing opening stock</h3>
-  <p>When a shop starts on MediCore, its stock is often already in an Excel sheet. Open <span class="ui">Pharmacy &amp; stock → Inventory → Import stock</span> and click <span class="ui">Download a template</span> to see the columns: name (or code), packs, loose units, batch, expiry, cost per pack and price per pack.</p>
-  <ol class="steps"><li>In Excel, keep one row per batch and click <b>File → Save As → CSV</b>.</li>
+  <p>When a shop starts on MediCore, its stock is often already in an Excel sheet. MediCore reads the Excel file directly (or a CSV). Open <span class="ui">Pharmacy &amp; stock → Inventory → Import stock</span> and click <span class="ui">Download a template</span> to see the columns: name (or code), packs, loose units, batch, expiry, cost per pack and price per pack.</p>
+  <ol class="steps"><li>In Excel, keep one row per batch with a heading row on top. Column names such as Name, Boxes, Loose units, Batch and Expiry are recognised.</li>
     <li>Choose the file and click <span class="ui">Check the list</span>. Each row shows what it matched in the medicine list. Rows matched only by a similar name say so: check them.</li>
     <li>Rows marked <b>not found</b> or <b>to fix</b> are skipped. Tick <b>Add items that are not in the catalogue</b> to create them (they need a selling price).</li>
     <li>Click <span class="ui">Add … lines to stock</span>. Fix the skipped rows in Excel and import them again later.</li></ol>
@@ -698,7 +698,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
     <li>Settings → Data &amp; backup → <b>Remove sample data</b>.</li>
     <li>Settings → Staff &amp; access: add every real staff member with the right role; deactivate practice accounts.</li>
     <li>Settings → Service prices and Lab → Test menu: confirm your prices.</li>
-    <li>Pharmacy → Inventory → <b>Import stock</b>: load the shop's stock list from Excel (saved as CSV) with packs, batch and expiry. Use <b>Receive stock</b> for anything left over.</li>
+    <li>Pharmacy → Inventory → <b>Import stock</b>: load the shop's stock list straight from Excel, with packs, batch and expiry. Use <b>Receive stock</b> for anything left over.</li>
     <li>Change the Pentarch super PIN on this computer.</li>
     <li>Reserve the main computer's IP address in the router; bookmark it on every device.</li>
     <li>Set up the weekly backup (Chapter 13) and do the first one today.</li>

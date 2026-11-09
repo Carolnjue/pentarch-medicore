@@ -469,7 +469,13 @@ function ImportStock({ onClose, onDone }) {
   const [res, setRes] = useState(null);
   const [busy, setBusy] = useState(false);
   const load = async f => {
-    const all = parseCSV(await f.text()); if (all.length < 2) return toast('That file has no rows under the headings', true);
+    let all;
+    if (/\.xlsx?$/i.test(f.name)) {
+      // Excel file straight from the shop: read the first sheet (the reader loads only when needed)
+      const XLSX = await import('xlsx');
+      const wb = XLSX.read(await f.arrayBuffer(), { type: 'array', cellDates: true });
+      all = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, dateNF: 'yyyy-mm-dd', defval: '' }).map(r => r.map(c => String(c ?? ''))).filter(r => r.some(c => c.trim()));
+    } else all = parseCSV(await f.text()); if (all.length < 2) return toast('That file has no rows under the headings', true);
     const head = all[0].map(h => h.trim().toLowerCase()), m = {};
     for (const [k, names] of Object.entries(IMPORT_COLS)) { const i = head.findIndex(h => names.includes(h)); if (i >= 0) m[k] = i; }
     if (m.name == null && m.code == null) return toast('Add a column called "Name" (or "Code") with the item names', true);
@@ -487,8 +493,8 @@ function ImportStock({ onClose, onDone }) {
     {rows && <button disabled={busy} onClick={() => check(false)}>Check the list</button>}
     {res && <button className="primary" disabled={busy || !(res.ok + res.new)} onClick={() => check(true)}>Add {res.ok + res.new} lines to stock</button>}</>}>
     <div className="stack">
-      <p className="muted" style={{ margin: 0 }}>Use this when going live. In Excel, keep one row per batch with the item name (or code), how many packs and loose units, batch and expiry, then <b>File → Save As → CSV</b>. MediCore matches each row to the medicine list and shows you the result before anything changes.</p>
-      <div className="row"><input type="file" accept=".csv,text/csv" onChange={e => e.target.files[0] && load(e.target.files[0])} style={{ maxWidth: 320 }} /><button className="sm" onClick={template}>Download a template</button></div>
+      <p className="muted" style={{ margin: 0 }}>Use this when going live. In Excel, keep one row per batch with the item name (or code), how many packs and loose units, batch and expiry, then choose the file here (Excel or CSV both work). MediCore matches each row to the medicine list and shows you the result before anything changes.</p>
+      <div className="row"><input type="file" accept=".xlsx,.xls,.csv,text/csv" onChange={e => e.target.files[0] && load(e.target.files[0])} style={{ maxWidth: 320 }} /><button className="sm" onClick={template}>Download a template</button></div>
       {rows && <p className="small" style={{ margin: 0 }}>{rows.length} rows read. Columns found: {Object.keys(map).join(', ')}.</p>}
       {rows && <label className="row small"><input type="checkbox" checked={create} onChange={e => { setCreate(e.target.checked); setRes(null); }} style={{ width: 'auto' }} />Add items that are not in the catalogue as new items (needs a selling price)</label>}
       {res && <>
