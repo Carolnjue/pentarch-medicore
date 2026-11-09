@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
 import { useData, Badge, FlagBadge, StatusBadge, TriageBadge, TRIAGE, Modal, Field, Tabs, act, age, ageYears, fmtDT, fmtTime, money, fmtQty, Empty, Icon } from '../ui';
-import { HealthBar, VITAL_RANGES } from './PatientView';
+import { HealthBar, VITAL_RANGES, childRanges } from './PatientView';
 import { ReferralForm } from './Referrals';
 import { ResultEntry, DEPT_COLOR } from './Lab';
 import ProductArt from '../shared/ProductArt';
@@ -92,7 +92,7 @@ export default function Visit({ id }) {
         <div className="stack">
           <div className="card">
             <div className="cardhead"><h3>Vitals</h3><span className="right faint small">{vt ? fmtTime(vt.created_at) + ' · ' + vt.recorded_by : 'not taken'}</span></div>
-            {vt ? Object.entries(VITAL_RANGES).filter(([k]) => !(isChild && ['sys', 'dia', 'pulse', 'resp', 'bmi'].includes(k))).map(([k, r]) =>
+            {vt ? Object.entries(isChild ? childRanges(ageYears(p.dob)) : VITAL_RANGES).filter(([k]) => !(isChild && ['sys', 'dia', 'bmi'].includes(k))).map(([k, r]) =>
               <HealthBar key={k} r={r} v={k === 'bmi' ? (vt.weight && vt.height ? vt.weight / Math.pow(vt.height / 100, 2) : null) : vt[k]} />)
               : <Empty icon="thermo">No vitals yet. Record them in Triage.</Empty>}
             {vt?.weight && <p className="small muted">Weight {vt.weight} kg{vt.height ? ` · height ${vt.height} cm` : ''}{vt.muac ? ` · MUAC ${vt.muac} cm` : ''}{isChild && vt.pulse ? ` · pulse ${vt.pulse}, RR ${vt.resp || '-'}` : ''}</p>}

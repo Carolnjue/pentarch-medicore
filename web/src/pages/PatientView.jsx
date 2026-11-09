@@ -17,6 +17,11 @@ export const VITAL_RANGES = {
   bmi: { name: 'BMI', unit: 'kg/m²', min: 12, max: 45, lo: 18.5, hi: 24.9, hi2: 29.9 },
   glucose: { name: 'Blood glucose', unit: 'mmol/L', min: 2, max: 25, lo: 3.9, hi: 7.8, hi2: 11 },
 };
+// children's pulse and breathing ranges (WHO / ETAT+), so their bars are shown against the right normal
+export function childRanges(years) {
+  const [pl, ph, rl, rh] = years < 1 ? [100, 160, 30, 50] : years < 5 ? [90, 140, 24, 40] : [70, 120, 18, 30];
+  return { ...VITAL_RANGES, pulse: { ...VITAL_RANGES.pulse, lo: pl, hi: ph, max: 200 }, resp: { ...VITAL_RANGES.resp, lo: rl, hi: rh, max: 70 } };
+}
 export function classify(r, v) {
   if (v == null) return null;
   if (v < r.lo || (r.hi2 ? v > r.hi2 : v > r.hi)) return ['Abnormal', 'bad'];
@@ -117,10 +122,10 @@ export default function PatientView({ id }) {
         <div className="stack">
           <div className="card">
             <div className="cardhead"><h3>Health bars</h3><span className="right faint small">{lastVital ? 'Latest readings · ' + fmtDT(lastVital.created_at) : 'No vitals yet'}</span></div>
-            {Object.keys(latest).length ? Object.entries(VITAL_RANGES).filter(([k]) => !(isChild && ['sys', 'dia', 'pulse', 'resp'].includes(k))).map(([k, r]) => <HealthBar key={k} r={r} v={latest[k]} />)
+            {Object.keys(latest).length ? Object.entries(isChild ? childRanges((Date.now() - new Date(p.dob)) / (365.25 * 864e5)) : VITAL_RANGES).filter(([k]) => !(isChild && ['sys', 'dia'].includes(k))).map(([k, r]) => <HealthBar key={k} r={r} v={latest[k]} />)
               : <Empty>Take vitals at triage to see health bars.</Empty>}
             {Object.values(numericLabs).map(l => l.lo != null && <HealthBar key={l.name} r={{ name: l.name, unit: l.unit, lo: l.lo, hi: l.hi, min: l.lo * 0.4, max: l.hi * 1.6 }} v={l.pts[l.pts.length - 1].value} />)}
-            <p className="faint small mt">Green = within the normal adult reference range; amber = borderline; red = outside range. Ranges for children differ{isChild ? ', so adult BP and pulse bars are hidden' : ''}.</p>
+            <p className="faint small mt">Green = within the normal reference range; amber = borderline; red = outside range. {isChild ? 'For this child, pulse and breathing use the normal range for their age; adult BP bars are hidden.' : 'Ranges for children differ and are applied for patients under 13.'}</p>
           </div>
           {bpData.length > 1 && <Trend title="Blood pressure" data={bpData} keys={[['Systolic', '#dc2626'], ['Diastolic', '#2563eb']]} band={[90, 120]} line={80} unit="mmHg" note="shaded = normal systolic 90–120 · dashed = diastolic upper limit 80" />}
           {gluData.length > 1 && <Trend title="Blood glucose" data={gluData} keys={[['Glucose', '#9333ea']]} band={[3.9, 7.8]} unit="mmol/L" />}
