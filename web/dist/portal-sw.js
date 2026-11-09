@@ -1,6 +1,6 @@
 // Pentarch MediCore sales portal: keeps the app shell on the phone so it opens without network.
-const CACHE = 'pp-shell-v1';
-const SHELL = ['/portal', '/try', '/portal.webmanifest', '/pentarch-icon.svg', '/pentarch-icon-192.png'];
+const CACHE = 'pp-shell-v2';
+const SHELL = ['/portal', '/try', '/portal.webmanifest', '/pentarch-icon-192.png', '/pentarch-logo.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {

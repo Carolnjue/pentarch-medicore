@@ -1,5 +1,5 @@
-export const LOGO = 'https://pentarchcommunications.com/wp-content/uploads/2026/01/cropped-LOGO-LOGO-TRANSPARENT.png';
-export const LOGO_WHITE = 'https://pentarchcommunications.com/wp-content/uploads/2026/03/LOGOwhitetrans_LOGOLONG.png';
+export const LOGO = '/pentarch-logo.png';
+export const LOGO_WHITE = '/pentarch-logo-white.png';
 export const SITE = 'https://pentarchcommunications.com';
 export const PHONE = '+254 729 455 912';
 export const PHONE_WA = '254729455912';
