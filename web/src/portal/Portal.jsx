@@ -598,6 +598,7 @@ function SalesKit() {
       <dt>"We have no internet."</dt><dd>MediCore runs on the computer in the facility. Internet is only used for backup and M-Pesa prompts.</dd>
       <dt>"My staff are not good with computers."</dt><dd>The counter screen is built for speed: scan, take payment, done. Setup includes training for the whole team.</dd>
       <dt>"We already have a system."</dt><dd>Ask what it does not do for them: expiry, cash-up, offline. Offer the 30-day demo side by side. Pentarch imports their item list.</dd>
+      <dt>"We have hundreds of items. Typing them in will take weeks."</dt><dd>Most medicines are already in MediCore's list. Their Excel stock sheet is imported in minutes, with batches and expiry dates, and anything missing is added at the same time.</dd>
       <dt>"Is my data safe?"</dt><dd>Each staff member signs in with their own PIN, and wrong PINs lock the account. Every sale, refund and price change carries a name. MediCore keeps an automatic copy every day, and the owner downloads a backup file to keep away from the shop.</dd>
       <dt>"What about SHA?"</dt><dd>MediCore records SHA numbers and turns every SHA or insurance bill into a claim, so the owner sees what is unsubmitted, unpaid or rejected, and for how long. Formal SHA integration depends on DHA certification; tell the client honestly what Pentarch has confirmed and check with Pentarch before promising dates.</dd>
     </dl>],
