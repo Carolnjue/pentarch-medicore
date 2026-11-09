@@ -60,8 +60,9 @@ function seedSample(D, cfg) {
   // ---------- stock: two batches per item (one older, one newer) ----------
   for (const it of all('SELECT * FROM items')) {
     const low = ['SALB', 'AUG625', 'CEFTR1', 'INSMIX', 'GLUSTR', 'MONTE'].includes(it.code);
-    const packs1 = low ? 1 : Math.ceil(between(2, 6));
-    const packs2 = low ? 0 : Math.ceil(between(4, 12));
+    const mult = it.pack_size > 1 ? 1 : 4; // single bottles, tubes and kits sell fast: stock more of them
+    const packs1 = low ? 1 : Math.ceil(between(2, 6)) * mult;
+    const packs2 = low ? 0 : Math.ceil(between(4, 12)) * mult;
     const loose = it.sell_loose && it.pack_size > 1 ? Math.floor(between(0, it.pack_size * 0.8)) : 0;
     const soon = ['AMX500', 'ORS', 'VITC', 'CALPOL', 'COFSYR'].includes(it.code) ? 40 : Math.round(between(150, 300));
     const b1 = run('INSERT INTO batches(item_id,batch_no,expiry,qty,cost,supplier,received_at) VALUES(?,?,?,?,?,?,?)',
@@ -151,6 +152,15 @@ function seedSample(D, cfg) {
   function outMove(itemId, units, type, ref, at) {
     // take from the earliest-expiring batches first; anything not on record still counts at item cost
     let left = units;
+    // fast sellers get a delivery when they run low, like a real shop restocking weekly
+    const have = get('SELECT COALESCE(SUM(qty),0) q FROM batches WHERE item_id=? AND qty>0', itemId).q;
+    if (have < units * 3) {
+      const it = get('SELECT * FROM items WHERE id=?', itemId);
+      const add = Math.max(units * 10, (it.pack_size > 1 ? it.pack_size : 1) * 6);
+      const exp = new Date(new Date(at).getTime() + 500 * 864e5).toISOString().slice(0, 10);
+      const nb = run('INSERT INTO batches(item_id,batch_no,expiry,qty,cost,supplier,received_at) VALUES(?,?,?,?,?,?,?)', itemId, 'R' + itemId + String(at).slice(5, 10).replace('-', ''), exp, add, it.cost, 'Dawa Ltd', at).lastInsertRowid;
+      run('INSERT INTO stock_moves(item_id,batch_id,qty,type,ref,by_user,created_at) VALUES(?,?,?,?,?,?,?)', itemId, nb, add, 'receive', 'GRN restock', 'system', at);
+    }
     for (const b of all('SELECT * FROM batches WHERE item_id=? AND qty>0 ORDER BY expiry', itemId)) {
       if (left <= 0) break;
       const take = Math.min(left, b.qty);

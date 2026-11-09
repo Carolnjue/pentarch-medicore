@@ -159,7 +159,7 @@ function POS() {
       </button>)}</div>
       {items && !results.length && <Empty icon="search">Nothing matches “{q}”.</Empty>}
     </div>
-    <div className="card stack cart" style={{ position: 'sticky', top: 16, alignSelf: 'start' }}>
+    <div id="pos-cart" className="card stack cart" style={{ position: 'sticky', top: 16, alignSelf: 'start' }}>
       <div className="row"><h3 style={{ margin: 0 }}>Cart</h3><span className="faint small right">{cart.reduce((a, l) => a + l.qty, 0)} item{cart.length === 1 ? '' : 's'} · <kbd>F2</kbd> search · <kbd>F8</kbd> park · <kbd>F9</kbd> pay</span></div>
       {parked.length > 0 && <div className="row small" style={{ gap: 6 }}><span className="muted">Parked:</span>{parked.map(p => <button key={p.id} className="sm" onClick={() => resume(p)} title={`Parked ${new Date(p.at).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}`}>{p.label} · {p.lines.length}</button>)}</div>}
       <CustomerPicker value={cust} onChange={setCust} />
@@ -184,6 +184,7 @@ function POS() {
       {cust && credit > 0 && cart.length > 0 && <button disabled={total > credit || needsRx || !!short} onClick={() => finish(null)}>Put on {cust.name.split(' ')[0]}'s account (up to {money(credit)})</button>}
     </div>
     </div>
+    {cart.length > 0 && <button className="cartbar" onClick={() => document.getElementById('pos-cart')?.scrollIntoView({ behavior: 'smooth' })}><span>Cart · {cart.reduce((a, l) => a + l.qty, 0)} item{cart.length === 1 && cart[0].qty === 1 ? '' : 's'}</span><span>{money(total)} →</span></button>}
     {paying && <Modal title={`Payment · ${money(total)}`} onClose={() => setPaying(false)}><PayPanel balance={total} phone={cust?.phone} onPay={finish} /></Modal>}
     {receipt && <Receipt bill={receipt} onClose={() => { setReceipt(null); searchRef.current?.focus(); }} />}
     {refund && <RefundDialog onClose={() => setRefund(false)} onDone={() => { setRefund(false); reloadItems(); setTick(t => t + 1); }} />}
