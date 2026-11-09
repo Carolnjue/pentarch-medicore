@@ -1232,6 +1232,8 @@ Object.assign(H, { D, R, all, get, run, tx, now, today, wrap, fail, userOf, audi
 require('./commerce')(app, H);
 Object.assign(H, { TYPES: D.TYPES, createBranch, SAMPLE_STAFF, uniqueUsername, sessionFor, dropBranch: D.dropBranch });
 if (process.env.MEDICORE_CLOUD === '1') require('./cloud')(app, H);
+// The MediCore section of pentarchcommunications.com is kept here so the site can be updated from this repo
+app.get('/api/public/website-section', (req, res) => res.type('text/html').sendFile(path.join(__dirname, '..', 'marketing', 'website', 'medicore-page.html')));
 app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API route' }));
 
 // ---------- static files ----------

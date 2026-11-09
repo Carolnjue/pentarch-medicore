@@ -1,0 +1,399 @@
+<style>
+.mcx{--ink:#0A1530;--navy:#1F3C7A;--coral:#EE4B3B;--sun:#F6B22C;--teal:#14B1AC;--paper:#F7F5F0;--line:#E4E0D7;--tx:#121A2E;--bd:#3D475C;--mu:#646E82;--grad:linear-gradient(100deg,#EE4B3B 0%,#F6B22C 48%,#14B1AC 100%);color:var(--bd);font-family:'DM Sans',system-ui,sans-serif;line-height:1.55}
+.mcx *{box-sizing:border-box}
+.mcx h1,.mcx h2,.mcx h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;color:var(--tx);letter-spacing:-.02em;margin:0}
+.mcx .w{max-width:1180px;margin:0 auto;padding:0 clamp(16px,4vw,32px)}
+.mcx section{padding:clamp(56px,7vw,96px) 0}
+.mcx .ey{font:600 12px/1 'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:.1em;color:var(--coral)}
+.mcx .h2{font-size:clamp(28px,3.6vw,42px);line-height:1.1;margin:12px 0 14px;max-width:760px}
+.mcx .sub{font-size:17px;max-width:680px;margin:0}
+.mcx .gt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mcx svg{width:20px;height:20px;flex:none}
+.mcx .cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:26px}
+.mcx .b{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:999px;font-weight:700;text-decoration:none;transition:transform .15s,box-shadow .2s,background .2s;border:2px solid transparent;font-size:15.5px}
+.mcx .b:hover{transform:translateY(-2px)}
+.mcx .b.p{background:var(--coral);color:#fff;box-shadow:0 14px 30px -14px rgba(238,75,59,.8)}
+.mcx .b.p:hover{background:#d93d2e}
+.mcx .b.o{border-color:currentColor;color:var(--tx)}
+.mcx .dk .b.o{color:#fff}
+.mcx .dk{background:#061423;color:#C9D4E5;position:relative;overflow:hidden;isolation:isolate}
+.mcx .dk::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(800px 500px at 100% 0%,rgba(20,177,172,.32),transparent 60%),radial-gradient(700px 500px at 0% 100%,rgba(31,60,122,.7),transparent 60%)}
+.mcx .dk h1,.mcx .dk h2,.mcx .dk h3{color:#fff}
+/* hero */
+.mcx .hero{padding:clamp(60px,8vw,110px) 0 0}
+.mcx .hero .w.sw{display:block}
+.mcx .hero .w:not(.sw){display:grid;grid-template-columns:1fr 1.05fr;gap:clamp(28px,4vw,60px);align-items:center}
+.mcx .hero h1{font-size:clamp(36px,5.2vw,62px);line-height:1.04;margin:16px 0 18px}
+.mcx .hero p.lead{font-size:18.5px;max-width:560px;margin:0;color:#C9D4E5}
+.mcx .pill{display:inline-flex;align-items:center;gap:10px;padding:6px 14px 6px 6px;border-radius:99px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);font-size:13.5px;color:#fff}
+.mcx .pill b{background:var(--teal);color:#05202a;border-radius:99px;padding:3px 10px;font-size:12px}
+.mcx .shot{position:relative}
+.mcx .shot img{width:100%;display:block;border-radius:18px 18px 0 0;border:1px solid rgba(255,255,255,.12);border-bottom:0;box-shadow:0 40px 80px -30px rgba(0,0,0,.7)}
+.mcx .float{position:absolute;display:flex;gap:10px;align-items:center;background:#fff;color:var(--tx);padding:11px 15px;border-radius:14px;font-weight:700;font-size:13.5px;box-shadow:0 24px 40px -18px rgba(0,0,0,.55);animation:mcx-fl 7s ease-in-out infinite}
+.mcx .float small{display:block;font-weight:500;color:var(--mu);font-size:12px}
+.mcx .float i{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;font-style:normal}
+.mcx .f1{left:-22px;top:18%}.mcx .f2{right:-14px;top:52%;animation-delay:-3s}
+@keyframes mcx-fl{50%{transform:translateY(-10px)}}
+.mcx .stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,.1);margin-top:clamp(40px,6vw,70px)}
+.mcx .stats div{padding:22px 18px;border-left:1px solid rgba(255,255,255,.1)}
+.mcx .stats div:first-child{border-left:0;padding-left:0}
+.mcx .stats b{display:block;font:800 clamp(24px,2.6vw,32px)/1.1 'Bricolage Grotesque',sans-serif;color:#fff}
+.mcx .stats span{font-size:14px}
+/* who */
+.mcx .who{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:36px}
+.mcx .card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:26px;transition:transform .2s,box-shadow .2s,border-color .2s;position:relative;overflow:hidden}
+.mcx .card:hover{transform:translateY(-4px);box-shadow:0 28px 50px -30px rgba(10,21,48,.4);border-color:#d5cfc2}
+.mcx .card .ic{width:50px;height:50px;border-radius:14px;display:grid;place-items:center;color:#fff;margin-bottom:16px}
+.mcx .card h3{font-size:22px;margin-bottom:8px}
+.mcx .card ul{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:9px;font-size:15px}
+.mcx .card li{display:flex;gap:9px;align-items:flex-start}
+.mcx .card li svg{color:var(--teal);margin-top:2px;width:18px;height:18px}
+.mcx .card .tag{position:absolute;top:22px;right:22px;font:600 11px 'JetBrains Mono',monospace;color:var(--mu)}
+/* flow */
+.mcx .flow{display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-top:40px;counter-reset:s}
+.mcx .flow div{padding:0 18px 0 0;position:relative}
+.mcx .flow div::before{counter-increment:s;content:"0" counter(s);font:700 13px 'JetBrains Mono',monospace;color:var(--coral);display:block;margin-bottom:12px}
+.mcx .flow div::after{content:"";position:absolute;top:30px;left:0;right:18px;height:3px;border-radius:3px;background:var(--line)}
+.mcx .flow div:hover::after{background:var(--grad)}
+.mcx .flow h3{font-size:18px;margin:26px 0 6px}
+.mcx .flow p{margin:0;font-size:14.5px}
+/* features */
+.mcx .feat{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:36px}
+.mcx .fi{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:20px;transition:background .2s,border-color .2s}
+.mcx .fi:hover{background:rgba(255,255,255,.08);border-color:rgba(20,177,172,.5)}
+.mcx .fi svg{color:var(--sun);width:24px;height:24px}
+.mcx .fi h3{font-size:16.5px;margin:12px 0 6px}
+.mcx .fi p{margin:0;font-size:14px;color:#AFBBD0}
+/* offline band */
+.mcx .split{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,70px);align-items:center}
+.mcx .diag{background:#fff;border:1px solid var(--line);border-radius:22px;padding:24px;display:grid;gap:12px}
+.mcx .node{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:var(--paper)}
+.mcx .node i{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;color:#fff;font-style:normal;flex:none}
+.mcx .node b{color:var(--tx);display:block;font-size:15px}
+.mcx .node small{color:var(--mu);font-size:13px}
+.mcx .line{height:22px;margin-left:32px;border-left:2px dashed #cfc8ba}
+.mcx .ticks{list-style:none;padding:0;margin:20px 0 0;display:grid;gap:12px}
+.mcx .ticks li{display:flex;gap:10px}
+.mcx .ticks svg{color:var(--teal);margin-top:2px}
+/* pricing */
+.mcx .tog{display:inline-flex;background:#fff;border:1px solid var(--line);border-radius:99px;padding:4px;margin-top:22px}
+.mcx .tog button{border:0;background:transparent;padding:10px 18px;border-radius:99px;font:600 14.5px 'DM Sans',sans-serif;cursor:pointer;color:var(--mu)}
+.mcx .tog button.on{background:var(--ink);color:#fff}
+.mcx .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:28px}
+.mcx .plan{background:#fff;border:1px solid var(--line);border-radius:22px;padding:28px;display:flex;flex-direction:column;gap:6px;position:relative}
+.mcx .plan.hot{border:2px solid var(--ink);box-shadow:0 30px 60px -36px rgba(10,21,48,.55)}
+.mcx .plan .flag{position:absolute;top:-13px;left:24px;background:var(--grad);color:#fff;font:700 12px 'DM Sans',sans-serif;padding:5px 12px;border-radius:99px}
+.mcx .plan h3{font-size:22px}
+.mcx .plan .for{font-size:14px;color:var(--mu);min-height:42px}
+.mcx .price{font:800 40px/1 'Bricolage Grotesque',sans-serif;color:var(--tx);margin:14px 0 2px}
+.mcx .price small{font:500 15px 'DM Sans',sans-serif;color:var(--mu)}
+.mcx .plan .note{font-size:13.5px;color:var(--mu)}
+.mcx .plan ul{list-style:none;padding:16px 0 0;margin:14px 0 18px;border-top:1px solid var(--line);display:grid;gap:8px;font-size:14.5px;flex:1}
+.mcx .plan li{display:flex;gap:8px}
+.mcx .plan li svg{color:var(--teal);width:18px;height:18px;margin-top:2px}
+.mcx .ways{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:22px}
+.mcx .way{border-radius:22px;padding:26px;border:1px solid var(--line);background:#fff}
+.mcx .way.dark{background:var(--ink);color:#C9D4E5;border-color:var(--ink)}
+.mcx .way.dark h3{color:#fff}
+.mcx .way h3{font-size:20px;margin:8px 0}
+.mcx .way table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14.5px}
+.mcx .way td{padding:9px 0;border-top:1px solid rgba(128,128,128,.22)}
+.mcx .way td:last-child{text-align:right;font-weight:700;color:inherit;white-space:nowrap}
+.mcx .way.dark td{color:#C9D4E5}
+.mcx .way.dark td:last-child{color:#fff}
+/* kit */
+.mcx .kit{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:30px}
+.mcx .kit .k{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;gap:14px;align-items:flex-start}
+.mcx .kit .k i{width:44px;height:44px;border-radius:12px;background:var(--paper);display:grid;place-items:center;color:var(--navy);flex:none}
+.mcx .kit b{color:var(--tx);display:block}
+.mcx .kit span{font-size:14px}
+.mcx .how{margin-top:26px;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mcx .how div{border-left:3px solid var(--teal);padding:4px 0 4px 16px;font-size:14.5px}
+.mcx .how b{display:block;color:var(--tx);margin-bottom:2px}
+/* try form */
+.mcx .tryg{display:grid;grid-template-columns:1fr 1fr;gap:clamp(28px,5vw,64px);align-items:start}
+.mcx form.tf{background:#fff;color:var(--bd);border-radius:22px;padding:clamp(20px,3vw,30px);display:grid;gap:12px;position:relative;box-shadow:0 40px 80px -40px rgba(0,0,0,.7)}
+.mcx form.tf::before{content:"";position:absolute;left:0;right:0;top:0;height:5px;border-radius:22px 22px 0 0;background:var(--grad)}
+.mcx .tf label{display:grid;gap:5px;font-size:13px;font-weight:600;color:var(--tx)}
+.mcx .tf input,.mcx .tf select{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:12px;font:15px 'DM Sans',sans-serif;background:#fff;color:var(--tx)}
+.mcx .tf input:focus,.mcx .tf select:focus{outline:none;border-color:var(--teal);box-shadow:0 0 0 3px rgba(20,177,172,.18)}
+.mcx .tf .r2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mcx .tf .seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--paper);border-radius:12px;padding:4px;gap:4px}
+.mcx .tf .seg button{border:0;background:transparent;padding:10px 6px;border-radius:9px;font:600 14px 'DM Sans',sans-serif;cursor:pointer;color:var(--mu)}
+.mcx .tf .seg button.on{background:#fff;color:var(--tx);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.mcx .tf .ck{display:flex;gap:9px;font-weight:500;font-size:13.5px;color:var(--bd);align-items:flex-start}
+.mcx .tf .ck input{width:18px;height:18px;margin-top:2px;flex:none}
+.mcx .tf button.go{border:0;background:var(--coral);color:#fff;font:700 16px 'DM Sans',sans-serif;padding:15px;border-radius:999px;cursor:pointer}
+.mcx .tf button.go:disabled{opacity:.6}
+.mcx .tf .err{background:#FDECEA;color:#A42A1E;border-radius:10px;padding:10px 12px;font-size:14px;display:none}
+.mcx .creds{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.mcx .creds div{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.mcx .creds small{display:block;color:var(--mu);font-size:12px}
+.mcx .creds b{font:600 18px 'JetBrains Mono',monospace;color:var(--tx);word-break:break-all}
+/* agents */
+.mcx .agent{display:grid;grid-template-columns:1.2fr 1fr;gap:30px;align-items:center;background:var(--ink);border-radius:28px;padding:clamp(28px,5vw,56px);color:#C9D4E5;position:relative;overflow:hidden}
+.mcx .agent::after{content:"";position:absolute;inset:auto 0 0;height:6px;background:var(--grad)}
+.mcx .agent h2{color:#fff}
+.mcx .earn{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mcx .earn div{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:18px}
+.mcx .earn b{display:block;font:800 26px 'Bricolage Grotesque',sans-serif;color:#fff}
+.mcx .earn span{font-size:13.5px}
+/* faq */
+.mcx .faq{margin-top:30px;display:grid;gap:10px;max-width:860px}
+.mcx details{background:#fff;border:1px solid var(--line);border-radius:16px;padding:0 20px}
+.mcx summary{cursor:pointer;list-style:none;padding:18px 0;font-weight:700;color:var(--tx);display:flex;justify-content:space-between;gap:16px;font-size:16px}
+.mcx summary::-webkit-details-marker{display:none}
+.mcx summary::after{content:"+";font:600 22px/1 'JetBrains Mono',monospace;color:var(--coral)}
+.mcx details[open] summary::after{content:"−"}
+.mcx details p{margin:0 0 18px;font-size:15px}
+.mcx .rv{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.mcx .rv.in{opacity:1;transform:none}
+@media (max-width:960px){.mcx .hero .w,.mcx .split,.mcx .tryg,.mcx .agent{grid-template-columns:1fr}.mcx .who,.mcx .plans,.mcx .kit,.mcx .how{grid-template-columns:1fr}.mcx .feat{grid-template-columns:1fr 1fr}.mcx .flow{grid-template-columns:1fr;gap:22px}.mcx .flow h3{margin-top:18px}.mcx .stats{grid-template-columns:1fr 1fr}.mcx .stats div:nth-child(3){border-left:0;padding-left:0}.mcx .ways{grid-template-columns:1fr}.mcx .f1{left:8px}.mcx .f2{right:8px}}
+@media (max-width:560px){.mcx .feat,.mcx .earn{grid-template-columns:1fr}.mcx .tf .r2{grid-template-columns:1fr}.mcx .float{display:none}}
+</style>
+<div class="pc mcx">
+
+<section class="dk hero">
+  <div class="w">
+    <div class="rv">
+      <span class="pill"><b>New</b> Free 30-day online demo, no devices needed</span>
+      <h1>Run the whole facility. <span class="gt">Even when the internet doesn't.</span></h1>
+      <p class="lead">Pentarch MediCore is the management system for Kenyan pharmacies, clinics and hospitals. Counter sales, stock, patients, lab, wards and money in one place, running on a computer in your facility, with every sale and every stock movement recorded.</p>
+      <div class="cta">
+        <a class="b p" href="#try">Try it free for 30 days <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+        <a class="b o" href="/contact/">Book a guided demo</a>
+      </div>
+    </div>
+    <div class="shot rv">
+      <img src="/wp-content/uploads/2026/11/pentarch-medicore-dashboard.jpg" alt="Pentarch MediCore dashboard showing today's sales, patients and stock alerts" loading="eager">
+      <div class="float f1"><i style="background:#14B1AC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01M2 9a15 15 0 0 1 20 0"/><path d="M3 3l18 18"/></svg></i><span>Internet down<small>Still selling, nothing lost</small></span></div>
+      <div class="float f2"><i style="background:#EE4B3B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg></i><span>Amoxil 500mg<small>Expires in 41 days · 3 packs</small></span></div>
+    </div>
+  </div>
+  <div class="w sw"><div class="stats">
+    <div><b>Works offline</b><span>Runs on your own computer</span></div>
+    <div><b>30 days free</b><span>Online demo, sample data loaded</span></div>
+    <div><b>KES 2,500</b><span>a month for a pharmacy</span></div>
+    <div><b>1 day</b><span>to install and train your team</span></div>
+  </div></div>
+</section>
+
+<section>
+  <div class="w">
+    <span class="ey">Built for your type of facility</span>
+    <h2 class="h2">One system, set up for the way you work.</h2>
+    <p class="sub">Choose your facility type when we install it. MediCore switches on the screens you need and keeps the rest out of your way. Add branches of any type later.</p>
+    <div class="who">
+      <div class="card rv"><span class="tag">From KES 2,500/mo</span><div class="ic" style="background:#EE4B3B"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7zM8.5 8.5l7 7"/></svg></div><h3>Pharmacies and chemists</h3><p>A fast scan-and-sell counter that tracks every batch from delivery to the receipt.</p>
+        <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Barcode and 2D medicine-pack scanning</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Expiry alerts and a reorder list from real sales</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Shifts and cash-up with over/short per cashier</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Customers on account, loyalty points, returns</li></ul></div>
+      <div class="card rv"><span class="tag">From KES 5,000/mo</span><div class="ic" style="background:#14B1AC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4.8 2.3A.3.3 0 1 0 5 2H4a2 2 0 0 0-2 2v5a6 6 0 0 0 6 6 6 6 0 0 0 6-6V4a2 2 0 0 0-2-2h-1a.2.2 0 1 0 .3.3"/><path d="M8 15v1a6 6 0 0 0 6 6 6 6 0 0 0 6-6v-4"/><circle cx="20" cy="10" r="2"/></svg></div><h3>Clinics and medical centres</h3><p>The patient journey from reception to the doctor, the lab, the pharmacy and the cashier.</p>
+        <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Registration, queue, triage and consultation</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Lab requests, results and referrals</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Prescriptions dispensed straight from the visit</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Bills for SHA, insurance, M-Pesa and cash</li></ul></div>
+      <div class="card rv"><span class="tag">From KES 12,000/mo</span><div class="ic" style="background:#1F3C7A"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6v4M14 14h-4M14 18h-4M14 8h-4M18 12h2a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2h2M18 22V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v18"/></svg></div><h3>Hospitals and nursing homes</h3><p>Everything a clinic has, plus wards, beds, maternity and department reports.</p>
+        <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Admissions, wards and bed occupancy</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Maternity and inpatient charges</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Stores, purchase orders and branch transfers</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Several branches on one owner dashboard</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<section style="background:#fff;border-top:1px solid #E4E0D7;border-bottom:1px solid #E4E0D7">
+  <div class="w">
+    <span class="ey">A day on MediCore</span>
+    <h2 class="h2">From the delivery van to the evening report.</h2>
+    <div class="flow">
+      <div class="rv"><h3>Receive stock</h3><p>Scan the delivery. Batch numbers and expiry dates fill in from the pack's 2D code, and the purchase order is ticked off.</p></div>
+      <div class="rv"><h3>Sell or dispense</h3><p>Scan, take M-Pesa, cash, card or put it on account. The receipt prints and stock drops from the right batch.</p></div>
+      <div class="rv"><h3>Handle returns</h3><p>Refunds go back to the original batch, need a supervisor PIN and stay in the record with a reason.</p></div>
+      <div class="rv"><h3>Close the shift</h3><p>Count the drawer by note and coin. MediCore shows what should be there and asks for a reason for any gap.</p></div>
+      <div class="rv"><h3>Read the numbers</h3><p>Profit and loss, best and worst sellers, dead stock and each cashier's takings, for any day or month.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="dk">
+  <div class="w">
+    <span class="ey">What is inside</span>
+    <h2 class="h2">Every sale, stock move and change is logged. Nothing quietly disappears.</h2>
+    <p class="sub" style="color:#AFBBD0">Each action carries a name and a time. Owners see who sold what, who changed a price and who opened the drawer, even from another branch.</p>
+    <div class="feat">
+      <div class="fi rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 8v8M11 8v8M15 8v8M18 8v8"/></svg><h3>Point of sale</h3><p>Barcode scanning, keyboard shortcuts, credit sales, discounts with supervisor PIN.</p></div>
+      <div class="fi rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></svg><h3>Inventory and batches</h3><p>Stock by batch and expiry, packs and loose units, labels for your own barcodes.</p></div>
+      <div class="fi rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2M15 18H9M19 18h2a1 1 0 0 0 1-1v-3.6a1 1 0 0 0-.2-.6l-3.5-4.4A1 1 0 0 0 17.5 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></svg><h3>Purchasing</h3><p>Suggested orders, purchase orders on WhatsApp, partial deliveries, supplier history.</p></div>
+      <div class="fi rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5M8 21H3v-5M21 3l-7 7M3 21l7-7"/></svg><h3>Branch transfers</h3><p>Move stock between branches with send and receive steps, so nothing goes missing on the road.</p></div>
+      <div class="fi rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"/></svg><h3>Patients and visits</h3><p>Records, vitals, notes, diagnoses, full history at a glance, and appointments.</p></div>
+      <div class="fi rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2v7.5L4.5 19a2 2 0 0 0 1.7 3h11.6a2 2 0 0 0 1.7-3L14 9.5V2M8.5 2h7M7 16h10"/></svg><h3>Laboratory</h3><p>Requests from the doctor, results entry with normal ranges, printable reports.</p></div>
+      <div class="fi rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg><h3>Billing and cash</h3><p>M-Pesa, cash, card, SHA and insurance on one bill. Shifts, Z-reports and expenses.</p></div>
+      <div class="fi rv"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18M7 15l4-4 3 3 5-6"/></svg><h3>Reports</h3><p>Profit and loss with real cost of goods, sales by hour and cashier, dead stock.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="w split">
+    <div class="rv">
+      <span class="ey">Offline first, online when it helps</span>
+      <h2 class="h2">Your facility keeps working when the line or the power goes.</h2>
+      <p class="sub">MediCore runs on a computer inside your facility. Other computers, tablets and phones on your Wi-Fi connect to it. The internet is only needed for M-Pesa payment prompts and for checking the business from outside the facility.</p>
+      <ul class="ticks">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg><span><b>Your data stays yours.</b> Records live on your own computer, and you can take a full backup copy at any time.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg><span><b>Every user has their own PIN</b> and role, so a cashier never sees the profit report.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg><span><b>Power backup included</b> in the Counter Kit, so a KPLC cut doesn't stop a sale.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg><span><b>Your own facility website</b> can list your medicines and services and take orders.</span></li>
+      </ul>
+    </div>
+    <div class="diag rv" aria-label="How MediCore connects">
+      <div class="node"><i style="background:#0A1530"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></i><span><b>Main computer at the counter</b><small>Holds all records. Scanner, printer and cash drawer plug in here.</small></span></div>
+      <div class="line"></div>
+      <div class="node"><i style="background:#14B1AC"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01"/></svg></i><span><b>Facility Wi-Fi</b><small>Consultation room, lab and store use tablets or phones. No internet needed.</small></span></div>
+      <div class="line"></div>
+      <div class="node"><i style="background:#F6B22C"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9z"/></svg></i><span><b>Internet, when available</b><small>Backups, M-Pesa prompts, and the owner checking sales from anywhere.</small></span></div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" style="background:#fff;border-top:1px solid #E4E0D7;border-bottom:1px solid #E4E0D7">
+  <div class="w">
+    <span class="ey">Pricing</span>
+    <h2 class="h2">Clear prices in Kenya shillings. Pay monthly or save with a year.</h2>
+    <p class="sub">Every plan includes all updates, phone and WhatsApp support, and the free 30-day demo before you pay anything.</p>
+    <div class="tog" role="group" aria-label="Billing period"><button type="button" class="on" data-bill="m">Monthly</button><button type="button" data-bill="y">Yearly (2 months free)</button></div>
+    <div class="plans">
+      <div class="plan rv"><h3>Pharmacy</h3><p class="for">Retail pharmacies and chemists, with or without a lab</p><div class="price" data-m="2,500" data-y="25,000">KES <span>2,500</span><small class="per"> /month</small></div><p class="note">One-off setup KES 10,000</p>
+        <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Counter, stock, purchasing, cash-up</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Lab module if you run one</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Your item list imported for you</li></ul>
+        <a class="b o" href="#try">Start free demo</a></div>
+      <div class="plan hot rv"><span class="flag">Most chosen</span><h3>Clinic</h3><p class="for">Clinics, medical centres and maternity homes</p><div class="price" data-m="5,000" data-y="50,000">KES <span>5,000</span><small class="per"> /month</small></div><p class="note">One-off setup KES 15,000</p>
+        <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Everything in Pharmacy</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Patients, queue, consultation, lab</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>SHA and insurance billing</li></ul>
+        <a class="b p" href="#try">Start free demo</a></div>
+      <div class="plan rv"><h3>Hospital</h3><p class="for">Nursing homes and hospitals with wards and theatre</p><div class="price" data-m="12,000" data-y="120,000">KES <span>12,000</span><small class="per"> /month</small></div><p class="note">One-off setup KES 40,000</p>
+        <ul><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Everything in Clinic</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Admissions, wards, maternity</li><li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>Department and branch reports</li></ul>
+        <a class="b o" href="/contact/">Talk to us</a></div>
+    </div>
+    <p class="sub" style="margin-top:18px;font-size:15px">More branches? Each branch pays its own plan, with 15% off every branch from the third.</p>
+    <div class="ways">
+      <div class="way dark rv"><span class="ey">Option 1 · Complete package</span><h3>Software plus everything for the counter</h3><p>We bring the computer, scanner, printer, drawer and power backup, install it, load your items and train your staff.</p>
+        <table><tr><td>Pharmacy, first year (yearly plan)</td><td>KES 120,000</td></tr><tr><td>Clinic, first year (yearly plan)</td><td>KES 150,000</td></tr><tr><td>Hospital, one counter, first year</td><td>KES 245,000</td></tr></table><p style="font-size:13.5px;margin:12px 0 0">Counter Kit KES 85,000 + setup + one year of software. From year two you pay only the plan.</p></div>
+      <div class="way rv"><span class="ey">Option 2 · Use your own computers</span><h3>Setup only, on the machines you have</h3><p>We install MediCore on your existing Windows computer (4 GB RAM or more), connect your printer and scanner, and train your team.</p>
+        <table><tr><td>Pharmacy, first year</td><td>KES 35,000</td></tr><tr><td>Clinic, first year</td><td>KES 65,000</td></tr><tr><td>Hospital, first year</td><td>KES 160,000</td></tr></table><p style="font-size:13.5px;margin:12px 0 0">Setup + one year of software on the yearly plan. Monthly billing is also available.</p></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="w">
+    <span class="ey">The MediCore Counter Kit · KES 85,000</span>
+    <h2 class="h2">Tested devices that work together, delivered and installed.</h2>
+    <p class="sub">Every item is stocked in Kenya, so a replacement is a day away, not a month.</p>
+    <div class="kit">
+      <div class="k rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg></i><span><b>Computer</b>HP EliteDesk 800 G3 Mini (renewed), Core i5, 8 GB, 256 GB SSD, 19" monitor, keyboard, mouse</span></div>
+      <div class="k rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2M7 12h10"/></svg></i><span><b>Barcode scanner</b>Honeywell Youjie HH360 2D, USB. Reads box barcodes and the 2D codes on medicine packs</span></div>
+      <div class="k rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v8H6z"/></svg></i><span><b>Receipt printer</b>Xprinter XP-T80A, 80 mm thermal, USB and network, automatic cutter</span></div>
+      <div class="k rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="8" width="20" height="12" rx="2"/><path d="M6 8V5h12v3M8 14h8"/></svg></i><span><b>Cash drawer</b>5-note, 8-coin drawer that opens automatically when a cash sale prints</span></div>
+      <div class="k rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h9l-1 8 10-12h-9z"/></svg></i><span><b>Power backup</b>Mecer ME-650-VU 650 VA UPS, about 15 minutes to finish sales and close safely</span></div>
+      <div class="k rv"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 19.5h.01"/></svg></i><span><b>Wi-Fi router and paper</b>TP-Link TL-WR840N for tablets and phones, plus 10 rolls of receipt paper</span></div>
+    </div>
+    <div class="how">
+      <div class="rv"><b>How the scanner works</b>It plugs into USB and types the barcode as if from a keyboard. Point, beep, and the item is in the sale. No drivers.</div>
+      <div class="rv"><b>Packs without a barcode</b>MediCore makes one for you. Print shelf or pack labels on the optional label printer (KES 12,500 with 1,000 labels).</div>
+      <div class="rv"><b>2D codes on medicine packs</b>The square codes carry the product, batch and expiry. One scan when receiving fills all three.</div>
+    </div>
+  </div>
+</section>
+
+<section class="dk" id="try">
+  <div class="w tryg">
+    <div class="rv">
+      <span class="ey">Free for 30 days</span>
+      <h2 class="h2">See your own MediCore in one minute.</h2>
+      <p class="sub" style="color:#C9D4E5">You get a private copy already filled with sample medicines, patients and a month of sales, so every report has something to show. Use it on a phone or computer. No card, no devices, no commitment.</p>
+      <ul class="ticks" style="color:#C9D4E5">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg><span>Try a sale, receive stock, close a shift, read the profit report.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg><span>A Pentarch advisor calls to help you through it.</span></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg><span>If you buy, your demo becomes your live system.</span></li>
+      </ul>
+    </div>
+    <form class="tf rv" id="mcx-try" novalidate>
+      <div id="mcx-fields" style="display:grid;gap:12px">
+        <div class="seg" role="group" aria-label="Facility type"><button type="button" class="on" data-t="pharmacy">Pharmacy</button><button type="button" data-t="clinic">Clinic</button><button type="button" data-t="hospital">Hospital</button></div>
+        <label>Facility name<input name="facility" required placeholder="e.g. Afya Bora Chemist"></label>
+        <div class="r2"><label>Your name<input name="contact" required autocomplete="name"></label><label>Phone<input name="phone" required inputmode="tel" placeholder="07…" autocomplete="tel"></label></div>
+        <div class="r2"><label>Email (optional)<input name="email" type="email" autocomplete="email"></label><label>Town<input name="town" placeholder="e.g. Thika"></label></div>
+        <label class="ck"><input type="checkbox" name="agree" required><span>Pentarch may call or WhatsApp me about this demo.</span></label>
+        <div class="err" id="mcx-err"></div>
+        <button class="go" type="submit">Create my free demo</button>
+      </div>
+      <div id="mcx-done" style="display:none;gap:12px">
+        <h3 style="font-size:22px">Your MediCore is ready</h3>
+        <p style="margin:0">Save these details. You need them to sign in.</p>
+        <div class="creds"><div><small>Web address</small><b>medicore.pentarchcommunications.com</b></div><div><small>Username</small><b id="mcx-u"></b></div><div><small>PIN</small><b id="mcx-p"></b></div><div><small>Free until</small><b id="mcx-e"></b></div></div>
+        <a class="b p" id="mcx-open" href="https://medicore.pentarchcommunications.com/" style="justify-content:center">Open my MediCore</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section>
+  <div class="w">
+    <div class="agent rv">
+      <div>
+        <span class="ey">Earn with Pentarch</span>
+        <h2 class="h2">Know pharmacies and clinics? Become a MediCore agent.</h2>
+        <p class="sub">Medical reps, pharmacists, IT technicians and students across Kenya introduce MediCore in their area. Sign up free, record your clients from your phone, even offline, and start their demos yourself. Pentarch installs, trains and supports.</p>
+        <div class="cta"><a class="b p" href="https://medicore.pentarchcommunications.com/portal?apply">Apply to be an agent</a><a class="b o" href="https://medicore.pentarchcommunications.com/portal">Agent sign in</a></div>
+      </div>
+      <div class="earn">
+        <div><b>20%</b><span>of each client's first-year software fees</span></div>
+        <div><b>KES 5,000</b><span>for every Counter Kit installed</span></div>
+        <div><b>1 minute</b><span>to start a client's free demo</span></div>
+        <div><b>M-Pesa</b><span>commission paid within 7 days</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="w">
+    <span class="ey">Questions</span>
+    <h2 class="h2">What facilities ask before they switch.</h2>
+    <div class="faq">
+      <details><summary>Do we need internet for MediCore to work?</summary><p>No. The installed system runs on your own computer and keeps working with no internet. When there is a connection it can send M-Pesa payment prompts and let the owner check sales from elsewhere. The free online demo does need internet.</p></details>
+      <details><summary>Can we use the computers we already have?</summary><p>Yes. Any Windows computer with 4 GB of RAM or more will run it. Choose the setup-only option and we install it on your machines and connect your printer and scanner.</p></details>
+      <details><summary>How long does it take to start?</summary><p>One day on site for most pharmacies and clinics: we install, import your item list and prices, set up staff PINs and train the team. Larger hospitals are planned department by department.</p></details>
+      <details><summary>What happens to our records if we stop paying?</summary><p>They remain yours. After a 7-day grace period the system becomes read-only: you can view and print everything, but new entries pause until the plan is renewed.</p></details>
+      <details><summary>Does it handle SHA and insurance?</summary><p>MediCore records SHA and insurance numbers on patients and bills and produces claim lists. Direct electronic submission depends on certification and integration approvals; ask us for the current status before you buy.</p></details>
+      <details><summary>Can the owner see several branches?</summary><p>Yes. Add branches of any type under one account. The owner sees all of them together or one at a time, and can move stock between them.</p></details>
+    </div>
+    <div class="cta"><a class="b p" href="#try">Start your free demo</a><a class="b o" href="/contact/">Book a guided demo</a></div>
+  </div>
+</section>
+</div>
+<script>
+(function(){
+  var root=document.querySelector('.mcx'); if(!root) return;
+  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.12});
+  root.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
+  root.querySelectorAll('.tog button').forEach(function(b){b.addEventListener('click',function(){
+    root.querySelectorAll('.tog button').forEach(function(x){x.classList.toggle('on',x===b)});
+    var y=b.getAttribute('data-bill')==='y';
+    root.querySelectorAll('.price').forEach(function(p){p.querySelector('span').textContent=p.getAttribute(y?'data-y':'data-m');p.querySelector('.per').textContent=y?' /year':' /month';});
+  })});
+  var f=document.getElementById('mcx-try'), type='pharmacy', API='https://medicore.pentarchcommunications.com';
+  f.querySelectorAll('.seg button').forEach(function(b){b.addEventListener('click',function(){type=b.getAttribute('data-t');f.querySelectorAll('.seg button').forEach(function(x){x.classList.toggle('on',x===b)})})});
+  var err=document.getElementById('mcx-err');
+  function show(m){err.textContent=m;err.style.display='block'}
+  f.addEventListener('submit',function(e){
+    e.preventDefault(); err.style.display='none';
+    var d={type:type,facility:f.facility.value.trim(),contact:f.contact.value.trim(),phone:f.phone.value.trim(),email:f.email.value.trim(),town:f.town.value.trim(),agent:new URLSearchParams(location.search).get('agent')||''};
+    if(!d.facility||!d.contact||!d.phone) return show('Please fill in the facility name, your name and phone.');
+    if(!f.agree.checked) return show('Please tick the box so we can contact you about the demo.');
+    var btn=f.querySelector('.go'); btn.disabled=true; btn.textContent='Setting up your MediCore…';
+    fetch(API+'/api/public/demo',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(d)})
+      .then(function(r){return r.json().then(function(j){if(!r.ok) throw new Error(j.error||'Something went wrong.');return j;})})
+      .then(function(j){
+        document.getElementById('mcx-u').textContent=j.username; document.getElementById('mcx-p').textContent=j.pin;
+        document.getElementById('mcx-e').textContent=new Date(j.ends+'T00:00:00').toLocaleDateString('en-KE',{day:'numeric',month:'long'});
+        document.getElementById('mcx-fields').style.display='none'; document.getElementById('mcx-done').style.display='grid';
+        document.getElementById('mcx-open').href=API+'/';
+      })
+      .catch(function(x){show((x.message==='Failed to fetch'?'We could not reach the demo server. Please try again in a minute, or WhatsApp +254 729 455 912.':x.message));})
+      .then(function(){btn.disabled=false;btn.textContent='Create my free demo';});
+  });
+})();
+</script>
