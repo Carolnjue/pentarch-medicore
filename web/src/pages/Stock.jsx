@@ -282,3 +282,52 @@ function CountInput({ l, v, set }) {
 const packText = (l, q) => { const ps = l.pack_size > 1 ? l.pack_size : 1; const p = Math.floor(q / ps), u = q - p * ps; return ps === 1 ? `${q} ${q === 1 ? l.unit : plu(l.unit)}` : [p && `${p} ${p === 1 ? l.pack_name : plu(l.pack_name)}`, u && `${u} ${u === 1 ? l.unit : plu(l.unit)}`].filter(Boolean).join(' + ') || '0'; };
 
 const plu = w => /(x|s|ch|sh)$/.test(w || '') ? w + 'es' : (w || '') + 's';
+
+// ---------------- Expired, damaged and recalled stock: write-off and the disposal register ----------------
+export function Disposal() {
+  const c = useContext(ConfigContext);
+  const can = ['admin', 'superadmin', 'pharmacist'].includes(c.user.role);
+  const [cands, reloadC] = useData('/disposals/candidates');
+  const [reg, reloadR] = useData('/disposals');
+  const [pick, setPick] = useState({});
+  const [f, setF] = useState(null);
+  const chosen = (cands || []).filter(b => pick[b.id] > 0);
+  const value = chosen.reduce((a, b) => a + pick[b.id] * (b.cost || 0), 0);
+  const submit = async () => {
+    const r = await act(() => api.post('/disposals', { ...f, lines: chosen.map(b => ({ batch_id: b.id, qty: pick[b.id] })) }), 'Stock written off');
+    toast(`${r.disp_no}: ${r.lines} batch${r.lines > 1 ? 'es' : ''} written off, ${money(r.value)} at cost`);
+    setF(null); setPick({}); reloadC(); reloadR();
+  };
+  const printReg = () => {
+    const w = window.open('', '_blank');
+    w.document.write(`<title>Disposal register</title><style>body{font:12px Arial;margin:24px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:5px;text-align:left}th{background:#eee}</style><h2>${c.facility_name} · Disposal register</h2><table><tr><th>No.</th><th>Date</th><th>Item</th><th>Batch</th><th>Expiry</th><th>Quantity</th><th>Value (cost)</th><th>Reason</th><th>Method</th><th>Witness</th><th>Recorded by</th></tr>${(reg?.rows || []).map(d => `<tr><td>${d.disp_no}</td><td>${new Date(d.created_at).toLocaleDateString('en-KE')}</td><td>${d.name}${d.controlled ? ' (controlled)' : ''}</td><td>${d.batch_no || ''}</td><td>${d.expiry || ''}</td><td>${d.qty_text}</td><td>${d.value.toLocaleString('en-KE')}</td><td>${d.reason}</td><td>${d.method}</td><td>${d.witness}</td><td>${d.by_user}</td></tr>`).join('')}</table><p style="margin-top:30px">Superintendent pharmacist: ______________________ Signature: ____________ Date: __________</p>`);
+    w.document.close(); w.print();
+  };
+  return <div className="stack">
+    <Tip id="disposal">Expired, damaged or recalled stock must come off the shelf and out of the stock count, with a witness. Enter how much of each batch is going (or tap All), then record how it will be disposed of and who witnessed it. The register prints for PPB inspection.</Tip>
+    <div className="card" style={{ padding: 0 }}>
+      <div className="row" style={{ padding: '14px 16px 0' }}><h3 style={{ margin: 0 }}>Expired or expiring within 60 days</h3>
+        {chosen.length > 0 && can && <button className="primary right" onClick={() => setF({ reason: 'Expired', method: '', witness: '', note: '' })}>Write off {chosen.length} batch{chosen.length > 1 ? 'es' : ''} · {money(value)}</button>}</div>
+      {(cands || []).length ? <div className="tablewrap"><table className="table"><thead><tr><th>Item</th><th>Batch</th><th>Expiry</th><th className="num">In stock</th><th className="num">Value at cost</th><th className="num">Write off (single units)</th></tr></thead>
+        <tbody>{cands.map(b => <tr key={b.id}><td><b>{b.name}</b>{b.controlled ? <> <Badge tone="warn">Controlled</Badge></> : null}</td><td className="small">{b.batch_no}</td>
+          <td>{b.expired ? <Badge tone="bad">Expired {fmtDate(b.expiry)}</Badge> : <Badge tone="warn">{fmtDate(b.expiry)}</Badge>}</td><td className="num">{b.qty_text}</td><td className="num">{money(b.value)}</td>
+          <td className="num">{can ? <span className="row" style={{ justifyContent: 'flex-end', flexWrap: 'nowrap', gap: 6 }}><input type="number" min="0" max={b.qty} value={pick[b.id] ?? ''} onChange={e => setPick({ ...pick, [b.id]: Math.min(b.qty, Math.max(0, Number(e.target.value))) })} style={{ width: 90, textAlign: 'right' }} /><button className="sm" onClick={() => setPick({ ...pick, [b.id]: b.qty })}>All</button></span> : '-'}</td></tr>)}</tbody></table></div>
+        : <Empty icon="check">Nothing expired or expiring in the next 60 days.</Empty>}
+    </div>
+    <div className="card">
+      <div className="row"><h3 style={{ margin: 0 }}>Disposal register</h3><button className="right" onClick={printReg} disabled={!reg?.rows?.length}><Icon name="print" size={15} />Print register</button></div>
+      {reg?.rows?.length ? <div className="tablewrap"><table className="table small"><thead><tr><th>No.</th><th>Date</th><th>Item</th><th>Batch · expiry</th><th className="num">Quantity</th><th className="num">Value</th><th>Reason</th><th>Method</th><th>Witness</th><th>By</th></tr></thead>
+        <tbody>{reg.rows.map(d => <tr key={d.id}><td><b>{d.disp_no}</b></td><td>{fmtDT(d.created_at)}</td><td>{d.name}</td><td>{d.batch_no} · {fmtDate(d.expiry)}</td><td className="num">{d.qty_text}</td><td className="num">{money(d.value)}</td><td>{d.reason}</td><td>{d.method}</td><td>{d.witness}</td><td>{d.by_user}</td></tr>)}</tbody></table></div>
+        : <Empty icon="box">Nothing written off yet.</Empty>}
+    </div>
+    {f && <Modal title="Write off stock" onClose={() => setF(null)} footer={<><button onClick={() => setF(null)}>Cancel</button><button className="danger solid" onClick={submit}>Write off {money(value)}</button></>}>
+      <div className="fields">
+        <Field label="Reason"><select value={f.reason} onChange={e => setF({ ...f, reason: e.target.value })}>{(reg?.reasons || ['Expired']).map(r => <option key={r}>{r}</option>)}</select></Field>
+        <Field label="Disposal method" hint="e.g. returned to supplier for credit, collected by PPB-licensed disposer, incinerated"><input value={f.method} onChange={e => setF({ ...f, method: e.target.value })} /></Field>
+        <Field label="Witness (name)"><input value={f.witness} onChange={e => setF({ ...f, witness: e.target.value })} /></Field>
+        <Field label="Note"><input value={f.note} onChange={e => setF({ ...f, note: e.target.value })} placeholder="Optional" /></Field>
+      </div>
+      <p className="small muted">{chosen.map(b => `${b.name} (${b.batch_no}): ${pick[b.id]}`).join(' · ')}</p>
+    </Modal>}
+  </div>;
+}

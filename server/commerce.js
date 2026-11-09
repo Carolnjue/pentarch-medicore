@@ -381,7 +381,7 @@ module.exports = function commerce(app, H) {
       WHERE m.type IN ('sale','dispense','consumable','return') AND m.created_at BETWEEN ? AND ? GROUP BY i.id`, ...range);
     const cogs = cogsRows.reduce((a, r) => a + r.cost, 0);
     const lossRows = all(`SELECT m.type, SUM(-m.qty * COALESCE(b.cost, i.cost, 0)) cost FROM stock_moves m JOIN items i ON i.id=m.item_id LEFT JOIN batches b ON b.id=m.batch_id
-      WHERE m.type='adjust' AND m.qty<0 AND m.created_at BETWEEN ? AND ? GROUP BY m.type`, ...range);
+      WHERE m.type IN ('adjust','dispose') AND m.qty<0 AND m.created_at BETWEEN ? AND ? GROUP BY m.type`, ...range);
     const shrinkage = lossRows.reduce((a, r) => a + r.cost, 0);
     const exp = all('SELECT category, SUM(amount) amount FROM expenses WHERE date BETWEEN ? AND ? GROUP BY category ORDER BY amount DESC', from, to);
     const expenses = exp.reduce((a, r) => a + r.amount, 0);
@@ -527,5 +527,42 @@ module.exports = function commerce(app, H) {
     return { day, collected, receipts, pay, sales, refunds, cogs, gross, expenses, shifts, open, top, low: low.slice(0, 15).map(i => ({ name: i.name, stock_text: fmtQty(i, i.stock), out: i.stock <= 0 })), low_count: low.length, out_count: out.length,
       expiring: soon.slice(0, 15).map(b => ({ name: b.name, expiry: b.expiry, qty_text: fmtQty(b, b.qty), value: Math.round(b.qty * (b.cost || 0)) })), expiring_count: soon.length, expiring_value: Math.round(soonValue),
       text: lines.join('\n'), owner_whatsapp: cfg().owner_whatsapp || '' };
+  }));
+
+  // ---------- expired, damaged and recalled stock: write-off with a disposal register ----------
+  const REASONS = ['Expired', 'Damaged', 'Recalled by manufacturer or PPB', 'Returned to supplier', 'Other'];
+  app.get('/api/disposals/candidates', wrap(() => {
+    const soon = D.addDays(now(), 60).slice(0, 10);
+    return all(`SELECT b.*, i.name, i.code, i.unit, i.pack_size, i.pack_name, i.controlled FROM batches b JOIN items i ON i.id=b.item_id WHERE b.qty>0 AND b.expiry<=? ORDER BY b.expiry`, soon)
+      .map(b => ({ ...b, expired: b.expiry < today(), qty_text: fmtQty(b, b.qty), value: Math.round(b.qty * (b.cost || 0)) }));
+  }));
+  app.get('/api/disposals', wrap(req => {
+    const rows = all(`SELECT d.*, i.name, i.unit, i.pack_size, i.pack_name, i.controlled FROM disposals d JOIN items i ON i.id=d.item_id ORDER BY d.id DESC LIMIT 500`)
+      .map(d => ({ ...d, qty_text: fmtQty(d, d.qty), value: Math.round(d.qty * (d.cost || 0)) }));
+    return { rows, reasons: REASONS };
+  }));
+  app.post('/api/disposals', wrap(req => {
+    if (!['admin', 'superadmin', 'pharmacist'].includes(req.user.role)) fail('Only a pharmacist or administrator can write off stock');
+    const { lines = [], reason, method, witness, note } = req.body;
+    if (!REASONS.includes(reason)) fail('Choose why the stock is being written off');
+    if (!method?.trim()) fail('Say how it will be disposed of or returned');
+    if (!witness?.trim()) fail('Name a witness. Disposal must be witnessed.');
+    const todo = lines.filter(l => Number(l.qty) > 0);
+    if (!todo.length) fail('Choose at least one batch and quantity');
+    return tx(() => {
+      const n = (get('SELECT COUNT(DISTINCT disp_no) n FROM disposals').n || 0) + 1, no = 'DSP' + pad(n, 4);
+      let value = 0;
+      for (const l of todo) {
+        const b = get('SELECT * FROM batches WHERE id=?', l.batch_id); if (!b) fail('Batch not found');
+        const q = Math.min(Number(l.qty), b.qty);
+        run('UPDATE batches SET qty=qty-? WHERE id=?', q, b.id);
+        run('INSERT INTO stock_moves(item_id,batch_id,qty,type,ref,by_user,created_at) VALUES(?,?,?,?,?,?,?)', b.item_id, b.id, -q, 'dispose', `${no} ${reason}`, userOf(req), now());
+        run('INSERT INTO disposals(disp_no,item_id,batch_id,batch_no,expiry,qty,cost,reason,method,witness,note,by_user,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
+          no, b.item_id, b.id, b.batch_no, b.expiry, q, b.cost, reason, method.trim(), witness.trim(), note, userOf(req), now());
+        value += q * (b.cost || 0);
+      }
+      audit(req, `stock written off ${no}: ${reason}, value ${Math.round(value)}`, 'disposal', n);
+      return { disp_no: no, lines: todo.length, value: Math.round(value) };
+    });
   }));
 };
