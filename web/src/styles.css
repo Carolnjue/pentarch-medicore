@@ -322,3 +322,14 @@ kbd { font-family: ui-monospace, Consolas, monospace; background: var(--bg); bor
 .todo-item i { width: 10px; height: 10px; border-radius: 50%; flex: none; }
 .todo-item span { flex: 1; display: grid; min-width: 0; }
 .todo-item small { color: var(--ink-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* phones: stat cards two to a row so figures stay above the fold */
+@media (max-width: 760px) {
+  .g4:has(> .stat) { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .g4:has(> .stat) > :not(.stat), .g4 > .stat-action { grid-column: 1 / -1; }
+  .stat-action button { width: 100%; justify-content: center; }
+  .g4 > .stat { padding: 12px 13px; }
+  .g4 > .stat .value { font-size: 19px; }
+  .g4 > .stat .hint { font-size: 11px; }
+  .g4 > .stat .stat-ic { display: none; }
+}

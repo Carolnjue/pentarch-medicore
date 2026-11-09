@@ -347,7 +347,7 @@ export function SupplierAccounts() {
       <div className="card stat"><span className="label">Owed to suppliers</span><b className="value">{money(d?.owed || 0)}</b></div>
       <div className="card stat"><span className="label">Overdue</span><b className="value" style={{ color: d?.overdue ? 'var(--bad)' : null }}>{money(d?.overdue || 0)}</b></div>
       <div className="card stat"><span className="label">Due in the next 7 days</span><b className="value">{money(d?.due_week || 0)}</b></div>
-      <div className="card stat" style={{ justifyContent: 'center' }}>{admin && <button className="primary" onClick={() => setInv({ supplier: '', invoice_no: '', date: t, due_date: '', amount: '' })}><Icon name="plus" size={15} />Record supplier invoice</button>}</div>
+      <div className="card stat stat-action" style={{ justifyContent: 'center' }}>{admin && <button className="primary" onClick={() => setInv({ supplier: '', invoice_no: '', date: t, due_date: '', amount: '' })}><Icon name="plus" size={15} />Record supplier invoice</button>}</div>
     </div>
     <Tip id="supplier-accounts">Deliveries received against a purchase order are added here automatically as invoices, due after the supplier's credit terms. Pay the oldest first to keep good terms with suppliers.</Tip>
     <div className="card" style={{ padding: 0 }}><div className="tablewrap"><table className="table"><thead><tr><th>Supplier</th><th>Terms</th><th className="num">Owed</th><th className="num">Overdue</th><th>Next due</th><th /></tr></thead>
