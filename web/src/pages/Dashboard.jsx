@@ -20,6 +20,7 @@ export default function Dashboard() {
           <p className="sub">{c.facility_name} · {new Date().toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p></div>
         <div className="actions"><span className="demo-ribbon">Demo mode · M-Pesa, eTIMS and SHA are simulated</span></div>
       </div>
+      {!d.sample && isAdmin && (!c.last_backup || Date.now() - new Date(c.last_backup) > 7 * 864e5) && <div className="alert warn row"><Icon name="alert" size={16} /><span>{c.last_backup ? `Last backup was ${Math.floor((Date.now() - new Date(c.last_backup)) / 864e5)} days ago.` : 'No backup has been made yet.'} Keep a copy of your records off this computer.</span><a className="btn sm right" href="#/settings">Back up now</a></div>}
       {d.sample && isAdmin && <div className="tip"><Icon name="info" size={16} /><div>This branch is running on <b>sample data</b> for demos and training. When the facility goes live, remove it in <a href="#/settings">Settings → Data</a>. The medicine catalogue and prices stay.</div></div>}
 
       <div className="grid g-auto">

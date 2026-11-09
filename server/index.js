@@ -1230,6 +1230,7 @@ app.post('/api/public/order', wrap(req => {
 }));
 Object.assign(H, { D, R, all, get, run, tx, now, today, wrap, fail, userOf, audit, deduct, fmtQty, stockOf, billTotals, addLine, pad, adminOnly, itemsWithStock, cfg, PHONE });
 require('./commerce')(app, H);
+require('./backup')(app, H);
 Object.assign(H, { TYPES: D.TYPES, createBranch, SAMPLE_STAFF, uniqueUsername, sessionFor, dropBranch: D.dropBranch });
 if (process.env.MEDICORE_CLOUD === '1') require('./cloud')(app, H);
 // The MediCore section of pentarchcommunications.com is kept here so the site can be updated from this repo

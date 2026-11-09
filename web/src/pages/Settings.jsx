@@ -1,8 +1,8 @@
 import { LicencePanel } from '../shared/Licence';
 import React, { useContext, useState } from 'react';
-import { api } from '../api';
+import { api, getSession, getBranchId } from '../api';
 import { ConfigContext, ROLES } from '../App';
-import { useData, Field, Tabs, Badge, act, money, PageHead, Tip, Modal, Icon } from '../ui';
+import { useData, Field, Tabs, Badge, act, money, PageHead, Tip, Modal, Icon, toast } from '../ui';
 import { TypeCards, ModuleOptions } from './Onboard';
 
 export default function Settings({ reload, refreshProfile }) {
@@ -146,10 +146,7 @@ function Data({ reload }) {
       <label className="check"><input type="checkbox" checked={zero} onChange={e => setZero(e.target.checked)} />Also set all stock to zero (recommended, then receive your real stock)</label>
       <div><button className="danger" onClick={() => setConfirm('')}>Remove sample data…</button></div>
     </div>
-    <div className="card stack">
-      <h3>Backup</h3>
-      <p>Each branch is one file in <code>data/branches</code> on the main computer, and users are in <code>data/registry.db</code>. Copy the whole <code>data</code> folder to a flash drive at least once a week. Automatic cloud backup comes with the online sync.</p>
-    </div>
+    <BackupCard reload={reload} />
     {confirm !== null && <Modal title="Remove sample data?" onClose={() => setConfirm(null)} footer={<><button onClick={() => setConfirm(null)}>Cancel</button><button className="danger solid" disabled={confirm !== 'DELETE'} onClick={clear}>Remove permanently</button></>}>
       <p>This cannot be undone. Type <b>DELETE</b> to confirm.</p>
       <div className="mt"><input value={confirm} onChange={e => setConfirm(e.target.value)} autoFocus /></div>
@@ -182,5 +179,51 @@ function Network() {
     <p className="muted">The facility website for this branch is the same address followed by <code>/site</code>.</p>
     <h3 className="mt">Integrations</h3>
     <div className="row">{['M-Pesa Daraja', 'KRA eTIMS', 'SHA claims', 'DHA HIE (AfyaConnect)', 'KHIS / DHIS2', 'SMS reminders'].map(x => <Badge key={x} tone="warn">{x}: demo</Badge>)}</div>
+  </div>;
+}
+
+// Download a backup of every branch, and restore from one
+function BackupCard({ reload }) {
+  const c = useContext(ConfigContext);
+  const [busy, setBusy] = useState(false);
+  const [file, setFile] = useState(null);
+  const [confirm, setConfirm] = useState('');
+  const last = c.last_backup;
+  const days = last ? Math.floor((Date.now() - new Date(last)) / 864e5) : null;
+  const download = async () => {
+    setBusy(true);
+    try {
+      const s = getSession();
+      const r = await fetch('/api/backup', { headers: { 'x-token': s?.token || '', 'x-branch': getBranchId() || '' } });
+      if (!r.ok) throw new Error((await r.json().catch(() => ({}))).error || 'Backup failed');
+      const name = (r.headers.get('content-disposition') || '').match(/filename="([^"]+)"/)?.[1] || 'MediCore-backup.mcbak';
+      const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = name; a.click();
+      toast('Backup downloaded. Copy it to a flash drive or Google Drive.'); reload?.();
+    } catch (e) { toast(e.message, true); } finally { setBusy(false); }
+  };
+  const restore = async () => {
+    setBusy(true);
+    try {
+      const s = getSession();
+      const r = await fetch('/api/restore', { method: 'POST', headers: { 'content-type': 'application/gzip', 'x-token': s?.token || '', 'x-branch': getBranchId() || '' }, body: file });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(d.error || 'Restore failed');
+      toast(`Restored the backup made ${new Date(d.made_at).toLocaleString('en-KE')}`); setFile(null); setConfirm(''); setTimeout(() => location.reload(), 1200);
+    } catch (e) { toast(e.message, true); } finally { setBusy(false); }
+  };
+  return <div className="card stack">
+    <h3>Backup</h3>
+    <p className="muted" style={{ margin: 0 }}>One file holds every branch's patients, stock, sales and settings. Keep a copy away from this computer, on a flash drive or Google Drive, so a stolen or broken computer does not take your records with it.</p>
+    <div className="row">
+      <button className="primary" disabled={busy} onClick={download}><Icon name="upload" size={15} />{busy ? 'Working…' : 'Download backup now'}</button>
+      <span className={'small ' + (days == null || days > 7 ? '' : 'muted')} style={{ color: days == null || days > 7 ? 'var(--bad)' : null }}>{last ? `Last backup ${days === 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago'}` : 'No backup made yet'}</span>
+    </div>
+    <details><summary className="small">Restore from a backup file</summary>
+      <div className="stack mt">
+        <p className="small" style={{ margin: 0 }}>Restoring replaces everything in this facility's branches with the copy in the file. Use it after moving to a new computer or recovering from a fault.</p>
+        <input type="file" accept=".mcbak" onChange={e => setFile(e.target.files[0] || null)} />
+        {file && <div className="row"><input placeholder="Type RESTORE to confirm" value={confirm} onChange={e => setConfirm(e.target.value)} style={{ maxWidth: 220 }} /><button className="danger" disabled={busy || confirm !== 'RESTORE'} onClick={restore}>Restore {file.name}</button></div>}
+      </div>
+    </details>
   </div>;
 }
