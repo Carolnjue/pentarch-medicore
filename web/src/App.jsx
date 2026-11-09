@@ -56,6 +56,7 @@ export default function App() {
     setBranch(first); return first;
   });
   const [cfg, setCfg] = useState(null);
+  const [menu, setMenu] = useState(false); // phone-size navigation drawer
   const hash = useHash();
 
   useEffect(() => { api.get('/bootstrap').then(setBoot).catch(() => setBoot({ hasOrgs: true, types: {} })); }, []);
@@ -123,8 +124,9 @@ export default function App() {
   return (
     <ConfigContext.Provider value={{ ...c, user, session, branch: cfg.branch, branches: session.branches, reload: loadConfig }}>
       <div className="app">
-        <aside className="side">
-          <div className="brand"><Logo /><div><b>{c.facility_name}</b><small>{TYPE_LABEL[c.type]} · Pentarch MediCore</small></div></div>
+        <aside className={'side' + (menu ? ' open' : '')} onClick={e => { if (e.target.closest('a')) setMenu(false); }}>
+          <div className="brand"><Logo /><div><b>{c.facility_name}</b><small>{TYPE_LABEL[c.type]} · Pentarch MediCore</small></div>
+            <button className="menu-btn" onClick={() => setMenu(m => !m)} aria-label={menu ? 'Close menu' : 'Open menu'} aria-expanded={menu}>{menu ? '✕' : '☰'}</button></div>
           {(many || isSuper) && <div className="branch-switch">
             <select value={branch} onChange={e => chooseBranch(Number(e.target.value))} aria-label="Switch branch">
               {session.branches.map(b => <option key={b.id} value={b.id}>{b.name} · {TYPE_LABEL[b.type]}</option>)}
