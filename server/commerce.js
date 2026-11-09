@@ -667,4 +667,41 @@ module.exports = function commerce(app, H) {
     return { ok: true, updated: list.length };
   }));
   app.get('/api/pricing/history', wrap(() => all('SELECT p.*, i.name FROM price_changes p JOIN items i ON i.id=p.item_id ORDER BY p.id DESC LIMIT 200')));
+
+  // ---------- SHA and insurance claims: what is owed by payers, and its progress ----------
+  const CLAIM_STATUS = ['pending', 'submitted', 'paid', 'part-paid', 'rejected'];
+  app.get('/api/claims', wrap(req => {
+    const t = Date.now();
+    const rows = all(`SELECT p.id payment_id, p.method payer, p.amount, p.reference, p.created_at, p.bill_id, b.receipt_no, b.patient_id, b.customer_name,
+        COALESCE(pt.first_name||' '||pt.last_name, b.customer_name) patient, pt.mrn, pt.sha_number, c.status, c.scheme, c.member_no, c.claim_no, c.submitted_at, c.paid_amount, c.paid_at, c.remittance, c.reason
+      FROM payments p JOIN bills b ON b.id=p.bill_id LEFT JOIN patients pt ON pt.id=b.patient_id LEFT JOIN claims c ON c.payment_id=p.id
+      WHERE p.method IN ('sha','insurance') AND p.amount>0 ORDER BY p.created_at DESC LIMIT 1000`)
+      .map(r => ({ ...r, status: r.status || 'pending', member_no: r.member_no || r.sha_number || '', age: Math.floor((t - new Date(r.created_at)) / 864e5),
+        outstanding: ['paid', 'rejected'].includes(r.status) ? 0 : r.amount - (r.paid_amount || 0) }));
+    const open = rows.filter(r => r.outstanding > 0);
+    const band = (a, b) => open.filter(r => r.age >= a && r.age <= b).reduce((s, r) => s + r.outstanding, 0);
+    return { rows, statuses: CLAIM_STATUS, outstanding: open.reduce((s, r) => s + r.outstanding, 0),
+      ageing: { d30: band(0, 30), d60: band(31, 60), d90: band(61, 90), older: band(91, 1e6) },
+      byPayer: ['sha', 'insurance'].map(p => ({ payer: p, outstanding: open.filter(r => r.payer === p).reduce((s, r) => s + r.outstanding, 0), count: open.filter(r => r.payer === p).length })),
+      rejected: rows.filter(r => r.status === 'rejected').reduce((s, r) => s + r.amount, 0) };
+  }));
+  app.post('/api/claims/:paymentId', wrap(req => {
+    const p = get("SELECT * FROM payments WHERE id=? AND method IN ('sha','insurance')", req.params.paymentId);
+    if (!p) fail('Claim not found');
+    const b = req.body;
+    if (b.status && !CLAIM_STATUS.includes(b.status)) fail('Unknown status');
+    if (b.status === 'rejected' && !b.reason?.trim()) fail('Record why the claim was rejected');
+    if (['paid', 'part-paid'].includes(b.status) && !(Number(b.paid_amount) > 0)) fail('Enter the amount the payer paid');
+    const ex = get('SELECT * FROM claims WHERE payment_id=?', p.id);
+    const v = {
+      status: b.status || ex?.status || 'pending', scheme: b.scheme ?? ex?.scheme, member_no: b.member_no ?? ex?.member_no, claim_no: b.claim_no ?? ex?.claim_no,
+      submitted_at: b.status === 'submitted' && !ex?.submitted_at ? now() : ex?.submitted_at,
+      paid_amount: b.paid_amount != null ? Number(b.paid_amount) : ex?.paid_amount, paid_at: ['paid', 'part-paid'].includes(b.status) ? now() : ex?.paid_at,
+      remittance: b.remittance ?? ex?.remittance, reason: b.reason ?? ex?.reason,
+    };
+    if (ex) run('UPDATE claims SET status=?, scheme=?, member_no=?, claim_no=?, submitted_at=?, paid_amount=?, paid_at=?, remittance=?, reason=?, by_user=?, updated_at=? WHERE id=?', v.status, v.scheme, v.member_no, v.claim_no, v.submitted_at, v.paid_amount, v.paid_at, v.remittance, v.reason, userOf(req), now(), ex.id);
+    else run('INSERT INTO claims(payment_id,status,scheme,member_no,claim_no,submitted_at,paid_amount,paid_at,remittance,reason,by_user,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)', p.id, v.status, v.scheme, v.member_no, v.claim_no, v.submitted_at, v.paid_amount, v.paid_at, v.remittance, v.reason, userOf(req), now());
+    audit(req, `claim ${p.id} ${v.status}`, 'payment', p.id);
+    return { ok: true };
+  }));
 };

@@ -285,3 +285,52 @@ function Statement({ id, onClose }) {
     </div>
   </Modal>;
 }
+
+// ---------------- SHA and insurance claims register ----------------
+export function Claims() {
+  const [d, reload] = useData('/claims');
+  const [f, setF] = useState('open');
+  const [payer, setPayer] = useState('');
+  const [edit, setEdit] = useState(null);
+  const tone = { pending: 'warn', submitted: 'info', paid: 'good', 'part-paid': 'warn', rejected: 'bad' };
+  const label = { pending: 'To submit', submitted: 'Submitted', paid: 'Paid', 'part-paid': 'Part paid', rejected: 'Rejected' };
+  const rows = (d?.rows || []).filter(r => (!payer || r.payer === payer) && (f === 'all' || (f === 'open' ? r.outstanding > 0 : r.status === f)));
+  const csv = () => {
+    const keys = ['receipt_no', 'created_at', 'patient', 'mrn', 'payer', 'scheme', 'member_no', 'claim_no', 'amount', 'status', 'paid_amount', 'remittance', 'reason'];
+    const body = [keys.join(','), ...rows.map(r => keys.map(k => `"${String(r[k] ?? '').replace(/"/g, '""')}"`).join(','))].join('\n');
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], { type: 'text/csv' })); a.download = 'claims.csv'; a.click();
+  };
+  const save = async () => { await act(() => api.post('/claims/' + edit.payment_id, edit), 'Claim updated'); setEdit(null); reload(); };
+  return <div className="stack">
+    <div className="grid g4">
+      <Stat label="Owed by SHA and insurers" value={money(d?.outstanding || 0)} hint={(d?.byPayer || []).map(p => `${p.payer === 'sha' ? 'SHA' : 'Insurance'} ${money(p.outstanding)}`).join(' · ')} />
+      <Stat label="Up to 30 days" value={money(d?.ageing?.d30 || 0)} />
+      <Stat label="31 to 60 days" value={money(d?.ageing?.d60 || 0)} tone={d?.ageing?.d60 ? 'warn' : ''} />
+      <Stat label="Over 60 days" value={money((d?.ageing?.d90 || 0) + (d?.ageing?.older || 0))} tone={(d?.ageing?.d90 || d?.ageing?.older) ? 'bad' : ''} hint={d?.rejected ? `Rejected so far: ${money(d.rejected)}` : ''} />
+    </div>
+    <Tip id="claims">Every bill paid by SHA or a private insurer becomes a claim here. Mark it submitted when you send it, then paid (with the remittance number) or rejected (with the reason) when the payer responds. Follow up anything over 30 days.</Tip>
+    <div className="row">
+      <div className="seg">{[['open', 'Outstanding'], ['pending', 'To submit'], ['submitted', 'Submitted'], ['rejected', 'Rejected'], ['all', 'All']].map(([k, l]) => <button key={k} className={f === k ? 'on' : ''} onClick={() => setF(k)}>{l}</button>)}</div>
+      <select value={payer} onChange={e => setPayer(e.target.value)} style={{ width: 'auto' }}><option value="">SHA and insurance</option><option value="sha">SHA only</option><option value="insurance">Insurance only</option></select>
+      <button className="right" onClick={csv} disabled={!rows.length}>Export CSV</button>
+    </div>
+    <div className="card" style={{ padding: 0 }}><div className="tablewrap"><table className="table"><thead><tr><th>Date</th><th>Patient</th><th>Payer</th><th>Claim no.</th><th className="num">Amount</th><th className="num">Age</th><th>Status</th><th /></tr></thead>
+      <tbody>{rows.map(r => <tr key={r.payment_id}><td>{fmtDate(r.created_at)}<div className="faint small">{r.receipt_no}</div></td><td><b>{r.patient}</b><div className="faint small">{r.mrn}{r.member_no ? ' · ' + r.member_no : ''}</div></td>
+        <td>{r.payer === 'sha' ? 'SHA' : 'Insurance'}{r.scheme ? <div className="faint small">{r.scheme}</div> : null}</td><td className="small">{r.claim_no || '-'}</td>
+        <td className="num">{money(r.amount)}{r.status === 'part-paid' ? <div className="faint small">paid {money(r.paid_amount)}</div> : null}</td><td className="num">{r.age} d</td>
+        <td><Badge tone={tone[r.status]}>{label[r.status]}</Badge>{r.status === 'rejected' && r.reason ? <div className="small" style={{ color: 'var(--bad)' }}>{r.reason}</div> : null}</td>
+        <td className="nowrap">{r.status === 'pending' && <button className="sm primary" onClick={() => setEdit({ ...r, status: 'submitted' })}>Mark submitted</button>}{['submitted', 'part-paid'].includes(r.status) && <button className="sm primary" onClick={() => setEdit({ ...r, status: 'paid', paid_amount: r.amount })}>Record payment</button>}<button className="sm" onClick={() => setEdit({ ...r })}>Edit</button></td></tr>)}</tbody></table>
+      {d && !rows.length && <Empty icon="check">No claims here.</Empty>}</div></div>
+    {edit && <Modal title={`Claim · ${edit.patient} · ${money(edit.amount)}`} onClose={() => setEdit(null)} footer={<><button onClick={() => setEdit(null)}>Cancel</button><button className="primary" onClick={save}>Save</button></>}>
+      <div className="fields">
+        <Field label="Status"><select value={edit.status} onChange={e => setEdit({ ...edit, status: e.target.value })}>{(d?.statuses || []).map(s => <option key={s} value={s}>{label[s]}</option>)}</select></Field>
+        <Field label="Scheme / insurer"><input value={edit.scheme || ''} onChange={e => setEdit({ ...edit, scheme: e.target.value })} placeholder={edit.payer === 'sha' ? 'e.g. SHA Primary Health Care' : 'e.g. Jubilee, AAR, Britam'} /></Field>
+        <Field label="Member number"><input value={edit.member_no || ''} onChange={e => setEdit({ ...edit, member_no: e.target.value })} /></Field>
+        <Field label="Claim number"><input value={edit.claim_no || ''} onChange={e => setEdit({ ...edit, claim_no: e.target.value })} /></Field>
+        {['paid', 'part-paid'].includes(edit.status) && <><Field label="Amount paid by payer (KES)"><input type="number" value={edit.paid_amount ?? ''} onChange={e => setEdit({ ...edit, paid_amount: e.target.value })} /></Field>
+          <Field label="Remittance / payment reference"><input value={edit.remittance || ''} onChange={e => setEdit({ ...edit, remittance: e.target.value })} /></Field></>}
+        {edit.status === 'rejected' && <Field label="Reason for rejection" span={2}><input value={edit.reason || ''} onChange={e => setEdit({ ...edit, reason: e.target.value })} /></Field>}
+      </div>
+    </Modal>}
+  </div>;
+}

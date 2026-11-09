@@ -119,8 +119,9 @@ function seedSample(D, cfg) {
   const closedVisit = (pid, at, complaint, vit, dx, code, labs = [], rx = [], type = 'OPD') => {
     const v = run('INSERT INTO visits(patient_id,type,status,queue_no,complaint,triage_level,created_at,closed_at) VALUES(?,?,?,?,?,?,?,?)',
       pid, type, 'closed', 0, complaint, 'queue', at, at).lastInsertRowid;
+    const payer = rnd() < 0.3 ? 'sha' : rnd() < 0.08 ? 'insurance' : 'cash';
     const bill = run('INSERT INTO bills(visit_id,patient_id,payer,status,receipt_no,created_at,closed_at) VALUES(?,?,?,?,?,?,?)',
-      v, pid, rnd() < 0.3 ? 'sha' : 'cash', 'paid', 'RCT' + String(v).padStart(6, '0'), at, at).lastInsertRowid;
+      v, pid, payer, 'paid', 'RCT' + String(v).padStart(6, '0'), at, at).lastInsertRowid;
     if (vit) run('INSERT INTO vitals(visit_id,patient_id,temp,sys,dia,pulse,resp,spo2,weight,height,glucose,recorded_by,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
       v, pid, vit.temp, vit.sys, vit.dia, vit.pulse, vit.resp, vit.spo2, vit.weight, vit.height, vit.glucose, 'Nurse Jane Akinyi', at);
     if (dx) {
@@ -145,7 +146,7 @@ function seedSample(D, cfg) {
     }
     const tot = get('SELECT COALESCE(SUM(amount),0) t FROM bill_lines WHERE bill_id=?', bill).t;
     if (tot > 0) run('INSERT INTO payments(bill_id,method,amount,reference,by_user,created_at) VALUES(?,?,?,?,?,?)',
-      bill, rnd() > 0.35 ? 'mpesa' : 'cash', tot, 'S' + Math.floor(rnd() * 1e9).toString(36).toUpperCase().padEnd(9, 'K'), 'Cashier Tom Odhiambo', at);
+      bill, payer !== 'cash' ? payer : rnd() > 0.35 ? 'mpesa' : 'cash', tot, payer !== 'cash' ? (payer === 'sha' ? 'SHA-' : 'INS-') + v : 'S' + Math.floor(rnd() * 1e9).toString(36).toUpperCase().padEnd(9, 'K'), 'Cashier Tom Odhiambo', at);
     return v;
   };
   // stock leaves the oldest batch that still has enough, as a real sale would
@@ -389,6 +390,20 @@ function seedSample(D, cfg) {
     inv('Harleys Ltd', 'HL-90321', 41, 30, 22400, 0);
     inv('Surgipharm Ltd', 'SP-7781', 20, 45, 63900, 0);
     inv('Laborex Kenya', 'LBX-2290', 9, 30, 18750, 0);
+  }
+  // claims at different stages: older ones submitted or paid, one rejected, recent ones still to submit
+  {
+    const cl = all("SELECT * FROM payments WHERE method IN ('sha','insurance') ORDER BY created_at");
+    cl.forEach((p, i) => {
+      const age = (Date.now() - new Date(p.created_at)) / 864e5;
+      let st = age > 45 ? 'paid' : age > 14 ? 'submitted' : 'pending';
+      if (i === 2) st = 'rejected';
+      if (st === 'pending') return;
+      run('INSERT INTO claims(payment_id,status,scheme,member_no,claim_no,submitted_at,paid_amount,paid_at,remittance,reason,by_user,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)',
+        p.id, st, p.method === 'sha' ? 'SHA Primary Health Care' : 'Jubilee Health', null, 'CLM' + (5000 + p.id), p.created_at,
+        st === 'paid' ? p.amount : null, st === 'paid' ? daysAgo(Math.max(0, Math.round(age - 30))) : null, st === 'paid' ? 'RMT-' + (800 + i) : null,
+        st === 'rejected' ? 'Member not active on the date of service' : null, 'Jane (owner)', p.created_at);
+    });
   }
   // running costs sized to the sample's own takings, so the demo shows a believable margin
   const rev30 = get('SELECT COALESCE(SUM(amount),0) a FROM payments WHERE created_at>=?', daysAgo(30)).a || 100000;

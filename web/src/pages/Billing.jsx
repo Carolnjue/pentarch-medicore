@@ -3,7 +3,7 @@ import { api } from '../api';
 import { ConfigContext } from '../App';
 import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, toast, money, fmtDT, fmtTime, Empty, Icon } from '../ui';
 import { askSupervisor } from '../shared/askPin';
-import { Returns, Shifts, Expenses, Customers } from './Cash';
+import { Returns, Shifts, Expenses, Customers, Claims } from './Cash';
 
 // ---------- M-Pesa STK push (simulated in demo) ----------
 export function MpesaPush({ amount, phone: initPhone, onPaid }) {
@@ -166,8 +166,8 @@ export default function Billing({ openId }) {
         <div><h1>Billing & checkout</h1><p className="sub">{c.billing_mode === 'auto' ? 'Automatic billing: clinical actions post charges. ' : 'Manual billing: build each bill at the cashier. '}{c.auto_checkout ? 'Automatic checkout on.' : 'Manual checkout.'}</p></div>
         <div className="actions"><a href="#/settings" className="small">Change billing mode →</a></div>
       </div>
-      <Tabs value={tab} onChange={setTab} tabs={[['open', 'Open bills'], ['paid', 'Paid (7 days)'], ['credit', 'Credit / debtors'], ['returns', 'Returns'], ['shifts', 'Shifts & cash-up'], ['expenses', 'Expenses'], ['customers', 'Customers']]} />
-      {tab === 'returns' && <Returns />}{tab === 'shifts' && <Shifts />}{tab === 'expenses' && <Expenses />}{tab === 'customers' && <Customers />}
+      <Tabs value={tab} onChange={setTab} tabs={[['open', 'Open bills'], ['paid', 'Paid (7 days)'], ['credit', 'Credit / debtors'], ['claims', 'SHA & insurance claims'], ['returns', 'Returns'], ['shifts', 'Shifts & cash-up'], ['expenses', 'Expenses'], ['customers', 'Customers']]} />
+      {tab === 'claims' && <Claims />}{tab === 'returns' && <Returns />}{tab === 'shifts' && <Shifts />}{tab === 'expenses' && <Expenses />}{tab === 'customers' && <Customers />}
       {['open', 'paid', 'credit'].includes(tab) && <div className="tablewrap"><table className="table">
         <thead><tr><th>Opened</th><th>Patient / customer</th><th>Visit</th><th>Payer</th><th className="num">Total</th><th className="num">Paid</th><th className="num">Balance</th><th /></tr></thead>
         <tbody>{(list || []).map(b => <tr key={b.id} className="click" onClick={() => setOpen(b.id)}>
