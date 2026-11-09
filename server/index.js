@@ -102,8 +102,11 @@ app.post('/api/login', wrap(req => {
   const name = String(req.body.username || '').trim().toLowerCase(), keys = ['u:' + name, 'ip:' + req.ip];
   G.check(keys);
   const u = R.get('SELECT * FROM users WHERE username=? AND active=1', name);
-  if (!u || !D.verifyPin(u.pin_hash, req.body.pin)) { G.failed(keys); fail('Wrong username or PIN', 401); }
+  // sign-ins and wrong PINs go into the facility's audit trail, so the owner sees who came in and any guessing
+  const logAuth = (usr, action) => { try { const br = usr.branch_id || R.get('SELECT id FROM branches WHERE org_id=? ORDER BY id LIMIT 1', usr.org_id)?.id; if (br) D.openBranch(br).prepare('INSERT INTO audit(user,action,entity,entity_id,created_at) VALUES(?,?,?,?,?)').run(usr.name, action, 'sign-in', usr.id, now()); } catch {} };
+  if (!u || !D.verifyPin(u.pin_hash, req.body.pin)) { G.failed(keys); if (u) logAuth(u, `wrong PIN from ${req.ip}`); fail('Wrong username or PIN', 401); }
   G.passed(keys);
+  if (u.role !== 'superadmin') logAuth(u, `signed in from ${req.ip}`);
   if (G.isLegacy(u.pin_hash)) R.run('UPDATE users SET pin_hash=? WHERE id=?', D.hashPin(String(req.body.pin)), u.id); // upgrade older PIN hashes on sign-in
   return sessionFor(u);
 }));
