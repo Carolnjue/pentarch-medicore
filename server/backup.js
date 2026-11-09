@@ -16,7 +16,7 @@ module.exports = function backup(app, H) {
       if (fs.existsSync(path.join(dir, 'registry.db'))) return;
       fs.mkdirSync(dir, { recursive: true });
       R.exec(`VACUUM INTO '${path.join(dir, 'registry.db').replace(/'/g, "''")}'`);
-      for (const b of R.all('SELECT b.id FROM branches b LEFT JOIN orgs o ON o.id=b.org_id WHERE COALESCE(o.demo,0)=0')) D.openBranch(b.id).exec(`VACUUM INTO '${path.join(dir, `branch-${b.id}.db`).replace(/'/g, "''")}'`);
+      for (const b of R.all('SELECT b.id FROM branches b LEFT JOIN orgs o ON o.id=b.org_id LEFT JOIN licences l ON l.org_id=o.id WHERE COALESCE(o.demo,0)=0 OR l.key IS NOT NULL')) D.openBranch(b.id).exec(`VACUUM INTO '${path.join(dir, `branch-${b.id}.db`).replace(/'/g, "''")}'`);
       for (const old of fs.readdirSync(AUTO).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort().slice(0, -7)) fs.rmSync(path.join(AUTO, old), { recursive: true, force: true });
       console.log('Automatic backup saved to', dir);
     } catch (e) { console.error('Automatic backup failed:', e.message); }
