@@ -380,7 +380,19 @@ export function SupplierAccounts() {
 }
 function SupplierStatement({ name, onClose }) {
   const [d] = useData('/supplier-accounts/statement?supplier=' + encodeURIComponent(name));
-  return <Modal title={`${name} · statement`} onClose={onClose} wide footer={<button onClick={onClose}>Close</button>}>
+  const c = useContext(ConfigContext);
+  // printable copy to reconcile against the statement the supplier sends at month end
+  const print = () => {
+    const E = escObj({ d, name, f: c.facility_name || '' }), w = window.open('', '_blank'); if (!w) return;
+    const K = n => Math.round(n).toLocaleString('en-KE');
+    w.document.write(`<title>${E.name} statement</title><style>body{font:13px Arial;margin:28px}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ccc;padding:6px;text-align:left}.n{text-align:right}</style>
+      <h2>${E.f}</h2><h3>Supplier statement: ${E.name}</h3><p>Printed ${new Date().toLocaleString('en-KE')}</p>
+      <table><tr><th>Date</th><th>Details</th><th>Due</th><th class=n>Invoiced</th><th class=n>Paid</th><th class=n>Balance</th></tr>
+      ${[...E.d.rows].reverse().map(r => `<tr><td>${new Date(r.at).toLocaleDateString('en-KE')}</td><td>${r.kind === 'invoice' ? 'Invoice ' + r.ref : 'Payment ' + r.ref}</td><td>${r.kind === 'invoice' && r.due ? new Date(r.due).toLocaleDateString('en-KE') : ''}</td><td class=n>${r.amount > 0 ? K(r.amount) : ''}</td><td class=n>${r.amount < 0 ? K(-r.amount) : ''}</td><td class=n>${K(r.balance)}</td></tr>`).join('')}</table>
+      <h3 style="text-align:right">${E.d.owed > 0 ? 'We owe KES ' + K(E.d.owed) : 'Fully paid'}</h3><script>print()</script>`);
+    w.document.close();
+  };
+  return <Modal title={`${name} · statement`} onClose={onClose} wide footer={<>{d && <button onClick={print}><Icon name="print" size={14} />Print statement</button>}<button onClick={onClose}>Close</button></>}>
     {!d ? 'Loading…' : <div className="stack">
       <div className="row"><span className="muted">{d.supplier.phone || ''}{d.supplier.paybill ? ` · ${d.supplier.paybill}` : ''}</span><b className="right" style={{ fontSize: 20 }}>{d.owed > 0 ? `You owe ${money(d.owed)}` : 'Fully paid'}</b></div>
       <div className="tablewrap"><table className="table small"><thead><tr><th>Date</th><th>Details</th><th>Due</th><th className="num">Invoiced</th><th className="num">Paid</th><th className="num">Balance</th></tr></thead>
