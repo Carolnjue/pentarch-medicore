@@ -50,6 +50,7 @@ const R = {
   all: (sql, ...p) => reg.prepare(sql).all(...clean(p)),
   get: (sql, ...p) => reg.prepare(sql).get(...clean(p)),
   run: (sql, ...p) => reg.prepare(sql).run(...clean(p)),
+  exec: sql => reg.exec(sql),
 };
 // Pentarch super administrator (change the PIN in production)
 if (!R.get("SELECT id FROM users WHERE role='superadmin'")) {

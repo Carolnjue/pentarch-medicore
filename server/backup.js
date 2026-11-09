@@ -5,6 +5,26 @@ const express = require('express');
 
 module.exports = function backup(app, H) {
   const { D, R, wrap, fail, now, adminOnly, audit } = H;
+
+  // Daily safety copy of every database on this computer or server, kept for 7 days in data/backups.
+  // It protects against a damaged file or a mistake; the downloaded .mcbak protects against losing the computer.
+  const fs = require('fs'), path = require('path');
+  const AUTO = path.join(D.DATA_DIR, 'backups');
+  function autoBackup() {
+    try {
+      const day = new Date().toISOString().slice(0, 10), dir = path.join(AUTO, day);
+      if (fs.existsSync(path.join(dir, 'registry.db'))) return;
+      fs.mkdirSync(dir, { recursive: true });
+      R.exec(`VACUUM INTO '${path.join(dir, 'registry.db').replace(/'/g, "''")}'`);
+      for (const b of R.all('SELECT b.id FROM branches b LEFT JOIN orgs o ON o.id=b.org_id WHERE COALESCE(o.demo,0)=0')) D.openBranch(b.id).exec(`VACUUM INTO '${path.join(dir, `branch-${b.id}.db`).replace(/'/g, "''")}'`);
+      for (const old of fs.readdirSync(AUTO).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort().slice(0, -7)) fs.rmSync(path.join(AUTO, old), { recursive: true, force: true });
+      console.log('Automatic backup saved to', dir);
+    } catch (e) { console.error('Automatic backup failed:', e.message); }
+  }
+  setTimeout(autoBackup, Number(process.env.MEDICORE_AUTOBACKUP_DELAY || 60e3)).unref();
+  setInterval(autoBackup, 3 * 3600e3).unref();
+  app.get('/api/backup/auto', adminOnly, wrap(() => ({ cloud: process.env.MEDICORE_CLOUD === '1', days: fs.existsSync(AUTO) ? fs.readdirSync(AUTO).filter(d => /^\d{4}-\d{2}-\d{2}$/.test(d)).sort().reverse() : [] })));
+
   const tables = db => db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").all().map(r => r.name);
   const dump = db => Object.fromEntries(tables(db).map(t => [t, db.prepare(`SELECT * FROM "${t}"`).all()]));
   const orgOf = req => req.user.org_id || req.branch?.org_id;

@@ -189,6 +189,7 @@ function BackupCard({ reload }) {
   const [busy, setBusy] = useState(false);
   const [file, setFile] = useState(null);
   const [confirm, setConfirm] = useState('');
+  const [auto] = useData('/backup/auto');
   const last = c.last_backup;
   const days = last ? Math.floor((Date.now() - new Date(last)) / 864e5) : null;
   const download = async () => {
@@ -219,6 +220,7 @@ function BackupCard({ reload }) {
       <button className="primary" disabled={busy} onClick={download}><Icon name="upload" size={15} />{busy ? 'Working…' : 'Download backup now'}</button>
       <span className={'small ' + (days == null || days > 7 ? '' : 'muted')} style={{ color: days == null || days > 7 ? 'var(--bad)' : null }}>{last ? `Last backup ${days === 0 ? 'today' : days === 1 ? 'yesterday' : days + ' days ago'}` : 'No backup made yet'}</span>
     </div>
+    {auto && <p className="small muted" style={{ margin: 0 }}><Icon name="check" size={13} /> {auto.cloud ? "Pentarch also keeps" : "MediCore also keeps"} an automatic copy every day for 7 days{auto.cloud ? "" : <> in the <code>{"data\\backups"}</code> folder</>}{auto.days?.length ? `, latest ${auto.days[0]}` : ''}. That copy protects against a damaged file, not a lost computer, so still download your own.</p>}
     <details><summary className="small">Restore from a backup file</summary>
       <div className="stack mt">
         <p className="small" style={{ margin: 0 }}>Restoring replaces everything in this facility's branches with the copy in the file. Use it after moving to a new computer or recovering from a fault.</p>
