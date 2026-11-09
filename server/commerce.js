@@ -285,6 +285,14 @@ module.exports = function commerce(app, H) {
         run('UPDATE po_lines SET received=received+? WHERE id=?', qty, pl.id);
         if (cost > 0) run('UPDATE items SET cost=? WHERE id=?', cost, pl.item_id);
       }
+      // the delivery becomes a supplier invoice, so what is owed to suppliers is always known
+      const value = got.reduce((a, l) => { const pl = get('SELECT l.*, i.pack_size FROM po_lines l JOIN items i ON i.id=l.item_id WHERE l.id=?', l.line_id); return a + ((Number(l.packs) || 0) + (Number(l.loose) || 0) / pl.pack_size) * Number(l.pack_cost || pl.pack_cost); }, 0);
+      if (value > 0) {
+        const sup = get('SELECT * FROM suppliers WHERE name=?', po.supplier) || {};
+        const due = D.addDays(now(), Number(req.body.terms_days ?? sup.terms_days ?? 30)).slice(0, 10);
+        const inv = run('INSERT INTO supplier_invoices(supplier,invoice_no,po_id,date,due_date,amount,notes,created_by,created_at) VALUES(?,?,?,?,?,?,?,?,?)', po.supplier, req.body.invoice || po.po_no, po.id, today(), due, Math.round(value * 100) / 100, 'Delivery against ' + po.po_no, userOf(req), now()).lastInsertRowid;
+        if (req.body.paid_now) run('INSERT INTO supplier_payments(supplier,invoice_id,amount,method,reference,date,by_user,created_at) VALUES(?,?,?,?,?,?,?,?)', po.supplier, inv, Math.round(value * 100) / 100, req.body.paid_method || 'cash', req.body.paid_ref || '', today(), userOf(req), now());
+      }
       const open = all('SELECT l.*, i.pack_size FROM po_lines l JOIN items i ON i.id=l.item_id WHERE l.po_id=?', po.id).some(l => l.received < l.packs * l.pack_size);
       run('UPDATE purchase_orders SET status=?, closed_at=? WHERE id=?', open ? 'partial' : 'received', open ? null : now(), po.id);
     });
@@ -508,6 +516,7 @@ module.exports = function commerce(app, H) {
     const out = low.filter(i => i.stock <= 0);
     const soon = all('SELECT b.qty, b.expiry, b.cost, i.name, i.unit, i.pack_size, i.pack_name FROM batches b JOIN items i ON i.id=b.item_id WHERE b.qty>0 AND b.expiry>=? AND b.expiry<=? ORDER BY b.expiry', today(), D.addDays(now(), 60));
     const soonValue = soon.reduce((a, b) => a + b.qty * (b.cost || 0), 0);
+    const supDue = all('SELECT * FROM supplier_invoices WHERE due_date<=?', D.addDays(now(), 7).slice(0, 10)).reduce((a, i) => a + Math.max(0, i.amount - get('SELECT COALESCE(SUM(amount),0) a FROM supplier_payments WHERE invoice_id=?', i.id).a), 0);
     const facility = cfg().facility_name || 'MediCore';
     const gross = sales - refunds - cogs;
     const K = n => 'KES ' + Math.round(n).toLocaleString('en-KE');
@@ -522,6 +531,7 @@ module.exports = function commerce(app, H) {
       top.length ? `Top sellers: ${top.slice(0, 3).map(t => t.description).join(', ')}` : null,
       `Out of stock: ${out.length} · Low: ${low.length - out.length}`,
       soon.length ? `Expiring in 60 days: ${soon.length} batch${soon.length === 1 ? '' : 'es'} worth ${K(soonValue)}` : null,
+      supDue > 0 ? `Suppliers due in 7 days or overdue: ${K(supDue)}` : null,
       '_Sent from Pentarch MediCore_',
     ].filter(Boolean);
     return { day, collected, receipts, pay, sales, refunds, cogs, gross, expenses, shifts, open, top, low: low.slice(0, 15).map(i => ({ name: i.name, stock_text: fmtQty(i, i.stock), out: i.stock <= 0 })), low_count: low.length, out_count: out.length,
@@ -564,5 +574,55 @@ module.exports = function commerce(app, H) {
       audit(req, `stock written off ${no}: ${reason}, value ${Math.round(value)}`, 'disposal', n);
       return { disp_no: no, lines: todo.length, value: Math.round(value) };
     });
+  }));
+
+  // ---------- supplier accounts: invoices from deliveries, payments, what is owed and when ----------
+  const invBal = inv => inv.amount - get('SELECT COALESCE(SUM(amount),0) a FROM supplier_payments WHERE invoice_id=?', inv.id).a;
+  app.get('/api/supplier-accounts', wrap(() => {
+    const names = [...new Set([...all('SELECT name FROM suppliers').map(r => r.name), ...all('SELECT DISTINCT supplier FROM supplier_invoices').map(r => r.supplier)])].filter(Boolean);
+    const t = today();
+    const rows = names.map(n => {
+      const invs = all('SELECT * FROM supplier_invoices WHERE supplier=?', n).map(i => ({ ...i, balance: invBal(i) }));
+      const open = invs.filter(i => i.balance > 0.5);
+      const sup = get('SELECT * FROM suppliers WHERE name=?', n) || { name: n };
+      return { ...sup, name: n, invoiced: invs.reduce((a, i) => a + i.amount, 0), paid: get('SELECT COALESCE(SUM(amount),0) a FROM supplier_payments WHERE supplier=?', n).a,
+        owed: open.reduce((a, i) => a + i.balance, 0), overdue: open.filter(i => i.due_date < t).reduce((a, i) => a + i.balance, 0),
+        next_due: open.map(i => i.due_date).sort()[0] || null, open_invoices: open.length };
+    }).sort((a, b) => b.owed - a.owed);
+    return { rows, owed: rows.reduce((a, r) => a + r.owed, 0), overdue: rows.reduce((a, r) => a + r.overdue, 0), due_week: all('SELECT * FROM supplier_invoices WHERE due_date<=?', D.addDays(now(), 7).slice(0, 10)).reduce((a, i) => a + Math.max(0, invBal(i)), 0) };
+  }));
+  app.get('/api/supplier-accounts/statement', wrap(req => {
+    const n = String(req.query.supplier || '');
+    const rows = [
+      ...all('SELECT * FROM supplier_invoices WHERE supplier=?', n).map(i => ({ at: i.date, kind: 'invoice', ref: i.invoice_no, due: i.due_date, amount: i.amount, id: i.id, balance_open: invBal(i) })),
+      ...all('SELECT * FROM supplier_payments WHERE supplier=?', n).map(p => ({ at: p.date, kind: 'payment', ref: [p.method === 'mpesa' ? 'M-Pesa' : p.method, p.reference].filter(Boolean).join(' '), amount: -p.amount, by: p.by_user })),
+    ].sort((a, b) => String(a.at).localeCompare(String(b.at)) || (a.kind === 'invoice' ? -1 : 1));
+    let bal = 0; for (const r of rows) { bal += r.amount; r.balance = Math.round(bal * 100) / 100; }
+    return { supplier: get('SELECT * FROM suppliers WHERE name=?', n) || { name: n }, rows, owed: Math.max(0, bal) };
+  }));
+  app.post('/api/supplier-invoices', adminOnly, wrap(req => {
+    const { supplier, invoice_no, date, due_date, amount, notes } = req.body;
+    if (!supplier?.trim()) fail('Choose the supplier'); if (!(Number(amount) > 0)) fail('Enter the invoice amount');
+    if (!get('SELECT id FROM suppliers WHERE name=?', supplier.trim())) run('INSERT INTO suppliers(name) VALUES(?)', supplier.trim());
+    run('INSERT INTO supplier_invoices(supplier,invoice_no,date,due_date,amount,notes,created_by,created_at) VALUES(?,?,?,?,?,?,?,?)', supplier.trim(), invoice_no, date || today(), due_date || D.addDays(now(), 30).slice(0, 10), Number(amount), notes, userOf(req), now());
+    audit(req, `supplier invoice ${invoice_no || ''} ${supplier} ${amount}`, 'supplier', null);
+    return { ok: true };
+  }));
+  app.post('/api/supplier-payments', adminOnly, wrap(req => {
+    const { supplier, method = 'bank', reference } = req.body; let left = Number(req.body.amount);
+    if (!(left > 0)) fail('Enter the amount paid');
+    const open = all('SELECT * FROM supplier_invoices WHERE supplier=? ORDER BY due_date, id', supplier).map(i => ({ i, bal: invBal(i) })).filter(x => x.bal > 0.5);
+    const owed = open.reduce((a, x) => a + x.bal, 0);
+    if (left > owed + 0.5) fail(`You owe ${supplier} ${Math.round(owed).toLocaleString('en-KE')}. Pay only that amount.`);
+    return tx(() => {
+      for (const { i, bal } of open) { if (left <= 0) break; const take = Math.min(left, bal); run('INSERT INTO supplier_payments(supplier,invoice_id,amount,method,reference,date,by_user,created_at) VALUES(?,?,?,?,?,?,?,?)', supplier, i.id, take, method, reference, today(), userOf(req), now()); left -= take; }
+      audit(req, `paid supplier ${supplier} ${req.body.amount}`, 'supplier', null);
+      return { ok: true, remaining: Math.max(0, Math.round(owed - Number(req.body.amount))) };
+    });
+  }));
+  app.put('/api/suppliers/:id', adminOnly, wrap(req => {
+    const s0 = get('SELECT * FROM suppliers WHERE id=?', req.params.id); if (!s0) fail('Supplier not found');
+    run('UPDATE suppliers SET phone=?, email=?, contact=?, terms_days=?, paybill=? WHERE id=?', req.body.phone ?? s0.phone, req.body.email ?? s0.email, req.body.contact ?? s0.contact, Number(req.body.terms_days ?? s0.terms_days ?? 30), req.body.paybill ?? s0.paybill, s0.id);
+    return { ok: true };
   }));
 };

@@ -375,6 +375,21 @@ function seedSample(D, cfg) {
       credit(grace, 'Grace Wambui', 4, [[otcItems[2], 2]], 0);
     }
   }
+  // suppliers on credit terms: some invoices paid, some due, one overdue
+  {
+    const sups = [['Dawa Ltd', 30, '0722 100 200'], ['Harleys Ltd', 30, '0733 200 300'], ['Surgipharm Ltd', 45, '0711 300 400'], ['Laborex Kenya', 30, '0720 400 500']];
+    for (const [n, t, ph] of sups) { if (!get('SELECT id FROM suppliers WHERE name=?', n)) run('INSERT INTO suppliers(name,phone,terms_days) VALUES(?,?,?)', n, ph, t); else run('UPDATE suppliers SET terms_days=?, phone=COALESCE(phone,?) WHERE name=?', t, ph, n); }
+    const inv = (sup, no, d, terms, amt, paid) => {
+      const date = addDays(now(), -d).slice(0, 10), due = addDays(now(), terms - d).slice(0, 10);
+      const id = run('INSERT INTO supplier_invoices(supplier,invoice_no,date,due_date,amount,notes,created_by,created_at) VALUES(?,?,?,?,?,?,?,?)', sup, no, date, due, amt, 'Delivery', 'Jane (owner)', daysAgo(d)).lastInsertRowid;
+      if (paid) run('INSERT INTO supplier_payments(supplier,invoice_id,amount,method,reference,date,by_user,created_at) VALUES(?,?,?,?,?,?,?,?)', sup, id, paid, 'bank', 'EFT' + (1000 + d), addDays(now(), -d + 20).slice(0, 10), 'Jane (owner)', daysAgo(Math.max(0, d - 20)));
+    };
+    inv('Dawa Ltd', 'DW-44812', 52, 30, 48600, 48600);
+    inv('Dawa Ltd', 'DW-45230', 24, 30, 37250, 15000);
+    inv('Harleys Ltd', 'HL-90321', 41, 30, 22400, 0);
+    inv('Surgipharm Ltd', 'SP-7781', 20, 45, 63900, 0);
+    inv('Laborex Kenya', 'LBX-2290', 9, 30, 18750, 0);
+  }
   // running costs sized to the sample's own takings, so the demo shows a believable margin
   const rev30 = get('SELECT COALESCE(SUM(amount),0) a FROM payments WHERE created_at>=?', daysAgo(30)).a || 100000;
   const r = f => Math.round(rev30 * f / 50) * 50;

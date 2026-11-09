@@ -143,6 +143,10 @@ CREATE TABLE IF NOT EXISTS web_orders (
   id INTEGER PRIMARY KEY, name TEXT, phone TEXT, items TEXT, total REAL, delivery TEXT,
   prescription_note TEXT, status TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY, user TEXT, action TEXT, entity TEXT, entity_id INTEGER, created_at TEXT);
+CREATE TABLE IF NOT EXISTS supplier_invoices (
+  id INTEGER PRIMARY KEY, supplier TEXT, invoice_no TEXT, po_id INTEGER, date TEXT, due_date TEXT, amount REAL, notes TEXT, created_by TEXT, created_at TEXT);
+CREATE TABLE IF NOT EXISTS supplier_payments (
+  id INTEGER PRIMARY KEY, supplier TEXT, invoice_id INTEGER, amount REAL, method TEXT, reference TEXT, date TEXT, by_user TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS disposals (
   id INTEGER PRIMARY KEY, disp_no TEXT, item_id INTEGER, batch_id INTEGER, batch_no TEXT, expiry TEXT, qty REAL, cost REAL,
   reason TEXT, method TEXT, witness TEXT, note TEXT, by_user TEXT, created_at TEXT);
@@ -179,6 +183,7 @@ CREATE INDEX IF NOT EXISTS ix_items_barcode ON items(barcode);
 const ADDED_COLUMNS = [
   ['payments', 'shift_id', 'INTEGER'], ['bills', 'customer_id', 'INTEGER'], ['bills', 'customer_phone', 'TEXT'],
   ['items', 'gtin', 'TEXT'], ['items', 'location', 'TEXT'], ['batches', 'po_id', 'INTEGER'],
+  ['suppliers', 'terms_days', 'INTEGER'], ['suppliers', 'contact', 'TEXT'], ['suppliers', 'paybill', 'TEXT'],
 ];
 function migrate(d) {
   for (const [t, c, type] of ADDED_COLUMNS) {
@@ -297,7 +302,7 @@ function clearSample({ zeroStock = true } = {}) {
   tx(() => {
     for (const t of ['patients', 'visits', 'vitals', 'notes', 'lab_orders', 'imaging_orders', 'prescriptions', 'procedures', 'bills', 'bill_lines',
       'payments', 'admissions', 'nursing_notes', 'partograph', 'pregnancies', 'anc_visits', 'deliveries', 'referrals', 'appointments', 'web_orders', 'audit',
-      'shifts', 'refunds', 'purchase_orders', 'po_lines', 'expenses', 'customers', 'stock_counts', 'stock_count_lines', 'disposals']) run(`DELETE FROM ${t}`);
+      'shifts', 'refunds', 'purchase_orders', 'po_lines', 'expenses', 'customers', 'stock_counts', 'stock_count_lines', 'disposals', 'supplier_invoices', 'supplier_payments']) run(`DELETE FROM ${t}`);
     if (zeroStock) { run('DELETE FROM batches'); run('DELETE FROM stock_moves'); }
   });
   R.run('UPDATE branches SET sample=0 WHERE id=?', currentBranch);

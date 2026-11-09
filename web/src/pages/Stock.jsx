@@ -331,3 +331,61 @@ export function Disposal() {
     </Modal>}
   </div>;
 }
+
+// ---------------- Supplier accounts: what we owe, when it is due, paying it ----------------
+export function SupplierAccounts() {
+  const c = useContext(ConfigContext);
+  const admin = c.user.role === 'admin' || c.user.role === 'superadmin';
+  const [d, reload] = useData('/supplier-accounts');
+  const [stmt, setStmt] = useState(null);
+  const [pay, setPay] = useState(null);
+  const [inv, setInv] = useState(null);
+  const [edit, setEdit] = useState(null);
+  const t = todayISO();
+  return <div className="stack">
+    <div className="grid g4">
+      <div className="card stat"><span className="label">Owed to suppliers</span><b className="value">{money(d?.owed || 0)}</b></div>
+      <div className="card stat"><span className="label">Overdue</span><b className="value" style={{ color: d?.overdue ? 'var(--bad)' : null }}>{money(d?.overdue || 0)}</b></div>
+      <div className="card stat"><span className="label">Due in the next 7 days</span><b className="value">{money(d?.due_week || 0)}</b></div>
+      <div className="card stat" style={{ justifyContent: 'center' }}>{admin && <button className="primary" onClick={() => setInv({ supplier: '', invoice_no: '', date: t, due_date: '', amount: '' })}><Icon name="plus" size={15} />Record supplier invoice</button>}</div>
+    </div>
+    <Tip id="supplier-accounts">Deliveries received against a purchase order are added here automatically as invoices, due after the supplier's credit terms. Pay the oldest first to keep good terms with suppliers.</Tip>
+    <div className="card" style={{ padding: 0 }}><div className="tablewrap"><table className="table"><thead><tr><th>Supplier</th><th>Terms</th><th className="num">Owed</th><th className="num">Overdue</th><th>Next due</th><th /></tr></thead>
+      <tbody>{(d?.rows || []).map(r => <tr key={r.name}><td><b>{r.name}</b>{r.phone ? <span className="faint small"> · {r.phone}</span> : null}</td><td>{r.terms_days || 30} days</td>
+        <td className="num">{r.owed > 0 ? <b>{money(r.owed)}</b> : '-'}</td><td className="num" style={{ color: r.overdue ? 'var(--bad)' : null }}>{r.overdue ? money(r.overdue) : '-'}</td>
+        <td>{r.next_due ? <Badge tone={r.next_due < t ? 'bad' : r.next_due <= new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10) ? 'warn' : ''}>{fmtDate(r.next_due)}</Badge> : '-'}</td>
+        <td className="nowrap"><button className="sm" onClick={() => setStmt(r.name)}>Statement</button>{admin && r.owed > 0 && <button className="sm primary" onClick={() => setPay({ supplier: r.name, amount: String(Math.round(r.overdue || r.owed)), method: 'bank', reference: '' })}>Pay</button>}{admin && r.id && <button className="sm" onClick={() => setEdit({ ...r })}>Edit</button>}</td></tr>)}</tbody></table>
+      {d && !d.rows.length && <Empty icon="truck">No suppliers yet. They appear when you receive stock.</Empty>}</div></div>
+    {stmt && <SupplierStatement name={stmt} onClose={() => setStmt(null)} />}
+    {pay && <Modal title={`Pay ${pay.supplier}`} onClose={() => setPay(null)} footer={<><button onClick={() => setPay(null)}>Cancel</button><button className="primary" onClick={async () => { const r = await act(() => api.post('/supplier-payments', pay), 'Payment recorded'); toast(r.remaining ? `Still owed: ${money(r.remaining)}` : 'Supplier fully paid'); setPay(null); reload(); }}>Record payment</button></>}>
+      <div className="fields"><Field label="Amount (KES)"><input type="number" value={pay.amount} onChange={e => setPay({ ...pay, amount: e.target.value })} /></Field>
+        <Field label="Method"><select value={pay.method} onChange={e => setPay({ ...pay, method: e.target.value })}><option value="bank">Bank transfer</option><option value="mpesa">M-Pesa</option><option value="cheque">Cheque</option><option value="cash">Cash</option></select></Field>
+        <Field label="Reference" span={2}><input value={pay.reference} onChange={e => setPay({ ...pay, reference: e.target.value })} placeholder="Transaction or cheque number" /></Field></div>
+      <p className="small muted">Paid against the oldest invoices first.</p></Modal>}
+    {inv && <Modal title="Record a supplier invoice" onClose={() => setInv(null)} footer={<><button onClick={() => setInv(null)}>Cancel</button><button className="primary" onClick={async () => { await act(() => api.post('/supplier-invoices', inv), 'Invoice recorded'); setInv(null); reload(); }}>Save</button></>}>
+      <div className="fields"><Field label="Supplier"><input list="sup-list" value={inv.supplier} onChange={e => setInv({ ...inv, supplier: e.target.value })} /><datalist id="sup-list">{(d?.rows || []).map(r => <option key={r.name}>{r.name}</option>)}</datalist></Field>
+        <Field label="Invoice number"><input value={inv.invoice_no} onChange={e => setInv({ ...inv, invoice_no: e.target.value })} /></Field>
+        <Field label="Invoice date"><input type="date" value={inv.date} onChange={e => setInv({ ...inv, date: e.target.value })} /></Field>
+        <Field label="Due date" hint="Empty = 30 days"><input type="date" value={inv.due_date} onChange={e => setInv({ ...inv, due_date: e.target.value })} /></Field>
+        <Field label="Amount (KES)"><input type="number" value={inv.amount} onChange={e => setInv({ ...inv, amount: e.target.value })} /></Field></div>
+      <p className="small muted">For deliveries received without a purchase order. Orders received in MediCore are added automatically.</p></Modal>}
+    {edit && <Modal title={edit.name} onClose={() => setEdit(null)} footer={<button className="primary" onClick={async () => { await act(() => api.put('/suppliers/' + edit.id, edit), 'Saved'); setEdit(null); reload(); }}>Save</button>}>
+      <div className="fields"><Field label="Contact person"><input value={edit.contact || ''} onChange={e => setEdit({ ...edit, contact: e.target.value })} /></Field>
+        <Field label="Phone"><input value={edit.phone || ''} onChange={e => setEdit({ ...edit, phone: e.target.value })} /></Field>
+        <Field label="Email"><input value={edit.email || ''} onChange={e => setEdit({ ...edit, email: e.target.value })} /></Field>
+        <Field label="Credit terms (days)"><input type="number" value={edit.terms_days || 30} onChange={e => setEdit({ ...edit, terms_days: e.target.value })} /></Field>
+        <Field label="Paybill / bank details" span={2}><input value={edit.paybill || ''} onChange={e => setEdit({ ...edit, paybill: e.target.value })} /></Field></div></Modal>}
+  </div>;
+}
+function SupplierStatement({ name, onClose }) {
+  const [d] = useData('/supplier-accounts/statement?supplier=' + encodeURIComponent(name));
+  return <Modal title={`${name} · statement`} onClose={onClose} wide footer={<button onClick={onClose}>Close</button>}>
+    {!d ? 'Loading…' : <div className="stack">
+      <div className="row"><span className="muted">{d.supplier.phone || ''}{d.supplier.paybill ? ` · ${d.supplier.paybill}` : ''}</span><b className="right" style={{ fontSize: 20 }}>{d.owed > 0 ? `You owe ${money(d.owed)}` : 'Fully paid'}</b></div>
+      <div className="tablewrap"><table className="table small"><thead><tr><th>Date</th><th>Details</th><th>Due</th><th className="num">Invoiced</th><th className="num">Paid</th><th className="num">Balance</th></tr></thead>
+        <tbody>{[...d.rows].reverse().map((r, i) => <tr key={i}><td>{fmtDate(r.at)}</td><td>{r.kind === 'invoice' ? <>Invoice <b>{r.ref}</b></> : <>Payment · {r.ref}</>}</td>
+          <td>{r.kind === 'invoice' && r.balance_open > 0.5 ? <Badge tone={r.due < todayISO() ? 'bad' : ''}>{fmtDate(r.due)}</Badge> : r.kind === 'invoice' ? <span className="faint">Paid</span> : ''}</td>
+          <td className="num">{r.amount > 0 ? money(r.amount) : ''}</td><td className="num">{r.amount < 0 ? money(-r.amount) : ''}</td><td className="num">{money(r.balance)}</td></tr>)}</tbody></table></div>
+    </div>}
+  </Modal>;
+}

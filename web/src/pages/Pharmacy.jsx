@@ -5,7 +5,7 @@ import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, money, fmtDate, f
 import { PayPanel, Receipt } from './Billing';
 import ProductArt from '../shared/ProductArt';
 import { ShiftBar, CustomerPicker, RefundDialog } from './Cash';
-import { PurchaseOrders, Transfers, Labels, StockTake, Disposal } from './Stock';
+import { PurchaseOrders, Transfers, Labels, StockTake, Disposal, SupplierAccounts } from './Stock';
 import { Barcode, parseGS1, looksLikeCode } from '../shared/barcode';
 import { toast } from '../ui';
 
@@ -20,12 +20,13 @@ export default function Pharmacy() {
   return (
     <div className="page">
       <PageHead icon="pharmacy" title={c.type === 'pharmacy' ? 'Pharmacy & stock' : 'Pharmacy & stores'} sub="Stock is counted in single pieces. Selling 10 tablets from a box of 100 updates stock straight away." />
-      <Tabs value={tab} onChange={setTab} tabs={[['dispense', `Prescriptions (${(queue || []).length})`], ['pos', 'Counter sale'], ['inventory', 'Inventory'], ['po', 'Purchase orders'],
+      <Tabs value={tab} onChange={setTab} tabs={[['dispense', `Prescriptions (${(queue || []).length})`], ['pos', 'Counter sale'], ['inventory', 'Inventory'], ['po', 'Purchase orders'], ['suppliers', 'Suppliers'],
         (c.branches || []).length > 1 && ['transfers', 'Transfers'], ['count', 'Stock take'], ['disposal', 'Expired & disposal'], ['labels', 'Barcode labels'], ['web', `Website orders${newOrders ? ` (${newOrders})` : ''}`], ['controlled', 'Controlled drugs']]} />
       {tab === 'dispense' && <Dispense queue={queue} reload={reloadQ} />}
       {tab === 'pos' && <POS />}
       {tab === 'inventory' && <Inventory />}
       {tab === 'po' && <PurchaseOrders />}
+      {tab === 'suppliers' && <SupplierAccounts />}
       {tab === 'transfers' && <Transfers />}
       {tab === 'count' && <StockTake />}
       {tab === 'disposal' && <Disposal />}
