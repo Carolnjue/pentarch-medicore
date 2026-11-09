@@ -143,6 +143,10 @@ CREATE TABLE IF NOT EXISTS web_orders (
   id INTEGER PRIMARY KEY, name TEXT, phone TEXT, items TEXT, total REAL, delivery TEXT,
   prescription_note TEXT, status TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY, user TEXT, action TEXT, entity TEXT, entity_id INTEGER, created_at TEXT);
+CREATE TABLE IF NOT EXISTS stock_counts (
+  id INTEGER PRIMARY KEY, count_no TEXT, scope TEXT, status TEXT, note TEXT, created_by TEXT, created_at TEXT, posted_by TEXT, posted_at TEXT);
+CREATE TABLE IF NOT EXISTS stock_count_lines (
+  id INTEGER PRIMARY KEY, count_id INTEGER, item_id INTEGER, batch_id INTEGER, expected REAL, counted REAL, cost REAL);
 CREATE TABLE IF NOT EXISTS shifts (
   id INTEGER PRIMARY KEY, user TEXT, user_id INTEGER, opened_at TEXT, opening_float REAL, closed_at TEXT,
   counted_cash REAL, expected_cash REAL, variance REAL, notes TEXT, status TEXT);
@@ -290,7 +294,7 @@ function clearSample({ zeroStock = true } = {}) {
   tx(() => {
     for (const t of ['patients', 'visits', 'vitals', 'notes', 'lab_orders', 'imaging_orders', 'prescriptions', 'procedures', 'bills', 'bill_lines',
       'payments', 'admissions', 'nursing_notes', 'partograph', 'pregnancies', 'anc_visits', 'deliveries', 'referrals', 'appointments', 'web_orders', 'audit',
-      'shifts', 'refunds', 'purchase_orders', 'po_lines', 'expenses', 'customers']) run(`DELETE FROM ${t}`);
+      'shifts', 'refunds', 'purchase_orders', 'po_lines', 'expenses', 'customers', 'stock_counts', 'stock_count_lines']) run(`DELETE FROM ${t}`);
     if (zeroStock) { run('DELETE FROM batches'); run('DELETE FROM stock_moves'); }
   });
   R.run('UPDATE branches SET sample=0 WHERE id=?', currentBranch);

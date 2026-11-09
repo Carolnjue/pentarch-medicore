@@ -149,10 +149,16 @@ function seedSample(D, cfg) {
   };
   // stock leaves the oldest batch that still has enough, as a real sale would
   function outMove(itemId, units, type, ref, at) {
-    const b = get('SELECT * FROM batches WHERE item_id=? AND qty>=? ORDER BY expiry LIMIT 1', itemId, units);
-    if (!b) return;
-    run('UPDATE batches SET qty=qty-? WHERE id=?', units, b.id);
-    run('INSERT INTO stock_moves(item_id,batch_id,qty,type,ref,by_user,created_at) VALUES(?,?,?,?,?,?,?)', itemId, b.id, -units, type, ref, 'system', at);
+    // take from the earliest-expiring batches first; anything not on record still counts at item cost
+    let left = units;
+    for (const b of all('SELECT * FROM batches WHERE item_id=? AND qty>0 ORDER BY expiry', itemId)) {
+      if (left <= 0) break;
+      const take = Math.min(left, b.qty);
+      run('UPDATE batches SET qty=qty-? WHERE id=?', take, b.id);
+      run('INSERT INTO stock_moves(item_id,batch_id,qty,type,ref,by_user,created_at) VALUES(?,?,?,?,?,?,?)', itemId, b.id, -take, type, ref, 'system', at);
+      left -= take;
+    }
+    if (left > 0) run('INSERT INTO stock_moves(item_id,batch_id,qty,type,ref,by_user,created_at) VALUES(?,?,?,?,?,?,?)', itemId, null, -left, type, ref, 'system', at);
   }
   function line(billId, desc, kind, refTable, refId, qty, price, at) {
     run('INSERT INTO bill_lines(bill_id,description,kind,ref_table,ref_id,qty,unit_price,amount,by_user,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)',

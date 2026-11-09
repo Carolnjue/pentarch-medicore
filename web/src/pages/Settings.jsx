@@ -47,6 +47,7 @@ function Facility({ reload, refreshProfile }) {
       <Field label="Brand colour"><input type="color" value={f.color || '#0f766e'} onChange={e => set('color', e.target.value)} style={{ height: 40, padding: 3 }} /></Field>
       <Field label="M-Pesa Till number" hint="Printed on receipts"><input value={f.till || ''} onChange={e => set('till', e.target.value)} placeholder="e.g. 5123456" /></Field>
       <Field label="M-Pesa Paybill and account"><input value={f.paybill || ''} onChange={e => set('paybill', e.target.value)} placeholder="e.g. 247247 · Acc 0712345678" /></Field>
+      <Field label="Owner's WhatsApp (for the daily summary)"><input value={f.owner_whatsapp || ''} onChange={e => set('owner_whatsapp', e.target.value)} placeholder="e.g. 0712 345 678" inputMode="tel" /></Field>
       <Field label="Receipt footer" span={2}><input value={f.receipt_footer || ''} onChange={e => set('receipt_footer', e.target.value)} placeholder="e.g. Goods once sold are not returnable unless faulty. Get well soon!" /></Field>
     </div>
     <Field label="Partner labs, imaging centres and referral hospitals (one per line)"><textarea value={f.partners} onChange={e => set('partners', e.target.value)} /></Field>

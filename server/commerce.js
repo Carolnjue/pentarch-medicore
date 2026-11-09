@@ -376,4 +376,116 @@ module.exports = function commerce(app, H) {
       receipts: get("SELECT COUNT(*) n FROM bills WHERE status='paid' AND closed_at BETWEEN ? AND ?", ...range).n,
     };
   }));
+
+  // ---------- stock take: print a count sheet, enter what is on the shelf, post the differences ----------
+  const countView = id => {
+    const sc = get('SELECT * FROM stock_counts WHERE id=?', id);
+    if (!sc) fail('Stock count not found', 404);
+    const lines = all(`SELECT l.*, i.name, i.code, i.unit, i.pack_size, i.pack_name, i.location, i.shop_cat, b.batch_no, b.expiry
+      FROM stock_count_lines l JOIN items i ON i.id=l.item_id LEFT JOIN batches b ON b.id=l.batch_id WHERE l.count_id=? ORDER BY i.name, b.expiry`, sc.id)
+      .map(l => ({ ...l, expected_text: fmtQty(l, l.expected), counted_text: l.counted == null ? '' : fmtQty(l, l.counted), diff: l.counted == null ? null : l.counted - l.expected }));
+    const done = lines.filter(l => l.counted != null);
+    const val = done.reduce((s, l) => s + (l.counted - l.expected) * (l.cost || 0), 0);
+    return { ...sc, lines, counted: done.length, total: lines.length, short_lines: done.filter(l => l.counted < l.expected).length, over_lines: done.filter(l => l.counted > l.expected).length, value_diff: Math.round(val) };
+  };
+  app.get('/api/stock-counts', wrap(() => all('SELECT * FROM stock_counts ORDER BY id DESC LIMIT 50').map(sc => {
+    const t = get('SELECT COUNT(*) n, SUM(CASE WHEN counted IS NOT NULL THEN 1 ELSE 0 END) c, SUM(CASE WHEN counted IS NOT NULL THEN (counted-expected)*COALESCE(cost,0) ELSE 0 END) v FROM stock_count_lines WHERE count_id=?', sc.id);
+    return { ...sc, total: t.n, counted: t.c || 0, value_diff: Math.round(t.v || 0) };
+  })));
+  app.get('/api/stock-counts/:id', wrap(req => countView(req.params.id)));
+  app.post('/api/stock-counts', wrap(req => {
+    const { category, location, note } = req.body;
+    if (get("SELECT id FROM stock_counts WHERE status='open'")) fail('Finish or cancel the open stock count first');
+    let items = all("SELECT * FROM items WHERE active=1 AND category!='service'");
+    if (category) items = items.filter(i => i.shop_cat === category || i.category === category);
+    if (location) items = items.filter(i => (i.location || '').toLowerCase() === String(location).toLowerCase());
+    return tx(() => {
+      const n = (get('SELECT COUNT(*) n FROM stock_counts').n || 0) + 1;
+      const id = run('INSERT INTO stock_counts(count_no,scope,status,note,created_by,created_at) VALUES(?,?,?,?,?,?)', 'SC' + pad(n, 4), [category, location].filter(Boolean).join(' · ') || 'Whole store', 'open', note, userOf(req), now()).lastInsertRowid;
+      for (const it of items) {
+        const bs = all('SELECT * FROM batches WHERE item_id=? AND qty>0 AND expiry>=? ORDER BY expiry', it.id, today());
+        if (!bs.length) run('INSERT INTO stock_count_lines(count_id,item_id,batch_id,expected,cost) VALUES(?,?,?,?,?)', id, it.id, null, 0, it.cost);
+        for (const b of bs) run('INSERT INTO stock_count_lines(count_id,item_id,batch_id,expected,cost) VALUES(?,?,?,?,?)', id, it.id, b.id, b.qty, b.cost ?? it.cost);
+      }
+      audit(req, 'stock count started', 'SC' + pad(n, 4));
+      return countView(id);
+    });
+  }));
+  app.post('/api/stock-counts/:id/lines', wrap(req => {
+    const sc = get('SELECT * FROM stock_counts WHERE id=?', req.params.id);
+    if (!sc || sc.status !== 'open') fail('This count is not open');
+    for (const l of req.body.lines || []) {
+      const v = l.counted === '' || l.counted == null ? null : Number(l.counted);
+      if (v != null && (Number.isNaN(v) || v < 0)) fail('Counts must be zero or more');
+      run('UPDATE stock_count_lines SET counted=? WHERE id=? AND count_id=?', v, l.id, sc.id);
+    }
+    return countView(sc.id);
+  }));
+  app.post('/api/stock-counts/:id/post', adminOnly, wrap(req => {
+    const v = countView(req.params.id);
+    if (v.status !== 'open') fail('This count is already closed');
+    if (!v.counted) fail('Enter at least one counted quantity');
+    return tx(() => {
+      for (const l of v.lines) {
+        if (l.counted == null || l.counted === l.expected) continue;
+        const diff = l.counted - l.expected;
+        let batchId = l.batch_id;
+        if (batchId) run('UPDATE batches SET qty=? WHERE id=?', l.counted, batchId);
+        else {
+          // stock found that the system did not have: book it as a new batch at current cost, expiry unknown (one year)
+          const exp = new Date(Date.now() + 365 * 864e5).toISOString().slice(0, 10);
+          batchId = run('INSERT INTO batches(item_id,batch_no,expiry,qty,cost,supplier,received_at) VALUES(?,?,?,?,?,?,?)', l.item_id, 'COUNT-' + v.count_no, exp, l.counted, l.cost, 'Stock count', now()).lastInsertRowid;
+        }
+        run('INSERT INTO stock_moves(item_id,batch_id,qty,type,ref,by_user,created_at) VALUES(?,?,?,?,?,?,?)', l.item_id, batchId, diff, 'adjust', 'Stock count ' + v.count_no, userOf(req), now());
+      }
+      run("UPDATE stock_counts SET status='posted', posted_by=?, posted_at=? WHERE id=?", userOf(req), now(), v.id);
+      audit(req, 'stock count posted', `${v.count_no}: ${v.short_lines} short, ${v.over_lines} over, value ${v.value_diff}`);
+      return countView(v.id);
+    });
+  }));
+  app.post('/api/stock-counts/:id/cancel', adminOnly, wrap(req => {
+    run("UPDATE stock_counts SET status='cancelled', posted_by=?, posted_at=? WHERE id=? AND status='open'", userOf(req), now(), req.params.id);
+    return { ok: true };
+  }));
+
+  // ---------- the owner's end-of-day summary (also shared on WhatsApp) ----------
+  app.get('/api/reports/daily', wrap(req => {
+    const day = req.query.date || today();
+    const range = [day, day + 'T23:59:59'];
+    const pay = all('SELECT method, SUM(amount) amount FROM payments WHERE created_at BETWEEN ? AND ? GROUP BY method ORDER BY amount DESC', ...range);
+    const collected = pay.reduce((a, r) => a + r.amount, 0);
+    const receipts = get("SELECT COUNT(*) n FROM bills WHERE status IN ('paid','credit') AND closed_at BETWEEN ? AND ?", ...range).n;
+    const sales = get("SELECT COALESCE(SUM(amount),0) a FROM bill_lines WHERE kind NOT IN ('refund') AND created_at BETWEEN ? AND ?", ...range).a;
+    const refunds = -get("SELECT COALESCE(SUM(amount),0) a FROM bill_lines WHERE kind='refund' AND created_at BETWEEN ? AND ?", ...range).a;
+    const cogs = get(`SELECT COALESCE(SUM(-m.qty * COALESCE(b.cost, i.cost, 0)),0) c FROM stock_moves m JOIN items i ON i.id=m.item_id LEFT JOIN batches b ON b.id=m.batch_id
+      WHERE m.type IN ('sale','dispense','consumable','return') AND m.created_at BETWEEN ? AND ?`, ...range).c;
+    const expenses = get('SELECT COALESCE(SUM(amount),0) a FROM expenses WHERE date=?', day).a;
+    const shifts = all('SELECT * FROM shifts WHERE closed_at BETWEEN ? AND ? ORDER BY id', ...range).map(x => ({ user: x.user, variance: x.variance, notes: x.notes }));
+    const open = all("SELECT user, opened_at FROM shifts WHERE status='open'");
+    const top = all("SELECT description, SUM(qty) qty, SUM(amount) amount FROM bill_lines WHERE amount>0 AND kind NOT IN ('discount','refund') AND created_at BETWEEN ? AND ? GROUP BY description ORDER BY amount DESC LIMIT 5", ...range);
+    const items = itemsWithStock();
+    const low = items.filter(i => i.stock <= i.reorder_level && i.category !== 'reagent' && i.category !== 'service');
+    const out = low.filter(i => i.stock <= 0);
+    const soon = all('SELECT b.qty, b.expiry, b.cost, i.name, i.unit, i.pack_size, i.pack_name FROM batches b JOIN items i ON i.id=b.item_id WHERE b.qty>0 AND b.expiry>=? AND b.expiry<=? ORDER BY b.expiry', today(), D.addDays(now(), 60));
+    const soonValue = soon.reduce((a, b) => a + b.qty * (b.cost || 0), 0);
+    const facility = cfg().facility_name || 'MediCore';
+    const gross = sales - refunds - cogs;
+    const K = n => 'KES ' + Math.round(n).toLocaleString('en-KE');
+    const lines = [
+      `*${facility}: ${new Date(day + 'T12:00:00').toLocaleDateString('en-KE', { weekday: 'long', day: 'numeric', month: 'long' })}*`,
+      `Collected: ${K(collected)} from ${receipts} receipt${receipts === 1 ? '' : 's'}` + (pay.length ? ` (${pay.map(p => `${({ mpesa: 'M-Pesa', cash: 'cash', card: 'card', sha: 'SHA', insurance: 'insurance', credit: 'account' })[p.method] || p.method} ${K(p.amount)}`).join(', ')})` : ''),
+      `Gross profit on sales: ${K(gross)}` + (sales - refunds > 0 ? ` (${Math.round(gross / (sales - refunds) * 100)}%)` : ''),
+      refunds ? `Refunds: ${K(refunds)}` : null,
+      expenses ? `Expenses paid: ${K(expenses)}` : null,
+      ...shifts.map(x => `Cash-up ${x.user}: ${x.variance === 0 ? 'balanced' : (x.variance > 0 ? 'over ' : 'short ') + K(Math.abs(x.variance))}${x.notes ? ` (${x.notes})` : ''}`),
+      open.length ? `Shift still open: ${open.map(o => o.user).join(', ')}` : null,
+      top.length ? `Top sellers: ${top.slice(0, 3).map(t => t.description).join(', ')}` : null,
+      `Out of stock: ${out.length} · Low: ${low.length - out.length}`,
+      soon.length ? `Expiring in 60 days: ${soon.length} batch${soon.length === 1 ? '' : 'es'} worth ${K(soonValue)}` : null,
+      '_Sent from Pentarch MediCore_',
+    ].filter(Boolean);
+    return { day, collected, receipts, pay, sales, refunds, cogs, gross, expenses, shifts, open, top, low: low.slice(0, 15).map(i => ({ name: i.name, stock_text: fmtQty(i, i.stock), out: i.stock <= 0 })), low_count: low.length, out_count: out.length,
+      expiring: soon.slice(0, 15).map(b => ({ name: b.name, expiry: b.expiry, qty_text: fmtQty(b, b.qty), value: Math.round(b.qty * (b.cost || 0)) })), expiring_count: soon.length, expiring_value: Math.round(soonValue),
+      text: lines.join('\n'), owner_whatsapp: cfg().owner_whatsapp || '' };
+  }));
 };

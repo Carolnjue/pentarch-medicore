@@ -15,13 +15,14 @@ function csv(name, rows) {
 
 export default function Reports() {
   const c = useContext(ConfigContext);
-  const [tab, setTab] = useState('profit');
+  const [tab, setTab] = useState('daily');
   return (
     <div className="page">
       <div className="pagehead"><div><h1>Reports</h1><p className="sub">Management reports and MOH monthly summaries, generated from what staff already recorded.</p></div>
         <div className="actions"><button onClick={() => window.print()}><Icon name="print" size={15} />Print</button></div></div>
-      <Tabs value={tab} onChange={setTab} tabs={[['profit', 'Profit & loss'], ['finance', 'Revenue'], ['sales', 'Sales & cashiers'], ['stock', 'Stock'], ['moh705', 'MOH 705 (OPD morbidity)'], c.type !== 'pharmacy' && ['moh711', 'MOH 711 / service summary'], c.lab !== 'none' && ['lab', 'Lab workload'], ['audit', 'Audit trail']]} />
+      <Tabs value={tab} onChange={setTab} tabs={[['daily', 'Daily summary'], ['profit', 'Profit & loss'], ['finance', 'Revenue'], ['sales', 'Sales & cashiers'], ['stock', 'Stock'], ['moh705', 'MOH 705 (OPD morbidity)'], c.type !== 'pharmacy' && ['moh711', 'MOH 711 / service summary'], c.lab !== 'none' && ['lab', 'Lab workload'], ['audit', 'Audit trail']]} />
       <div className="printable">
+        {tab === 'daily' && <Daily />}
         {tab === 'profit' && <Profit />}
         {tab === 'finance' && <Finance />}
         {tab === 'sales' && <Sales />}
@@ -206,5 +207,39 @@ function Sales() {
     <div className="card mt"><div className="row"><h3>Items sold</h3><button className="sm right noprint" onClick={() => csv('items-sold.csv', d.items)}>Export</button></div>
       <table className="table small"><thead><tr><th>Item</th><th className="num">Quantity</th><th className="num">Amount</th></tr></thead><tbody>{d.items.map((i, k) => <tr key={k}><td>{i.description}</td><td className="num">{i.qty}</td><td className="num">{money(i.amount)}</td></tr>)}</tbody></table>
       {!d.items.length && <Empty icon="box">No item sales in this period.</Empty>}</div>
+  </div>;
+}
+
+// The owner's end-of-day picture, ready to send on WhatsApp
+function Daily() {
+  const [day, setDay] = useState(todayISO());
+  const [d] = useData('/reports/daily?date=' + day, [day]);
+  const wa = d ? `https://wa.me/${(d.owner_whatsapp || '').replace(/\D/g, '').replace(/^0/, '254')}?text=${encodeURIComponent(d.text)}` : '#';
+  return <div className="stack">
+    <div className="row noprint">
+      <input type="date" value={day} max={todayISO()} onChange={e => setDay(e.target.value)} style={{ width: 170 }} />
+      {d && <><a className="btn primary right" href={wa} target="_blank" rel="noreferrer"><Icon name="upload" size={15} />Send on WhatsApp</a>
+        <button onClick={() => { navigator.clipboard?.writeText(d.text); }}>Copy text</button></>}
+    </div>
+    {!d ? <div className="card">Loading…</div> : <>
+      <div className="grid g4">
+        <Stat label="Collected" value={money(d.collected)} hint={`${d.receipts} receipts`} />
+        <Stat label="Gross profit on sales" value={money(d.gross)} hint={d.sales - d.refunds > 0 ? `${Math.round(d.gross / (d.sales - d.refunds) * 100)}% margin` : ''} />
+        <Stat label="Expenses paid" value={money(d.expenses)} hint={d.refunds ? `Refunds ${money(d.refunds)}` : 'No refunds'} />
+        <Stat label="Cash-up" value={d.shifts.length ? (d.shifts.every(x => x.variance === 0) ? 'Balanced' : money(d.shifts.reduce((a, x) => a + x.variance, 0))) : 'No shift closed'} hint={d.open.length ? `Still open: ${d.open.map(o => o.user).join(', ')}` : `${d.shifts.length} shift${d.shifts.length === 1 ? '' : 's'} closed`} />
+      </div>
+      <div className="grid g2">
+        <div className="card"><h3>Payments</h3>{d.pay.length ? <table className="table"><tbody>{d.pay.map(p => <tr key={p.method}><td style={{ textTransform: 'capitalize' }}>{p.method === 'mpesa' ? 'M-Pesa' : p.method}</td><td className="num">{money(p.amount)}</td></tr>)}</tbody></table> : <Empty icon="cash">No payments on this day.</Empty>}
+          <h3 style={{ marginTop: 18 }}>Top sellers</h3>{d.top.length ? <table className="table"><tbody>{d.top.map(t => <tr key={t.description}><td>{t.description}</td><td className="num">{money(t.amount)}</td></tr>)}</tbody></table> : <Empty icon="reports">No sales.</Empty>}</div>
+        <div className="card"><h3>Needs attention</h3>
+          <p className="small muted">{d.out_count} out of stock · {d.low_count - d.out_count} low · {d.expiring_count} batch{d.expiring_count === 1 ? '' : 'es'} expiring within 60 days ({money(d.expiring_value)} at cost)</p>
+          <table className="table small"><tbody>
+            {d.low.map(i => <tr key={'l' + i.name}><td>{i.name}</td><td>{i.out ? <Badge tone="bad">Out</Badge> : <Badge tone="warn">Low</Badge>}</td><td className="num">{i.stock_text}</td></tr>)}
+            {d.expiring.map(b => <tr key={'e' + b.name + b.expiry}><td>{b.name}</td><td><Badge tone="warn">Expires {fmtDate(b.expiry)}</Badge></td><td className="num">{b.qty_text}</td></tr>)}
+          </tbody></table></div>
+      </div>
+      <div className="card noprint"><h3>Message preview</h3><pre className="small" style={{ whiteSpace: 'pre-wrap', margin: 0, fontFamily: 'inherit' }}>{d.text}</pre>
+        {!d.owner_whatsapp && <p className="small muted">Tip: add the owner's WhatsApp number in Settings → Facility so this opens straight to their chat.</p>}</div>
+    </>}
   </div>;
 }

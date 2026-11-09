@@ -5,7 +5,7 @@ import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, money, fmtDate, f
 import { PayPanel, Receipt } from './Billing';
 import ProductArt from '../shared/ProductArt';
 import { ShiftBar, CustomerPicker, RefundDialog } from './Cash';
-import { PurchaseOrders, Transfers, Labels } from './Stock';
+import { PurchaseOrders, Transfers, Labels, StockTake } from './Stock';
 import { Barcode, parseGS1, looksLikeCode } from '../shared/barcode';
 import { toast } from '../ui';
 
@@ -21,12 +21,13 @@ export default function Pharmacy() {
     <div className="page">
       <PageHead icon="pharmacy" title={c.type === 'pharmacy' ? 'Pharmacy & stock' : 'Pharmacy & stores'} sub="Stock is counted in single pieces. Selling 10 tablets from a box of 100 updates stock straight away." />
       <Tabs value={tab} onChange={setTab} tabs={[['dispense', `Prescriptions (${(queue || []).length})`], ['pos', 'Counter sale'], ['inventory', 'Inventory'], ['po', 'Purchase orders'],
-        (c.branches || []).length > 1 && ['transfers', 'Transfers'], ['labels', 'Barcode labels'], ['web', `Website orders${newOrders ? ` (${newOrders})` : ''}`], ['controlled', 'Controlled drugs']]} />
+        (c.branches || []).length > 1 && ['transfers', 'Transfers'], ['count', 'Stock take'], ['labels', 'Barcode labels'], ['web', `Website orders${newOrders ? ` (${newOrders})` : ''}`], ['controlled', 'Controlled drugs']]} />
       {tab === 'dispense' && <Dispense queue={queue} reload={reloadQ} />}
       {tab === 'pos' && <POS />}
       {tab === 'inventory' && <Inventory />}
       {tab === 'po' && <PurchaseOrders />}
       {tab === 'transfers' && <Transfers />}
+      {tab === 'count' && <StockTake />}
       {tab === 'labels' && <Labels />}
       {tab === 'web' && <WebOrders orders={orders} reload={reloadO} />}
       {tab === 'controlled' && <Controlled />}
@@ -82,6 +83,22 @@ function POS() {
   const [receipt, setReceipt] = useState(null);
   const [refund, setRefund] = useState(false);
   const [tick, setTick] = useState(0);
+  // parked sales stay on this counter's computer until resumed
+  const parkKey = 'mc_parked_' + (c.branch?.id || '');
+  const [parked, setParked] = useState(() => { try { return JSON.parse(localStorage.getItem(parkKey) || '[]'); } catch { return []; } });
+  const saveParked = v => { setParked(v); try { localStorage.setItem(parkKey, JSON.stringify(v)); } catch {} };
+  const park = () => {
+    if (!cart.length) return;
+    const label = cust?.name || `Sale ${parked.length + 1}`;
+    saveParked([...parked, { id: Date.now(), label, at: new Date().toISOString(), cust, lines: cart.map(l => ({ item_id: l.item.id, qty: l.qty, mode: l.mode, rx_ref: l.rx_ref })) }]);
+    setCart([]); setCust(null); toast(`Parked: ${label}. Resume it from the Parked list.`); searchRef.current?.focus();
+  };
+  const resume = p => {
+    if (cart.length) return toast('Finish or park the current sale first', true);
+    const lines = p.lines.map(l => ({ ...l, item: (items || []).find(i => i.id === l.item_id) })).filter(l => l.item);
+    if (lines.length < p.lines.length) toast('Some parked items are no longer in the catalogue and were left out', true);
+    setCart(lines); setCust(p.cust || null); saveParked(parked.filter(x => x.id !== p.id));
+  };
   const searchRef = useRef();
   const cats = useCategories(items);
   const results = useMemo(() => (items || []).filter(i => i.category !== 'reagent' && (cat === 'All' || i.shop_cat === cat) &&
@@ -112,9 +129,10 @@ function POS() {
     const k = e => {
       if (e.key === 'F2') { e.preventDefault(); searchRef.current?.focus(); }
       if (e.key === 'F9' && cart.length) { e.preventDefault(); setPaying(true); }
+      if (e.key === 'F8' && cart.length) { e.preventDefault(); park(); }
     };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
-  }, [cart.length]);
+  }, [cart, cust, parked]);
   const total = cart.reduce((a, l) => a + l.qty * priceOf(l), 0);
   const needsRx = cart.some(l => l.item.rx_only && !l.rx_ref);
   const short = cart.find(l => baseOf(l) > l.item.stock);
@@ -142,7 +160,8 @@ function POS() {
       {items && !results.length && <Empty icon="search">Nothing matches “{q}”.</Empty>}
     </div>
     <div className="card stack cart" style={{ position: 'sticky', top: 16, alignSelf: 'start' }}>
-      <div className="row"><h3 style={{ margin: 0 }}>Cart</h3><span className="faint small right">{cart.reduce((a, l) => a + l.qty, 0)} item{cart.length === 1 ? '' : 's'} · <kbd>F2</kbd> search · <kbd>F9</kbd> pay</span></div>
+      <div className="row"><h3 style={{ margin: 0 }}>Cart</h3><span className="faint small right">{cart.reduce((a, l) => a + l.qty, 0)} item{cart.length === 1 ? '' : 's'} · <kbd>F2</kbd> search · <kbd>F8</kbd> park · <kbd>F9</kbd> pay</span></div>
+      {parked.length > 0 && <div className="row small" style={{ gap: 6 }}><span className="muted">Parked:</span>{parked.map(p => <button key={p.id} className="sm" onClick={() => resume(p)} title={`Parked ${new Date(p.at).toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' })}`}>{p.label} · {p.lines.length}</button>)}</div>}
       <CustomerPicker value={cust} onChange={setCust} />
       {cart.map((l, i) => <div key={i} className="stack" style={{ gap: 6, borderBottom: '1px solid var(--line)', paddingBottom: 10 }}>
         <div className="row" style={{ flexWrap: 'nowrap' }}><ProductArt item={l.item} size={40} rounded={8} /><b className="small" style={{ flex: 1 }}>{l.item.name}</b><button className="ghost sm" onClick={() => setCart(cart.filter((_, j) => j !== i))} aria-label="Remove">✕</button></div>
@@ -161,6 +180,7 @@ function POS() {
       <div className="row" style={{ fontSize: 22 }}><b>Total</b><b className="right">{money(total)}</b></div>
       {needsRx && <div className="alert warn small">Record the prescription for each Rx-only item before selling.</div>}
       <button className="primary big" disabled={!cart.length || needsRx || !!short} onClick={() => setPaying(true)}>Take payment {cart.length ? money(total) : ''}</button>
+      {cart.length > 0 && <button onClick={park} title="Keep this sale aside and serve the next customer">Park sale (F8)</button>}
       {cust && credit > 0 && cart.length > 0 && <button disabled={total > credit || needsRx || !!short} onClick={() => finish(null)}>Put on {cust.name.split(' ')[0]}'s account (up to {money(credit)})</button>}
     </div>
     </div>

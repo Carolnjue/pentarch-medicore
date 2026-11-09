@@ -174,3 +174,111 @@ export function Labels() {
     </div>
   </div>;
 }
+
+// ---------------- Stock take: count what is on the shelf, then post the differences ----------------
+export function StockTake() {
+  const c = useContext(ConfigContext);
+  const admin = c.user.role === 'admin' || c.user.role === 'superadmin';
+  const [list, reload] = useData('/stock-counts');
+  const [items] = useData('/items');
+  const [open, setOpen] = useState(null);
+  const [scope, setScope] = useState({ category: '', location: '' });
+  const cats = useMemo(() => [...new Set((items || []).map(i => i.shop_cat).filter(Boolean))].sort(), [items]);
+  const locs = useMemo(() => [...new Set((items || []).map(i => i.location).filter(Boolean))].sort(), [items]);
+  const current = (list || []).find(x => x.status === 'open');
+  const start = async () => { const r = await act(() => api.post('/stock-counts', scope), 'Count sheet ready'); reload(); setOpen(r.id); };
+  if (open) return <CountSheet id={open} admin={admin} onBack={() => { setOpen(null); reload(); }} />;
+  return <div className="stack">
+    {current ? <div className="alert info row"><span><b>{current.count_no}</b> ({current.scope}) is in progress: {current.counted} of {current.total} lines counted.</span><button className="primary right" onClick={() => setOpen(current.id)}>Continue counting</button></div>
+      : <div className="card stack">
+        <h3 style={{ margin: 0 }}>Start a stock count</h3>
+        <p className="muted small" style={{ margin: 0 }}>Count one shelf or category at a time while the shop is quiet. The system shows what it expects; you enter what you find. Differences are only applied when an administrator posts the count.</p>
+        <div className="row">
+          <Field label="Category"><select value={scope.category} onChange={e => setScope({ ...scope, category: e.target.value })}><option value="">All categories</option>{cats.map(x => <option key={x}>{x}</option>)}</select></Field>
+          {locs.length > 0 && <Field label="Shelf / location"><select value={scope.location} onChange={e => setScope({ ...scope, location: e.target.value })}><option value="">All locations</option>{locs.map(x => <option key={x}>{x}</option>)}</select></Field>}
+          <button className="primary" style={{ alignSelf: 'end' }} onClick={start}>Create count sheet</button>
+        </div>
+      </div>}
+    <div className="card">
+      <h3>Past counts</h3>
+      {(list || []).length ? <table className="table"><thead><tr><th>Count</th><th>Scope</th><th>Started</th><th>Status</th><th className="num">Lines counted</th><th className="num">Value difference</th></tr></thead>
+        <tbody>{list.map(x => <tr key={x.id} className="click" onClick={() => setOpen(x.id)}><td><b>{x.count_no}</b></td><td>{x.scope}</td><td>{fmtDT(x.created_at)} · {x.created_by}</td><td><Badge tone={x.status === 'posted' ? 'good' : x.status === 'open' ? 'warn' : ''}>{x.status === 'posted' ? 'Posted' : x.status === 'open' ? 'Counting' : 'Cancelled'}</Badge></td><td className="num">{x.counted} / {x.total}</td><td className="num" style={{ color: x.value_diff < 0 ? 'var(--bad)' : x.value_diff > 0 ? 'var(--good)' : null }}>{money(x.value_diff)}</td></tr>)}</tbody></table>
+        : <Empty icon="box">No stock counts yet. Counting one category a week keeps stock accurate without closing the shop.</Empty>}
+    </div>
+  </div>;
+}
+
+function CountSheet({ id, admin, onBack }) {
+  const [sc, setSc] = useState(null);
+  const [vals, setVals] = useState({});
+  const [q, setQ] = useState('');
+  const [only, setOnly] = useState('all');
+  React.useEffect(() => { api.get('/stock-counts/' + id).then(d => { setSc(d); setVals(Object.fromEntries(d.lines.map(l => [l.id, l.counted ?? '']))); }); }, [id]);
+  if (!sc) return <div className="card">Loading…</div>;
+  const open = sc.status === 'open';
+  const dirty = sc.lines.filter(l => String(vals[l.id] ?? '') !== String(l.counted ?? ''));
+  const save = async () => { if (!dirty.length) return; const d = await act(() => api.post(`/stock-counts/${id}/lines`, { lines: dirty.map(l => ({ id: l.id, counted: vals[l.id] })) }), `Saved ${dirty.length} count${dirty.length > 1 ? 's' : ''}`); setSc(d); };
+  const post = async () => {
+    if (dirty.length) await save();
+    if (!confirm(`Post ${sc.count_no}? Stock will be changed to the counted quantities for every counted line. This cannot be undone.`)) return;
+    const d = await act(() => api.post(`/stock-counts/${id}/post`), 'Stock count posted. Stock levels updated.'); setSc(d);
+  };
+  const cancel = async () => { if (!confirm('Cancel this count? Nothing will change in stock.')) return; await act(() => api.post(`/stock-counts/${id}/cancel`), 'Count cancelled'); onBack(); };
+  const unit = l => l.pack_size > 1 ? l.unit : l.unit;
+  const rows = sc.lines.filter(l => (!q || (l.name + ' ' + (l.code || '') + ' ' + (l.batch_no || '')).toLowerCase().includes(q.toLowerCase())) &&
+    (only === 'all' || (only === 'todo' ? vals[l.id] === '' || vals[l.id] == null : vals[l.id] !== '' && Number(vals[l.id]) !== l.expected)));
+  const printSheet = () => {
+    const w = window.open('', '_blank');
+    w.document.write(`<title>${sc.count_no} count sheet</title><style>body{font:13px Arial;margin:24px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #999;padding:6px;text-align:left}th{background:#eee}.c{width:110px}</style><h2>Stock count ${sc.count_no} · ${sc.scope}</h2><p>Counted by: ____________________ Date: ____________</p><table><tr><th>Item</th><th>Batch</th><th>Expiry</th><th>Location</th><th class=c>Counted</th></tr>${sc.lines.map(l => `<tr><td>${l.name}</td><td>${l.batch_no || ''}</td><td>${l.expiry || ''}</td><td>${l.location || ''}</td><td></td></tr>`).join('')}</table>`);
+    w.document.close(); w.print();
+  };
+  return <div className="stack">
+    <div className="row"><button onClick={onBack}>← All counts</button><h3 style={{ margin: 0 }}>{sc.count_no} · {sc.scope}</h3>
+      <Badge tone={sc.status === 'posted' ? 'good' : sc.status === 'open' ? 'warn' : ''}>{sc.status === 'posted' ? `Posted ${fmtDT(sc.posted_at)}` : sc.status === 'open' ? 'Counting' : 'Cancelled'}</Badge>
+      <button className="right" onClick={printSheet}>Print count sheet</button></div>
+    <div className="grid g4">
+      <div className="card stat"><span className="label">Lines counted</span><b className="value">{sc.counted} / {sc.total}</b></div>
+      <div className="card stat"><span className="label">Short</span><b className="value" style={{ color: 'var(--bad)' }}>{sc.short_lines}</b></div>
+      <div className="card stat"><span className="label">Over</span><b className="value">{sc.over_lines}</b></div>
+      <div className="card stat"><span className="label">Value difference (at cost)</span><b className="value" style={{ color: sc.value_diff < 0 ? 'var(--bad)' : null }}>{money(sc.value_diff)}</b></div>
+    </div>
+    <div className="row">
+      <input placeholder="Find item or batch" value={q} onChange={e => setQ(e.target.value)} style={{ maxWidth: 280 }} />
+      <div className="seg">{[['all', 'All'], ['todo', 'Not counted'], ['diff', 'Differences']].map(([k, l]) => <button key={k} className={only === k ? 'on' : ''} onClick={() => setOnly(k)}>{l}</button>)}</div>
+      {open && <><button className="right" disabled={!dirty.length} onClick={save}>Save counts{dirty.length ? ` (${dirty.length})` : ''}</button>
+        {admin ? <button className="primary" onClick={post}>Post count</button> : <span className="muted small">An administrator posts the count</span>}
+        {admin && <button className="ghost" onClick={cancel}>Cancel count</button>}</>}
+    </div>
+    <div className="card" style={{ padding: 0, overflowX: 'auto' }}>
+      <table className="table"><thead><tr><th>Item</th><th>Batch · expiry</th><th>Location</th><th className="num">System</th><th className="num">Counted</th><th className="num">Difference</th></tr></thead>
+        <tbody>{rows.map(l => { const v = vals[l.id]; const d = v === '' || v == null ? null : Number(v) - l.expected; return <tr key={l.id}>
+          <td><b>{l.name}</b>{l.code ? <span className="faint small"> · {l.code}</span> : null}</td>
+          <td className="small">{l.batch_no || <span className="faint">No stock on record</span>}{l.expiry ? ` · ${fmtDate(l.expiry)}` : ''}</td>
+          <td className="small">{l.location || ''}</td>
+          <td className="num">{l.expected_text}</td>
+          <td className="num">{open ? <CountInput l={l} v={v} set={x => setVals({ ...vals, [l.id]: x })} /> : (l.counted_text || '—')}</td>
+          <td className="num" style={{ color: d < 0 ? 'var(--bad)' : d > 0 ? 'var(--good)' : null, fontWeight: d ? 700 : 400 }}>{d == null ? '' : (d > 0 ? '+' : '−') + packText(l, Math.abs(d))}</td>
+        </tr>; })}</tbody></table>
+      {!rows.length && <Empty icon="search">No lines match.</Empty>}
+    </div>
+  </div>;
+}
+
+// Count in packs and loose pieces, the way stock sits on the shelf; stored as single units
+function CountInput({ l, v, set }) {
+  const ps = l.pack_size > 1 ? l.pack_size : 1;
+  const has = v !== '' && v != null;
+  const packs = has ? Math.floor(Number(v) / ps) : '';
+  const loose = has ? Number(v) - packs * ps : '';
+  const upd = (p, u) => { if (p === '' && u === '') return set(''); set(String((Number(p) || 0) * ps + (Number(u) || 0))); };
+  const box = { width: 70, textAlign: 'right' };
+  if (ps === 1) return <span className="row" style={{ justifyContent: 'flex-end', gap: 6, flexWrap: 'nowrap' }}><input type="number" min="0" inputMode="numeric" value={v ?? ''} onChange={e => set(e.target.value)} style={box} /><span className="small muted">{plu(l.unit)}</span></span>;
+  return <span className="row" style={{ justifyContent: 'flex-end', gap: 6, flexWrap: 'nowrap' }}>
+    <input type="number" min="0" inputMode="numeric" aria-label={l.pack_name + 's'} value={packs} onChange={e => upd(e.target.value, loose)} style={box} /><span className="small muted">{plu(l.pack_name)}</span>
+    <input type="number" min="0" inputMode="numeric" aria-label={l.unit + 's'} value={loose} onChange={e => upd(packs, e.target.value)} style={{ ...box, width: 60 }} /><span className="small muted">{plu(l.unit)}</span>
+  </span>;
+}
+
+const packText = (l, q) => { const ps = l.pack_size > 1 ? l.pack_size : 1; const p = Math.floor(q / ps), u = q - p * ps; return ps === 1 ? `${q} ${q === 1 ? l.unit : plu(l.unit)}` : [p && `${p} ${p === 1 ? l.pack_name : plu(l.pack_name)}`, u && `${u} ${u === 1 ? l.unit : plu(l.unit)}`].filter(Boolean).join(' + ') || '0'; };
+
+const plu = w => /(x|s|ch|sh)$/.test(w || '') ? w + 'es' : (w || '') + 's';
