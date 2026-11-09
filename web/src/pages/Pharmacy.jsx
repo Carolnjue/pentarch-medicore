@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, money, fmtDate, fmtDT, fmtQty, Empty, todayISO, PageHead, Tip, Icon, Stat } from '../ui';
+import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, money, fmtDate, fmtDT, fmtQty, Empty, todayISO, PageHead, Tip, Icon, Stat, takeTab } from '../ui';
 import { PayPanel, Receipt } from './Billing';
 import ProductArt from '../shared/ProductArt';
 import { ShiftBar, CustomerPicker, RefundDialog } from './Cash';
@@ -13,7 +13,7 @@ const pl = (w, n) => n === 1 ? w : /(x|s|ch|sh)$/.test(w) ? w + 'es' : w + 's';
 
 export default function Pharmacy() {
   const c = useContext(ConfigContext);
-  const [tab, setTab] = useState(c.user.role === 'cashier' ? 'pos' : 'dispense');
+  const [tab, setTab] = useState(() => takeTab(['dispense', 'pos', 'inventory', 'po', 'suppliers', 'prices', 'transfers', 'count', 'disposal', 'labels', 'web', 'controlled']) || (c.user.role === 'cashier' ? 'pos' : 'dispense'));
   const [queue, reloadQ] = useData('/pharmacy/queue');
   const [orders, reloadO] = useData('/web-orders');
   const newOrders = (orders || []).filter(o => ['new', 'awaiting_review', 'confirmed'].includes(o.status)).length;

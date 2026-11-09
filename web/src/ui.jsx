@@ -195,3 +195,8 @@ export function PatientPicker({ onPick, placeholder = 'Search patient by name, p
     </div>
   );
 }
+
+// A one-time tab hint set by links such as the dashboard to-do list: opens the page on the right tab
+export function takeTab(allowed) {
+  try { const t = sessionStorage.getItem('mc_tab'); sessionStorage.removeItem('mc_tab'); return allowed.includes(t) ? t : null; } catch { return null; }
+}

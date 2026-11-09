@@ -218,7 +218,7 @@ function TodoPanel() {
   const dot = { bad: 'var(--bad)', warn: 'var(--warn)', info: 'var(--brand)' };
   return <div className="card todo">
     <div className="cardhead"><h3>To do today</h3><span className="faint small">{list.length} thing{list.length > 1 ? 's' : ''} need{list.length === 1 ? 's' : ''} attention</span></div>
-    <div className="todo-list">{shown.map((t, i) => <a key={i} className="todo-item" href={t.href}><i style={{ background: dot[t.level] }} /><span><b>{t.title}</b><small>{t.detail}</small></span><Icon name="chev" size={16} /></a>)}</div>
+    <div className="todo-list">{shown.map((t, i) => <a key={i} className="todo-item" href={t.href} onClick={() => { try { sessionStorage.setItem('mc_tab', t.tab || ''); } catch {} }}><i style={{ background: dot[t.level] }} /><span><b>{t.title}</b><small>{t.detail}</small></span><Icon name="chev" size={16} /></a>)}</div>
     {list.length > 6 && <button className="ghost sm" onClick={() => setOpen(!open)}>{open ? 'Show less' : `Show all ${list.length}`}</button>}
   </div>;
 }

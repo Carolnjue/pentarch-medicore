@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, toast, money, fmtDT, fmtTime, Empty, Icon } from '../ui';
+import { useData, Modal, Field, Tabs, StatusBadge, Badge, act, toast, money, fmtDT, fmtTime, Empty, Icon, takeTab } from '../ui';
 import { askSupervisor } from '../shared/askPin';
 import { Returns, Shifts, Expenses, Customers, Claims } from './Cash';
 
@@ -156,7 +156,7 @@ export function Checkout({ id, onClose, onChanged }) {
 
 export default function Billing({ openId }) {
   const c = useContext(ConfigContext);
-  const [tab, setTab] = useState('open');
+  const [tab, setTab] = useState(() => takeTab(['open', 'paid', 'credit', 'claims', 'returns', 'shifts', 'expenses', 'customers']) || 'open');
   const [list, reload] = useData(['open', 'paid', 'credit'].includes(tab) ? '/bills?status=' + tab : null, [tab]);
   const [open, setOpen] = useState(openId ? Number(openId) : null);
   useEffect(() => { if (openId) setOpen(Number(openId)); }, [openId]);

@@ -391,6 +391,15 @@ function seedSample(D, cfg) {
     inv('Surgipharm Ltd', 'SP-7781', 20, 45, 63900, 0);
     inv('Laborex Kenya', 'LBX-2290', 9, 30, 18750, 0);
   }
+  // a supplier price rise on the last delivery: a few items now sell below the target markup, one at a loss
+  {
+    const rise = all("SELECT * FROM items WHERE active=1 AND cost>0 AND category NOT IN ('service') ORDER BY id LIMIT 60").filter((_, i) => i % 9 === 4).slice(0, 5);
+    rise.forEach((it, i) => {
+      const sell = it.pack_size > 1 && !it.sell_loose ? it.pack_price / it.pack_size : it.price;
+      const nc = Math.round(sell * (i === 0 ? 1.04 : 0.86 + i * 0.02) * 100) / 100;
+      if (nc > it.cost) run('UPDATE items SET cost=? WHERE id=?', nc, it.id);
+    });
+  }
   // claims at different stages: older ones submitted or paid, one rejected, recent ones still to submit
   {
     const cl = all("SELECT * FROM payments WHERE method IN ('sha','insurance') ORDER BY created_at");
