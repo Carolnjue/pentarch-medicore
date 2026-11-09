@@ -491,6 +491,15 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
     <figure class="shot"><div class="frame"><img src="img/po_receive.jpg" alt="Receiving a delivery" loading="lazy"></div></figure>
   </div>
 
+  <h3>Importing opening stock</h3>
+  <p>When a shop starts on MediCore, its stock is often already in an Excel sheet. Open <span class="ui">Pharmacy &amp; stock → Inventory → Import stock</span> and click <span class="ui">Download a template</span> to see the columns: name (or code), packs, loose units, batch, expiry, cost per pack and price per pack.</p>
+  <ol class="steps"><li>In Excel, keep one row per batch and click <b>File → Save As → CSV</b>.</li>
+    <li>Choose the file and click <span class="ui">Check the list</span>. Each row shows what it matched in the medicine list. Rows matched only by a similar name say so: check them.</li>
+    <li>Rows marked <b>not found</b> or <b>to fix</b> are skipped. Tick <b>Add items that are not in the catalogue</b> to create them (they need a selling price).</li>
+    <li>Click <span class="ui">Add … lines to stock</span>. Fix the skipped rows in Excel and import them again later.</li></ol>
+  <figure class="shot wide"><div class="frame"><img src="img/stock_import.jpg" alt="Checking an imported stock list" loading="lazy"></div></figure>
+  <p>To give your accountant the stock list with quantities and values, click <span class="ui">Export</span> on the same screen. The file opens in Excel.</p>
+
   <h3>Stock take</h3>
   <ol class="steps"><li>Open <span class="ui">Pharmacy &amp; stock → Stock take</span>. Choose a category or shelf, or the whole store, and click <span class="ui">Create count sheet</span>.</li>
     <li>Count what is on the shelf and type it in boxes and pieces. You can print the sheet, count on paper and type the numbers in later.</li>
@@ -518,7 +527,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
   <p>This chapter covers the money that sits outside the till: customers who buy on account, suppliers you owe, SHA and insurance claims, and selling prices that drift when suppliers change their costs. It ends with the backup that protects all of it.</p>
 
   <h3>The to-do list on the dashboard</h3>
-  <p>Administrators see <span class="ui">To do today</span> at the top of the dashboard. It lists only what needs a decision: expired stock on the shelf, items selling below cost, overdue supplier invoices, claims to submit or chase, customer debts, short stock and an overdue stock count. The most urgent items come first. Click an item to open the screen where you deal with it.</p>
+  <p>Administrators see <span class="ui">To do today</span> at the top of the dashboard. It lists only what needs a decision: expired stock on the shelf, items selling below cost, overdue supplier invoices, claims to submit or chase, customer debts, short stock and an overdue stock count. Clinics and hospitals also see lab results waiting validation, patients waiting over an hour and admitted patients with no observations for 8 hours. The most urgent items come first. Click an item to open the screen where you deal with it.</p>
   <figure class="shot wide"><div class="frame"><img src="img/todo_panel.jpg" alt="To do today panel on the dashboard" loading="lazy"></div><figcaption>Red items need action today; the others can wait for the end of the day.</figcaption></figure>
 
   <h3>Customers who buy on account</h3>
@@ -688,7 +697,7 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
     <li>Settings → Data &amp; backup → <b>Remove sample data</b>.</li>
     <li>Settings → Staff &amp; access: add every real staff member with the right role; deactivate practice accounts.</li>
     <li>Settings → Service prices and Lab → Test menu: confirm your prices.</li>
-    <li>Pharmacy → Inventory → <b>Receive stock</b> for everything on the shelves, with batch and expiry.</li>
+    <li>Pharmacy → Inventory → <b>Import stock</b>: load the shop's stock list from Excel (saved as CSV) with packs, batch and expiry. Use <b>Receive stock</b> for anything left over.</li>
     <li>Change the Pentarch super PIN on this computer.</li>
     <li>Reserve the main computer's IP address in the router; bookmark it on every device.</li>
     <li>Set up the weekly backup (Chapter 13) and do the first one today.</li>
