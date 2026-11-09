@@ -134,7 +134,7 @@ function seedSample(D, cfg) {
       const flag = t.kind === 'numeric' ? (val < t.ref_low ? 'L' : val > t.ref_high ? 'H' : 'N') : (t.abnormal_text && String(val).startsWith(t.abnormal_text) ? 'A' : 'N');
       const lo = run(`INSERT INTO lab_orders(visit_id,patient_id,test_id,mode,status,result_value,result_text,flag,resulted_by,validated_by,billed,created_at,resulted_at)
         VALUES(?,?,?,?,?,?,?,?,?,?,1,?,?)`, v, pid, t.id, t.outsourced_only ? 'outsourced' : 'inhouse', 'validated',
-        t.kind === 'numeric' ? val : null, t.kind === 'numeric' ? null : val, flag, 'Lab Tech Samuel Kibet', 'Dr. Peter Maina', at, at).lastInsertRowid;
+        t.kind === 'numeric' ? val : null, t.kind === 'numeric' ? null : val, flag, 'Lab Tech Samuel Kibet', 'Dr. Peter Maina', at, new Date(new Date(at).getTime() + (15 + Math.floor(Math.random() * 75)) * 60e3).toISOString()).lastInsertRowid;
       if (!t.outsourced_only) line(bill, t.name, 'lab', 'lab_orders', lo, 1, t.price, at);
     }
     for (const [c, qty, dose, freq, days] of rx) {
@@ -290,7 +290,7 @@ function seedSample(D, cfg) {
       if (w === 12) for (const [c, val] of [['HB', 11.8], ['BGRP', 'O+'], ['VDRL', 'Non-reactive'], ['HIV', 'Non-reactive'], ['URI', 'Normal']]) {
         const t = test(c);
         run(`INSERT INTO lab_orders(visit_id,patient_id,test_id,mode,status,result_value,result_text,flag,resulted_by,validated_by,billed,created_at,resulted_at) VALUES(?,?,?,?,?,?,?,?,?,?,1,?,?)`,
-          v, ids[8], t.id, 'inhouse', 'validated', typeof val === 'number' ? val : null, typeof val === 'number' ? null : val, typeof val === 'number' && val < 11 ? 'L' : 'N', 'Lab Tech Samuel Kibet', 'Dr. Peter Maina', at, at);
+          v, ids[8], t.id, 'inhouse', 'validated', typeof val === 'number' ? val : null, typeof val === 'number' ? null : val, typeof val === 'number' && val < 11 ? 'L' : 'N', 'Lab Tech Samuel Kibet', 'Dr. Peter Maina', at, new Date(new Date(at).getTime() + (15 + Math.floor(Math.random() * 75)) * 60e3).toISOString());
       }
     });
     const lmp2 = addDays(now(), -7 * 39);
@@ -306,6 +306,22 @@ function seedSample(D, cfg) {
     const p3 = run('INSERT INTO pregnancies(patient_id,lmp,edd,gravida,parity,status,created_at) VALUES(?,?,?,?,?,?,?)', mum.id, lmp3, addDays(lmp3, 280), 3, 2, 'delivered', daysAgo(260)).lastInsertRowid;
     run(`INSERT INTO deliveries(pregnancy_id,patient_id,delivered_at,mode,outcome,baby_sex,baby_weight,apgar1,apgar5,notes) VALUES(?,?,?,?,?,?,?,?,?,?)`,
       p3, mum.id, daysAgo(5, 4), 'Spontaneous vaginal delivery', 'Live birth', 'F', 3.2, 8, 10, 'AMTSL done, oxytocin 10 IU IM. Blood loss ~250ml.');
+  }
+  // imaging: a chest X-ray for the pneumonia child, an obstetric scan, one waiting
+  if (cfg.imaging && cfg.imaging !== 'none') {
+    const study = n => get('SELECT * FROM imaging_studies WHERE name=?', n);
+    const inhouse = cfg.imaging === 'inhouse';
+    const img = (pid, name, hoursAgo, report) => {
+      const s = study(name); if (!s) return;
+      const v = get('SELECT id FROM visits WHERE patient_id=? ORDER BY id DESC LIMIT 1', pid)?.id; if (!v) return;
+      const at = new Date(Date.now() - hoursAgo * 3600e3).toISOString();
+      const id = run('INSERT INTO imaging_orders(visit_id,patient_id,study_id,mode,partner,status,report,billed,created_at,reported_at) VALUES(?,?,?,?,?,?,?,?,?,?)',
+        v, pid, s.id, inhouse ? 'inhouse' : 'outsourced', inhouse ? null : 'Plaza Imaging Centre', report ? 'reported' : inhouse ? 'ordered' : 'sent_out', report, inhouse ? 1 : 0, at, report ? new Date(Date.now() - (hoursAgo - 2) * 3600e3).toISOString() : null).lastInsertRowid;
+      if (inhouse) { const bill = get('SELECT id FROM bills WHERE visit_id=? ORDER BY id DESC LIMIT 1', v)?.id; if (bill) line(bill, s.name, 'imaging', 'imaging_orders', id, 1, s.price, at); }
+    };
+    img(ids[10], 'Chest X-ray', 28, 'Right lower lobe consolidation with air bronchograms. No effusion. Heart size normal. Impression: right lower lobe pneumonia.');
+    img(ids[2], 'Obstetric ultrasound', 50, 'Single live intrauterine fetus, cephalic. FHR 142 bpm. Biometry consistent with 38 weeks + 4 days. Placenta fundal, liquor adequate.');
+    img(ids[9], 'ECG (12-lead)', 3, null);
   }
   if (cfg.admissions) {
     const admit = (pid, reason, wardName, hoursAgo, payer = 'sha') => {

@@ -174,10 +174,13 @@ function Network() {
   const [cfg] = useData('/config');
   return <div className="card stack">
     <h3>Use MediCore on other computers, tablets and phones</h3>
+    {cfg?.cloud ? <><p>This MediCore runs online. On any computer, tablet or phone, open this address and sign in with your own username and PIN:</p>
+      <code style={{ fontSize: 17, padding: '8px 12px', background: 'var(--brand-soft)', borderRadius: 8, alignSelf: 'flex-start' }}>{cfg.public_url || location.origin}</code>
+      <p className="muted">Add staff under Staff &amp; access so each person signs in as themselves.</p></> : <>
     <p>Only the main computer runs MediCore. Other devices <b>do not need Node.js or any installation</b>: connect them to the same Wi-Fi or office network and open this address in Chrome, Edge or Safari:</p>
     {(cfg?.lan || []).map(a => <code key={a} style={{ fontSize: 17, padding: '8px 12px', background: 'var(--brand-soft)', borderRadius: 8, alignSelf: 'flex-start' }}>{a}</code>)}
     <p className="muted">Tip: ask the router to always give the main computer the same IP address (a "DHCP reservation"), so this address never changes. Bookmark it on each device.</p>
-    <p className="muted">The facility website for this branch is the same address followed by <code>/site</code>.</p>
+    <p className="muted">The facility website for this branch is the same address followed by <code>/site</code>.</p></>}
     <h3 className="mt">Integrations</h3>
     <div className="row">{['M-Pesa Daraja', 'KRA eTIMS', 'SHA claims', 'DHA HIE (AfyaConnect)', 'KHIS / DHIS2', 'SMS reminders'].map(x => <Badge key={x} tone="warn">{x}: demo</Badge>)}</div>
   </div>;

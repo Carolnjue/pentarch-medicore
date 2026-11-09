@@ -342,7 +342,7 @@ const SEXREF = `CASE WHEN p.sex='F' AND t.ref_low_f IS NOT NULL THEN t.ref_low_f
   CASE WHEN p.sex='F' AND t.ref_high_f IS NOT NULL THEN t.ref_high_f ELSE t.ref_high END ref_high`;
 
 // ================= config =================
-app.get('/api/config', wrap(req => ({ config: getConfig(), branch: req.branch, types: D.TYPES, lan: lanAddresses() })));
+app.get('/api/config', wrap(req => ({ config: getConfig(), branch: req.branch, types: D.TYPES, lan: CLOUD ? [] : lanAddresses(), cloud: CLOUD, public_url: process.env.PUBLIC_URL || null })));
 app.put('/api/config', adminOnly, wrap(req => {
   const { user, reload, ...body } = req.body;
   const old = cfg();
