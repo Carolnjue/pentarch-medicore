@@ -209,18 +209,20 @@ export function Customers() {
   const [rows, reload] = useData('/customers?q=' + encodeURIComponent(q), [q]);
   const [f, setF] = useState(null);
   const [edit, setEdit] = useState(null);
+  const [stmt, setStmt] = useState(null);
   return <div className="stack">
     <div className="row"><input value={q} onChange={e => setQ(e.target.value)} placeholder="Search name or phone" style={{ maxWidth: 320 }} />
       <button className="primary right" onClick={() => setF({ name: '', phone: '', credit_limit: 0 })}><Icon name="plus" size={15} />New customer</button></div>
     <Tip id="customers">Regular customers earn 1 point per KES 100. Give trusted customers or companies a credit limit so they can buy now and pay at month end; what they owe shows under Credit / debtors.</Tip>
-    <div className="tablewrap"><table className="table"><thead><tr><th>Customer</th><th>Phone</th><th className="num">Points</th><th className="num">Spent</th><th className="num">Credit limit</th><th className="num">Owes</th>{c.user.role === 'admin' && <th />}</tr></thead>
+    <div className="tablewrap"><table className="table"><thead><tr><th>Customer</th><th>Phone</th><th className="num">Points</th><th className="num">Spent</th><th className="num">Credit limit</th><th className="num">Owes</th><th /></tr></thead>
       <tbody>{(rows || []).map(r => <tr key={r.id}><td><b>{r.name}</b></td><td>{r.phone}</td><td className="num">{Math.round(r.points)}</td><td className="num">{money(r.spent)}</td><td className="num">{r.credit_limit ? money(r.credit_limit) : '-'}</td>
-        <td className="num">{r.owed > 0 ? <b style={{ color: 'var(--bad)' }}>{money(r.owed)}</b> : '-'}</td>{c.user.role === 'admin' && <td><button className="sm" onClick={() => setEdit({ ...r })}>Edit</button></td>}</tr>)}</tbody></table>
+        <td className="num">{r.owed > 0 ? <b style={{ color: 'var(--bad)' }}>{money(r.owed)}</b> : '-'}</td><td className="nowrap"><button className="sm" onClick={() => setStmt(r.id)}>{r.owed > 0 ? 'Statement · pay' : 'Statement'}</button>{c.user.role === 'admin' && <button className="sm" onClick={() => setEdit({ ...r })}>Edit</button>}</td></tr>)}</tbody></table>
       {rows && !rows.length && <Empty icon="patients">No customers yet.</Empty>}</div>
     {f && <Modal title="New customer" onClose={() => setF(null)} footer={<><button onClick={() => setF(null)}>Cancel</button><button className="primary" onClick={async () => { await act(() => api.post('/customers', f), 'Customer added'); setF(null); reload(); }}>Save</button></>}>
       <div className="fields"><Field label="Name *"><input autoFocus value={f.name} onChange={e => setF({ ...f, name: e.target.value })} /></Field><Field label="Phone *"><input value={f.phone} onChange={e => setF({ ...f, phone: e.target.value })} placeholder="07XX XXX XXX" /></Field>
         {c.user.role === 'admin' && <Field label="Credit limit (KES)" hint="0 = pays every time"><input type="number" value={f.credit_limit} onChange={e => setF({ ...f, credit_limit: e.target.value })} /></Field>}</div>
     </Modal>}
+    {stmt && <Statement id={stmt} onClose={() => { setStmt(null); reload(); }} />}
     {edit && <Modal title={edit.name} onClose={() => setEdit(null)} footer={<button className="primary" onClick={async () => { await act(() => api.put('/customers/' + edit.id, edit), 'Saved'); setEdit(null); reload(); }}>Save</button>}>
       <div className="fields"><Field label="Name"><input value={edit.name} onChange={e => setEdit({ ...edit, name: e.target.value })} /></Field><Field label="Credit limit (KES)"><input type="number" value={edit.credit_limit} onChange={e => setEdit({ ...edit, credit_limit: e.target.value })} /></Field>
         <Field label="Notes" span={2}><input value={edit.notes || ''} onChange={e => setEdit({ ...edit, notes: e.target.value })} /></Field></div>
@@ -249,4 +251,37 @@ export function ShiftStats() {
   const [s] = useData('/shifts/current');
   if (!s) return null;
   return <div className="grid g4"><Stat icon="cash" label="Expected in drawer" value={money(s.expected)} /><Stat icon="billing" label="Sales this shift" value={s.receipts} /><Stat icon="alert" label="Refunds" value={money(s.refunds)} /><Stat icon="list" label="Cash paid out" value={money(s.paidOut)} /></div>;
+}
+
+// A customer's account: everything bought and paid, and taking a payment against the balance
+function Statement({ id, onClose }) {
+  const [d, setD] = useState(null);
+  const [pay, setPay] = useState({ amount: '', method: 'mpesa', reference: '' });
+  const load = () => api.get(`/customers/${id}/statement`).then(x => { setD(x); setPay(p => ({ ...p, amount: x.owed > 0 ? String(Math.round(x.owed)) : '' })); });
+  useEffect(() => { load(); }, [id]);
+  if (!d) return null;
+  const take = async () => { const r = await act(() => api.post(`/customers/${id}/pay`, pay), 'Payment recorded'); toast(r.remaining > 0 ? `Still owes ${money(r.remaining)}` : 'Account cleared'); load(); };
+  const print = () => {
+    const w = window.open('', '_blank');
+    w.document.write(`<title>Statement ${d.customer.name}</title><style>body{font:13px Arial;margin:28px}table{width:100%;border-collapse:collapse}td,th{border-bottom:1px solid #ccc;padding:6px;text-align:left}.n{text-align:right}</style><h2>${d.facility || ''}</h2><h3>Statement: ${d.customer.name} · ${d.customer.phone}</h3><p>Printed ${new Date().toLocaleString('en-KE')}</p><table><tr><th>Date</th><th>Details</th><th class=n>Charged</th><th class=n>Paid</th><th class=n>Balance</th></tr>${d.rows.map(r => `<tr><td>${new Date(r.at).toLocaleDateString('en-KE')}</td><td>${r.kind === 'bill' ? 'Purchase ' + r.ref : 'Payment ' + r.ref}</td><td class=n>${r.amount > 0 ? r.amount.toLocaleString('en-KE') : ''}</td><td class=n>${r.amount < 0 ? (-r.amount).toLocaleString('en-KE') : ''}</td><td class=n>${r.balance.toLocaleString('en-KE')}</td></tr>`).join('')}</table><h3 style="text-align:right">Amount due: KES ${Math.round(d.owed).toLocaleString('en-KE')}</h3>`);
+    w.document.close(); w.print();
+  };
+  return <Modal title={`${d.customer.name} · account`} onClose={onClose} wide footer={<><button onClick={print}><Icon name="print" size={15} />Print statement</button><button onClick={onClose}>Close</button></>}>
+    <div className="stack">
+      <div className="row"><span className="muted">{d.customer.phone}{d.customer.credit_limit ? ` · credit limit ${money(d.customer.credit_limit)}` : ''}</span><b className="right" style={{ fontSize: 20, color: d.owed > 0 ? 'var(--bad)' : null }}>{d.owed > 0 ? `Owes ${money(d.owed)}` : 'Nothing owed'}</b></div>
+      {d.owed > 0 && <div className="card stack" style={{ background: 'var(--paper, #f8fafc)' }}>
+        <b>Receive a payment</b>
+        <div className="row">
+          <Field label="Amount (KES)"><input type="number" value={pay.amount} onChange={e => setPay({ ...pay, amount: e.target.value })} style={{ width: 140 }} /></Field>
+          <Field label="Method"><select value={pay.method} onChange={e => setPay({ ...pay, method: e.target.value })}><option value="mpesa">M-Pesa</option><option value="cash">Cash</option><option value="card">Card</option><option value="bank">Bank transfer</option></select></Field>
+          {pay.method !== 'cash' && <Field label={pay.method === 'mpesa' ? 'M-Pesa code' : 'Reference'}><input value={pay.reference} onChange={e => setPay({ ...pay, reference: e.target.value.toUpperCase() })} style={{ width: 150 }} /></Field>}
+          <button className="primary" style={{ alignSelf: 'end' }} onClick={take}>Record payment</button>
+        </div>
+        <span className="small muted">Paid against the oldest unpaid purchases first: {d.open.map(o => `${o.ref} (${money(o.balance)})`).join(', ')}.</span>
+      </div>}
+      <div className="tablewrap"><table className="table small"><thead><tr><th>Date</th><th>Details</th><th className="num">Charged</th><th className="num">Paid</th><th className="num">Balance</th></tr></thead>
+        <tbody>{[...d.rows].reverse().map((r, i) => <tr key={i}><td>{fmtDT(r.at)}</td><td>{r.kind === 'bill' ? <>Purchase <b>{r.ref}</b></> : <>Payment · {r.ref}</>}</td><td className="num">{r.amount > 0 ? money(r.amount) : ''}</td><td className="num">{r.amount < 0 ? money(-r.amount) : ''}</td><td className="num">{money(r.balance)}</td></tr>)}</tbody></table>
+        {!d.rows.length && <Empty icon="billing">No purchases yet.</Empty>}</div>
+    </div>
+  </Modal>;
 }

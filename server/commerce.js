@@ -189,6 +189,46 @@ module.exports = function commerce(app, H) {
     return { ok: true };
   }));
 
+  // customer account: statement and paying off what they owe (oldest bills first)
+  app.get('/api/customers/:id/statement', wrap(req => {
+    const c = get('SELECT * FROM customers WHERE id=?', req.params.id);
+    if (!c) fail('Customer not found', 404);
+    const bills = all("SELECT * FROM bills WHERE customer_id=? AND status IN ('paid','credit','open') ORDER BY created_at", c.id);
+    const rows = [];
+    for (const b of bills) {
+      const t = billTotals(b.id);
+      rows.push({ at: b.closed_at || b.created_at, kind: 'bill', ref: b.receipt_no || ('Bill ' + b.id), amount: t.total, bill_id: b.id });
+      for (const p of all('SELECT * FROM payments WHERE bill_id=? ORDER BY created_at', b.id)) rows.push({ at: p.created_at, kind: 'payment', ref: [p.method === 'mpesa' ? 'M-Pesa' : p.method, p.reference].filter(Boolean).join(' '), amount: -p.amount, by: p.by_user });
+    }
+    rows.sort((a, b) => String(a.at).localeCompare(String(b.at)));
+    let bal = 0; for (const r of rows) { bal += r.amount; r.balance = Math.round(bal * 100) / 100; }
+    const open = bills.map(b => ({ id: b.id, ref: b.receipt_no || 'Bill ' + b.id, at: b.closed_at || b.created_at, balance: billTotals(b.id).balance })).filter(b => b.balance > 0.01);
+    return { customer: c, rows, owed: open.reduce((a, b) => a + b.balance, 0), open, facility: cfg().facility_name };
+  }));
+  app.post('/api/customers/:id/pay', wrap(req => {
+    const c = get('SELECT * FROM customers WHERE id=?', req.params.id);
+    if (!c) fail('Customer not found', 404);
+    const { method = 'cash', reference } = req.body; let left = Number(req.body.amount);
+    if (!(left > 0)) fail('Enter the amount paid');
+    if (method === 'mpesa' && !reference) fail('Enter the M-Pesa code');
+    const open = all("SELECT * FROM bills WHERE customer_id=? ORDER BY created_at", c.id).map(b => ({ b, bal: billTotals(b.id).balance })).filter(x => x.bal > 0.01);
+    const owed = open.reduce((a, x) => a + x.bal, 0);
+    if (!open.length) fail(`${c.name} owes nothing`);
+    if (left > owed + 0.01) fail(`${c.name} owes ${Math.round(owed).toLocaleString('en-KE')}. Take only that amount.`);
+    return tx(() => {
+      const paid = [];
+      for (const { b, bal } of open) {
+        if (left <= 0) break;
+        const take = Math.min(left, bal);
+        run('INSERT INTO payments(bill_id,method,amount,reference,by_user,created_at,shift_id) VALUES(?,?,?,?,?,?,?)', b.id, method, take, reference, userOf(req), now(), openShift(req)?.id ?? null);
+        if (billTotals(b.id).balance <= 0.01) run("UPDATE bills SET status='paid' WHERE id=?", b.id);
+        paid.push({ ref: b.receipt_no || 'Bill ' + b.id, amount: take }); left -= take;
+      }
+      audit(req, 'account payment ' + Math.round(Number(req.body.amount)), 'customer', c.id);
+      return { paid, remaining: Math.max(0, Math.round((owed - Number(req.body.amount)) * 100) / 100) };
+    });
+  }));
+
   // ================= purchase orders =================
   const poView = po => {
     const lines = all('SELECT l.*, i.name, i.pack_size, i.pack_name, i.unit, i.code, i.barcode FROM po_lines l JOIN items i ON i.id=l.item_id WHERE l.po_id=? ORDER BY i.name', po.id)

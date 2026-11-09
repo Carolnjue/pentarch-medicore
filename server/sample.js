@@ -357,6 +357,24 @@ function seedSample(D, cfg) {
   // ---------- back office: customers, expenses, a closed shift, a purchase order ----------
   for (const [n, ph, lim, pts] of [['Grace Wambui', '0712009988', 5000, 34], ['Kamau Hardware staff (account)', '0733445566', 20000, 120], ['Mama Zawadi', '0701112233', 0, 12]])
     run('INSERT INTO customers(name,phone,credit_limit,points,created_at) VALUES(?,?,?,?,?)', n, ph, lim, pts, daysAgo(60));
+  // account customers with something owing, and one part payment, so the statement has a story
+  {
+    const kamau = get("SELECT id FROM customers WHERE phone='0733445566'").id, grace = get("SELECT id FROM customers WHERE phone='0712009988'").id;
+    const otcItems = all("SELECT * FROM items WHERE rx_only=0 AND category='drug' AND price>=50 LIMIT 40");
+    const credit = (cid, name, d, lines, paid) => {
+      const at = daysAgo(d, 11);
+      const b = run("INSERT INTO bills(customer_id,customer_name,payer,status,receipt_no,created_at,closed_at) VALUES(?,?,?,?,?,?,?)", cid, name, 'cash', 'credit', 'INV' + String(900000 + d * 10 + cid), at, at).lastInsertRowid;
+      let tot = 0;
+      for (const [it, q] of lines) { line(b, it.name, 'drug', 'items', it.id, q, it.price, at); outMove(it.id, q, 'sale', 'POS-' + b, at); tot += q * it.price; }
+      paid = paid ? Math.round(tot * paid / 50) * 50 : 0; // part payment as a share of the bill
+      if (paid > 0 && paid < tot) run('INSERT INTO payments(bill_id,method,amount,reference,by_user,created_at) VALUES(?,?,?,?,?,?)', b, 'mpesa', paid, 'SK' + d + 'PAYACC', 'Jane (owner)', daysAgo(d - 2, 15));
+    };
+    if (otcItems.length > 6) {
+      credit(kamau, 'Kamau Hardware staff (account)', 21, [[otcItems[0], 6], [otcItems[3], 4]], 0.4);
+      credit(kamau, 'Kamau Hardware staff (account)', 9, [[otcItems[5], 10], [otcItems[1], 3]], 0);
+      credit(grace, 'Grace Wambui', 4, [[otcItems[2], 2]], 0);
+    }
+  }
   // running costs sized to the sample's own takings, so the demo shows a believable margin
   const rev30 = get('SELECT COALESCE(SUM(amount),0) a FROM payments WHERE created_at>=?', daysAgo(30)).a || 100000;
   const r = f => Math.round(rev30 * f / 50) * 50;
