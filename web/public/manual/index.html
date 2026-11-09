@@ -664,6 +664,12 @@ td.y{color:var(--brand);font-weight:700;text-align:center}td.n{color:var(--ink-3
     <tr><td>Settings, branches</td><td class="y">✓</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td><td class="n">–</td></tr>
   </tbody></table></div>
   <figure class="shot wide"><div class="frame"><img src="img/settings_data.jpg" alt="Data and backup" loading="lazy"></div><figcaption>Remove sample data: type DELETE to confirm. The medicine list, prices, lab menu and settings stay.</figcaption></figure>
+  <h3>How MediCore keeps records safe</h3>
+  <ul><li>Each person signs in with their own username and PIN. After 5 wrong PINs the account locks for a while, and every sign-in and wrong PIN shows in the audit trail.</li>
+    <li>PINs are stored scrambled, so nobody can read them, not even Pentarch.</li>
+    <li>Sign-ins last 30 days. Changing a PIN signs that person out everywhere else.</li>
+    <li>Each role sees only what it needs: cashiers do not see profit, supplier balances or the audit trail.</li>
+    <li>MediCore keeps a copy of every database each day for 7 days, and the owner downloads a full backup file to keep off the premises (Chapter 13).</li></ul>
 </section>
 
 <!-- 19 -->
