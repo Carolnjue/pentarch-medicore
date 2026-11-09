@@ -69,7 +69,7 @@ export default function Patients() {
               <td><div className="row" style={{ flexWrap: 'nowrap' }}><span className="avatar" style={{ width: 30, height: 30, fontSize: 11.5, background: p.sex === 'F' ? '#fce7f3' : '#e0f2fe', color: p.sex === 'F' ? '#9d174d' : '#075985' }}>{p.first_name[0]}{p.last_name[0]}</span><b>{p.first_name} {p.last_name}</b></div></td>
               <td className="muted">{p.mrn}</td><td>{p.sex === 'F' ? 'Female' : 'Male'} · {age(p.dob)}</td>
               <td>{p.phone}</td><td className="small">{p.sha_number ? <Badge tone="good">{p.sha_number}</Badge> : <span className="faint">-</span>}</td>
-              <td><div className="row">{p.allergies && <Badge tone="bad">Allergy</Badge>}{p.chronic && <Badge tone="info">{p.chronic}</Badge>}</div></td>
+              <td><div className="row">{p.allergies && <Badge tone="bad">Allergy</Badge>}{publicChronic(p.chronic) && <Badge tone="info">{publicChronic(p.chronic)}</Badge>}</div></td>
               <td className="small muted">{fmtDate(p.last_visit) || 'Never'}</td></tr>)}
           </tbody>
         </table>
@@ -79,3 +79,7 @@ export default function Patients() {
     </div>
   );
 }
+
+// The patient list is seen by reception and cashiers: keep confidential diagnoses (HIV and similar) to the clinical record only
+const CONFIDENTIAL = /\b(hiv|aids|art|arv|pmtct|prep|pep|stis?|syphilis|hepatitis b|hbv)\b|mental|psychiatr|depress/i;
+function publicChronic(c) { return (c || '').split(/[,;]/).map(x => x.trim()).filter(x => x && !CONFIDENTIAL.test(x)).join(', '); }

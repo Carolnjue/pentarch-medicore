@@ -39,11 +39,12 @@ export default function Pharmacy() {
 }
 
 function Dispense({ queue, reload }) {
+  const c = useContext(ConfigContext);
   const [sel, setSel] = useState({});
   const go = async g => {
     const ids = g.items.filter(i => sel[i.id] !== false && i.stock >= i.qty).map(i => i.id);
     await act(() => api.post(`/pharmacy/dispense/${g.visit_id}`, { prescription_ids: ids }), 'Dispensed. Stock updated and charged to the bill.');
-    printLabels({ ...g, items: g.items.filter(i => ids.includes(i.id)) });
+    printLabels({ ...g, items: g.items.filter(i => ids.includes(i.id)) }, c);
     reload();
   };
   if (!queue) return null;
@@ -58,16 +59,16 @@ function Dispense({ queue, reload }) {
       <div style={{ textAlign: 'right' }}><b>Give {i.qty_text}</b><div className="small">{i.stock < i.qty ? <Badge tone="bad">Only {i.stock_text}</Badge> : <span className="faint">{i.stock_text} in stock</span>}</div></div>
       <b style={{ width: 90, textAlign: 'right' }}>{money(i.qty * i.price)}</b>
     </div>)}</div>
-    <div className="row mt"><button className="primary" onClick={() => go(g)}>Dispense and print labels</button><button onClick={() => printLabels(g)}><Icon name="print" size={14} />Labels only</button>
+    <div className="row mt"><button className="primary" onClick={() => go(g)}>Dispense and print labels</button><button onClick={() => printLabels(g, c)}><Icon name="print" size={14} />Labels only</button>
       <span className="faint small">Out-of-stock items stay pending so the patient can buy them elsewhere or come back.</span></div>
   </div>)}</div>;
 }
 
-function printLabels(g) {
+function printLabels(g, c = {}) {
   if (!g.items.length) return;
   const w = window.open('', '_blank', 'width=420,height=600');
   if (!w) return;
-  w.document.write(`<html><body style="font-family:system-ui">${g.items.map(i => `<div style="border:1px solid #000;padding:8px;margin:8px;width:300px"><b>${i.name}</b><br/>${g.pname}<br/>${i.dose || ''} · ${i.frequency} for ${i.days} days<br/>Quantity: ${i.qty_text || i.qty}<br/><small>${new Date().toLocaleDateString('en-KE')}</small></div>`).join('')}<script>print()</script></body></html>`);
+  w.document.write(`<html><body style="font-family:system-ui">${g.items.map(i => `<div style="border:1px solid #000;padding:8px;margin:8px;width:300px"><b>${i.name}</b><br/>${g.pname}<br/><b>${[i.dose, FW[i.frequency]?.[0] || i.frequency].filter(Boolean).join(', ')}${i.frequency === 'Stat' ? '' : ` for ${i.days} day${i.days > 1 ? 's' : ''}`}</b><br/><i>${[i.dose, FW[i.frequency]?.[1] || ''].filter(Boolean).join(', ')}${i.frequency === 'Stat' ? '' : `, kwa siku ${i.days}`}</i><br/>Quantity: ${i.qty_text || i.qty}<br/><small>${new Date().toLocaleDateString('en-KE')} · ${c.facility_name || ''}${c.phone ? ' · Tel ' + c.phone : ''}</small><br/><small>Keep out of reach of children · Weka mbali na watoto</small></div>`).join('')}<script>print()</script></body></html>`);
   w.document.close();
 }
 
@@ -432,3 +433,7 @@ function BarcodeBox({ item, onChange }) {
     {scan && <input autoFocus placeholder="Scan the box now (or type the number) and press Enter" onKeyDown={e => e.key === 'Enter' && e.target.value.trim() && save({ barcode: e.target.value.trim() })} onBlur={() => setScan(false)} />}
   </div>;
 }
+
+// Plain-language dosing for medicine labels, English and Kiswahili
+const FW = { OD: ['once a day', 'mara moja kwa siku'], BD: ['twice a day', 'mara mbili kwa siku'], TDS: ['three times a day', 'mara tatu kwa siku'], QID: ['four times a day', 'mara nne kwa siku'],
+  Nocte: ['at night', 'usiku'], PRN: ['when needed', 'inapohitajika'], Stat: ['take now, once', 'meza sasa, mara moja'], 'As directed': ['as directed', 'kama ulivyoelekezwa'] };

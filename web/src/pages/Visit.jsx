@@ -15,9 +15,22 @@ export const DIAGNOSES = [
   ['Skin infection / dermatitis', 'L30.9'], ['Otitis media', 'H66.9'], ['Conjunctivitis', 'H10.9'], ['Joint pains / arthralgia', 'M25.5'],
   ['Dental caries', 'K02.9'], ['Injury / wound', 'T14.9'], ['Anaemia', 'D64.9'], ['Sexually transmitted infection', 'A64'],
   ['Tuberculosis (presumptive)', 'A16.9'], ['Brucellosis', 'A23.9'], ['Mental disorder', 'F99'], ['Epilepsy', 'G40.9'],
-  ['Supervision of normal pregnancy', 'Z34.9'], ['Family planning', 'Z30.9'], ['Circumcision (routine)', 'Z41.2'], ['Other', 'R69'],
+  ['Supervision of normal pregnancy', 'Z34.9'], ['Family planning', 'Z30.9'], ['Circumcision (routine)', 'Z41.2'],
+  ['Malaria, confirmed (RDT or slide)', 'B50.9'], ['Tonsillitis / pharyngitis', 'J03.9'], ['Sinusitis', 'J32.9'], ['Bronchitis', 'J40'],
+  ['Influenza-like illness', 'J11.1'], ['COVID-19', 'U07.1'], ['Amoebiasis', 'A06.9'], ['Cholera (suspected)', 'A00.9'], ['Dysentery', 'A03.9'],
+  ['Peptic ulcer disease', 'K27.9'], ['Constipation', 'K59.0'], ['Haemorrhoids', 'K64.9'], ['Gastroenteritis', 'A09.0'],
+  ['Fungal skin infection', 'B35.9'], ['Scabies', 'B86'], ['Chickenpox', 'B01.9'], ['Measles (suspected)', 'B05.9'], ['Allergic reaction', 'T78.4'],
+  ['Back pain', 'M54.9'], ['Osteoarthritis', 'M19.9'], ['Gout', 'M10.9'], ['Headache', 'R51'], ['Migraine', 'G43.9'],
+  ['Pelvic inflammatory disease', 'N73.9'], ['Vaginal candidiasis', 'B37.3'], ['Dysmenorrhoea', 'N94.6'], ['Threatened abortion', 'O20.0'],
+  ['Hyperemesis gravidarum', 'O21.0'], ['Pre-eclampsia', 'O14.9'], ['Postnatal care', 'Z39.2'],
+  ['Severe acute malnutrition', 'E43'], ['Moderate acute malnutrition', 'E44.0'], ['Neonatal jaundice', 'P59.9'], ['Neonatal sepsis', 'P36.9'],
+  ['Type 1 diabetes mellitus', 'E10.9'], ['Heart failure', 'I50.9'], ['Stroke', 'I64'], ['Chronic kidney disease', 'N18.9'], ['Sickle cell disease', 'D57.1'],
+  ['Depression', 'F32.9'], ['Anxiety disorder', 'F41.9'], ['Alcohol use disorder', 'F10.2'], ['Insomnia', 'G47.0'],
+  ['Burns', 'T30.0'], ['Road traffic injury', 'V89.2'], ['Dog bite', 'W54'], ['Snake bite', 'T63.0'], ['Poisoning', 'T65.9'], ['Fracture', 'T14.2'],
+  ['Eye injury / foreign body', 'T15.9'], ['Cataract', 'H26.9'], ['Wax in ear', 'H61.2'], ['Dental abscess', 'K04.7'], ['Gingivitis', 'K05.1'],
+  ['Fever, cause not yet known', 'R50.9'], ['Immunisation', 'Z23'], ['Medical check-up', 'Z00.0'], ['Other', 'R69'],
 ];
-const FREQ = [['OD', 1, 'once a day'], ['BD', 2, 'twice a day'], ['TDS', 3, 'three times a day'], ['QID', 4, 'four times a day'], ['Nocte', 1, 'at night'], ['PRN', 1, 'when needed'], ['Stat', 1, 'single dose now']];
+const FREQ = [['OD', 1, 'once a day'], ['BD', 2, 'twice a day'], ['TDS', 3, 'three times a day'], ['QID', 4, 'four times a day'], ['Nocte', 1, 'at night'], ['PRN', 1, 'when needed'], ['Stat', 1, 'single dose now'], ['As directed', 1, 'as directed on the pack']];
 const DANGER = ['Obstructed breathing', 'Severe respiratory distress', 'Central cyanosis', 'Signs of shock (cold hands, weak fast pulse)', 'Coma / unconscious', 'Convulsing now', 'Severe dehydration', 'Heavy bleeding'];
 const PRIORITY_SIGNS = ['Very high fever (≥39°C)', 'Severe pain', 'Severe pallor', 'Infant under 2 months', 'Trauma / major injury', 'Pregnant with danger signs', 'Restless or very irritable', 'Referred urgently'];
 
@@ -170,11 +183,10 @@ function Consult({ v, notes, reload, onNext }) {
           <Field label="History / presenting complaint"><textarea value={f.history || ''} onChange={e => set('history', e.target.value)} placeholder={v.complaint || 'Onset, duration, associated symptoms'} /></Field>
           <Field label="Examination findings"><textarea value={f.exam || ''} onChange={e => set('exam', e.target.value)} placeholder="General exam, systems" /></Field>
           <Field label="Diagnosis">
-            <select value={f.diagnosis} onChange={e => { const x = DIAGNOSES.find(dd => dd[0] === e.target.value); setF(o => ({ ...o, diagnosis: e.target.value, dx_code: x ? x[1] : '' })); }}>
-              <option value="">Select diagnosis…</option>{DIAGNOSES.map(([nm, code]) => <option key={nm} value={nm}>{nm} ({code})</option>)}
-            </select>
+            <input list="dx-list" value={f.diagnosis || ''} placeholder="Type to search, or write your own" onChange={e => { const val = e.target.value; const x = DIAGNOSES.find(dd => dd[0].toLowerCase() === val.trim().toLowerCase()); setF(o => ({ ...o, diagnosis: val, dx_code: x ? x[1] : (DIAGNOSES.some(dd => dd[1] === o.dx_code) ? '' : o.dx_code) })); }} />
+            <datalist id="dx-list">{DIAGNOSES.map(([nm, code]) => <option key={nm} value={nm}>{code}</option>)}</datalist>
           </Field>
-          <Field label="ICD-10 code"><input value={f.dx_code} onChange={e => set('dx_code', e.target.value)} /></Field>
+          <Field label="ICD-10 code" hint="Filled in for common diagnoses"><input value={f.dx_code || ''} onChange={e => set('dx_code', e.target.value)} /></Field>
           <Field label="Plan" span={2}><textarea value={f.plan || ''} onChange={e => set('plan', e.target.value)} placeholder="Investigations, treatment, advice, review date" /></Field>
         </div>
         <div className="row mt"><button className="primary" onClick={save}><Icon name="check" size={15} />Save note</button><button onClick={onNext}>Next: orders & prescription →</button></div>
@@ -190,7 +202,7 @@ function Consult({ v, notes, reload, onNext }) {
 }
 
 // Lab test picker grouped by department, with quick panels
-export function TestPicker({ tests, panels, selected, setSelected, outsideAll }) {
+export function TestPicker({ tests, panels, selected, setSelected, outsideAll, ordered = [] }) {
   const [q, setQ] = useState('');
   const [dept, setDept] = useState('Common');
   const COMMON = ['MPS', 'MRDT', 'HB', 'FBC', 'RBS', 'URI', 'HCG', 'WIDAL', 'TYPHI', 'HPY', 'STOOL', 'HIV', 'VDRL', 'BGRP', 'CREAT', 'HBA1C'];
@@ -199,7 +211,7 @@ export function TestPicker({ tests, panels, selected, setSelected, outsideAll })
   const toggle = id => setSelected(s => s.includes(id) ? s.filter(x => x !== id) : [...s, id]);
   return <div className="stack">
     {panels?.length > 0 && <div className="row"><span className="small muted">Quick panels:</span>{panels.map(p => <button key={p.id} className="sm panel-chip" onClick={() => {
-      const ids = tests.filter(t => p.codes.includes(t.code)).map(t => t.id);
+      const ids = tests.filter(t => p.codes.includes(t.code) && !ordered.includes(t.id)).map(t => t.id);
       setSelected(s => [...new Set([...s, ...ids])]);
     }}>+ {p.name}</button>)}</div>}
     <div className="row">
@@ -208,7 +220,7 @@ export function TestPicker({ tests, panels, selected, setSelected, outsideAll })
     </div>
     <div className="tgrid">{shown.map(t => <button type="button" key={t.id} className={'tcard' + (selected.includes(t.id) ? ' on' : '')} style={{ '--dc': DEPT_COLOR[t.dept] }} onClick={() => toggle(t.id)}>
       <span className="tick">{selected.includes(t.id) && <Icon name="check" size={13} />}</span>
-      <span style={{ flex: 1 }}><b>{t.name}</b><span className="small faint">{t.sample} · {t.tat}</span></span>
+      <span style={{ flex: 1 }}><b>{t.name}</b><span className="small faint">{ordered.includes(t.id) ? <b style={{ color: 'var(--warn, #b45309)' }}>Already ordered this visit</b> : `${t.sample} · ${t.tat}`}</span></span>
       <span className="small" style={{ textAlign: 'right' }}>{t.outsourced_only || outsideAll ? <Badge tone="info">outside</Badge> : <b style={{ color: 'var(--brand)' }}>{money(t.price)}</b>}</span>
     </button>)}</div>
   </div>;
@@ -232,7 +244,7 @@ function Orders({ v, d, reload }) {
   const orderImg = async () => { await act(() => api.post(`/visits/${v.id}/imaging-orders`, img), 'Imaging requested'); setImg({}); reload(); };
   const addRx = it => {
     const loose = ['tab', 'cap'].includes(it.unit);
-    setRx(r => [...r, { item: it, item_id: it.id, dose: it.strength || '', per: 1, frequency: loose ? 'TDS' : 'Stat', days: loose ? 5 : 1, qty: loose ? 15 : 1 }]);
+    setRx(r => [...r, { item: it, item_id: it.id, dose: /artemether/i.test(it.name) && /24/.test(it.name) ? '4 tabs' : (it.strength || ''), per: 1, frequency: loose ? 'TDS' : (/artemether/i.test(it.name) ? 'BD' : 'As directed'), days: loose ? 5 : (/artemether/i.test(it.name) ? 3 : 1), qty: loose ? 15 : 1 }]);
     setDrugQ('');
   };
   const setRow = (i, k, val) => setRx(r => r.map((x, j) => {
@@ -261,7 +273,7 @@ function Orders({ v, d, reload }) {
           </div>}
           {c.lab === 'outsourced' && <select className="right" value={partner} onChange={e => setPartner(e.target.value)} style={{ width: 'auto' }}>{(c.partners || []).map(x => <option key={x}>{x}</option>)}</select>}
         </div>
-        <TestPicker tests={cat.tests} panels={cat.panels} selected={tests} setSelected={setTests} outsideAll={labMode === 'outsourced'} />
+        <TestPicker tests={cat.tests} panels={cat.panels} selected={tests} setSelected={setTests} outsideAll={labMode === 'outsourced'} ordered={d.labs.filter(l => l.status !== 'cancelled').map(l => l.test_id)} />
         <div className="row mt"><button className="primary" disabled={!tests.length} onClick={orderLabs}>Order {tests.length || ''} test{tests.length === 1 ? '' : 's'}{tests.length ? ` · ${money(cat.tests.filter(t => tests.includes(t.id) && !t.outsourced_only && labMode === 'inhouse').reduce((a, t) => a + t.price, 0))}` : ''}</button>
           <span className="faint small">Outside-lab tests print a requisition; the patient pays the partner lab directly.</span></div>
       </div>}
