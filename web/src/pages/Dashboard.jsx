@@ -23,6 +23,7 @@ export default function Dashboard() {
       {!d.sample && isAdmin && (!c.last_backup || Date.now() - new Date(c.last_backup) > 7 * 864e5) && <div className="alert warn row"><Icon name="alert" size={16} /><span>{c.last_backup ? `Last backup was ${Math.floor((Date.now() - new Date(c.last_backup)) / 864e5)} days ago.` : 'No backup has been made yet.'} Keep a copy of your records off this computer.</span><a className="btn sm right" href="#/settings">Back up now</a></div>}
       {d.sample && isAdmin && <div className="tip"><Icon name="info" size={16} /><div>This branch is running on <b>sample data</b> for demos and training. When the facility goes live, remove it in <a href="#/settings">Settings → Data</a>. The medicine catalogue and prices stay.</div></div>}
 
+      {isAdmin && <TodoPanel />}
       <div className="grid g-auto">
         <Stat icon="cash" label="Collected today" value={money(d.revenueToday)} hint={d.payToday.map(p => `${mname(p.method)} ${money(p.amt)}`).join(' · ') || 'No payments yet'} onClick={() => setOpen('revenue')} />
         <Stat icon="queue" label="Patients waiting" value={d.queue.length} hint={`${d.visitsToday} visits today · ${d.totalPatients} on file`} onClick={() => setOpen('queue')} />
@@ -206,4 +207,18 @@ function DetailBody({ k, d, close }) {
       {d.rows.map(b => <tr key={b.id} className="click" onClick={open('#/billing/' + b.id)}><td className="small">#{b.id}<div className="faint">{waited(b.created_at)} ago</div></td><td><b>{b.who}</b></td><td className="small">{b.payer || 'Cash'}</td><td><StatusBadge s={b.status} /></td><td className="num">{money(b.total)}</td><td className="num">{money(b.paid)}</td><td className="num"><b>{money(b.balance)}</b></td></tr>)}
     </tbody></table> : <Empty icon="billing">No unpaid bills.</Empty>}
   </>;
+}
+
+// Everything that needs the owner's attention today, most urgent first
+function TodoPanel() {
+  const [list] = useData('/todo');
+  const [open, setOpen] = useState(false);
+  if (!list || !list.length) return null;
+  const shown = open ? list : list.slice(0, 6);
+  const dot = { bad: 'var(--bad)', warn: 'var(--warn)', info: 'var(--brand)' };
+  return <div className="card todo">
+    <div className="cardhead"><h3>To do today</h3><span className="faint small">{list.length} thing{list.length > 1 ? 's' : ''} need{list.length === 1 ? 's' : ''} attention</span></div>
+    <div className="todo-list">{shown.map((t, i) => <a key={i} className="todo-item" href={t.href}><i style={{ background: dot[t.level] }} /><span><b>{t.title}</b><small>{t.detail}</small></span><Icon name="chev" size={16} /></a>)}</div>
+    {list.length > 6 && <button className="ghost sm" onClick={() => setOpen(!open)}>{open ? 'Show less' : `Show all ${list.length}`}</button>}
+  </div>;
 }

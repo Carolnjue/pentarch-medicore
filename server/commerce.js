@@ -704,4 +704,31 @@ module.exports = function commerce(app, H) {
     audit(req, `claim ${p.id} ${v.status}`, 'payment', p.id);
     return { ok: true };
   }));
+
+  // ---------- the owner's to-do list: everything that needs a decision today, each with where to act ----------
+  app.get('/api/todo', wrap(req => {
+    const t = today(), items = [];
+    const K = n => 'KES ' + Math.round(n).toLocaleString('en-KE');
+    const push = (level, title, detail, href) => items.push({ level, title, detail, href });
+    const openShifts = all("SELECT * FROM shifts WHERE status='open' AND opened_at<?", t);
+    if (openShifts.length) push('bad', `${openShifts.length} shift${openShifts.length > 1 ? 's' : ''} left open from an earlier day`, openShifts.map(x => x.user).join(', ') + ': close and count the cash', '#/billing');
+    const expired = get("SELECT COUNT(*) n, COALESCE(SUM(qty*COALESCE(cost,0)),0) v FROM batches WHERE qty>0 AND expiry<?", t);
+    if (expired.n) push('bad', `${expired.n} expired batch${expired.n > 1 ? 'es' : ''} still on the shelf`, `${K(expired.v)} at cost: take off the shelf and write off`, '#/pharmacy');
+    const supOver = all('SELECT * FROM supplier_invoices WHERE due_date<?', t).map(i => i.amount - get('SELECT COALESCE(SUM(amount),0) a FROM supplier_payments WHERE invoice_id=?', i.id).a).filter(x => x > 0.5);
+    if (supOver.length) push('warn', `${K(supOver.reduce((a, x) => a + x, 0))} overdue to suppliers`, `${supOver.length} invoice${supOver.length > 1 ? 's' : ''} past the due date`, '#/pharmacy');
+    const claimsToSubmit = get("SELECT COUNT(*) n, COALESCE(SUM(p.amount),0) v FROM payments p LEFT JOIN claims c ON c.payment_id=p.id WHERE p.method IN ('sha','insurance') AND p.amount>0 AND (c.status IS NULL OR c.status='pending')");
+    if (claimsToSubmit.n) push('warn', `${claimsToSubmit.n} SHA / insurance claim${claimsToSubmit.n > 1 ? 's' : ''} to submit`, `${K(claimsToSubmit.v)} waiting to be claimed`, '#/billing');
+    const oldClaims = get("SELECT COUNT(*) n FROM payments p JOIN claims c ON c.payment_id=p.id WHERE c.status='submitted' AND p.created_at<?", D.addDays(now(), -30));
+    if (oldClaims.n) push('warn', `${oldClaims.n} claim${oldClaims.n > 1 ? 's' : ''} submitted over 30 days ago and unpaid`, 'Follow up with the payer', '#/billing');
+    const debt = all("SELECT b.id FROM bills b WHERE b.status='credit' AND b.customer_id IS NOT NULL").map(b => billTotals(b.id).balance).filter(x => x > 0.5);
+    if (debt.length) push('info', `${K(debt.reduce((a, x) => a + x, 0))} owed by account customers`, `${debt.length} unpaid account purchase${debt.length > 1 ? 's' : ''}`, '#/billing');
+    const soon = get("SELECT COUNT(*) n, COALESCE(SUM(qty*COALESCE(cost,0)),0) v FROM batches WHERE qty>0 AND expiry>=? AND expiry<=?", t, D.addDays(now(), 60).slice(0, 10));
+    if (soon.n) push('info', `${soon.n} batch${soon.n > 1 ? 'es' : ''} expire within 60 days`, `${K(soon.v)} at cost: sell first, or return to supplier`, '#/pharmacy');
+    const low = itemsWithStock().filter(i => i.stock <= i.reorder_level && i.category !== 'reagent' && i.category !== 'service');
+    if (low.length) push('info', `${low.length} item${low.length > 1 ? 's' : ''} at or below reorder level`, low.slice(0, 3).map(i => i.name).join(', ') + (low.length > 3 ? '…' : ''), '#/pharmacy');
+    const count = get("SELECT MAX(posted_at) d FROM stock_counts WHERE status='posted'").d;
+    if (!count || count < D.addDays(now(), -30)) push('info', count ? 'No stock count in the last 30 days' : 'No stock count yet', 'Count one category this week', '#/pharmacy');
+    const order = { bad: 0, warn: 1, info: 2 };
+    return items.sort((a, b) => order[a.level] - order[b.level]);
+  }));
 };
