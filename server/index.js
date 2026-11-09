@@ -1161,12 +1161,14 @@ app.get('/api/reports/summary', wrap(req => {
 }));
 app.get('/api/reports/moh705', wrap(req => {
   const month = req.query.month || today().slice(0, 7);
-  const rows = all("SELECT n.diagnosis, p.dob, n.created_at FROM notes n JOIN patients p ON p.id=n.patient_id JOIN visits v ON v.id=n.visit_id WHERE substr(n.created_at,1,7)=? AND v.type='OPD'", month);
+  // one diagnosis per visit (the latest note), grouped regardless of capitals or spacing
+  const rows = all(`SELECT n.diagnosis, p.dob, n.created_at FROM notes n JOIN patients p ON p.id=n.patient_id JOIN visits v ON v.id=n.visit_id
+    WHERE substr(n.created_at,1,7)=? AND v.type='OPD' AND n.id=(SELECT MAX(n2.id) FROM notes n2 WHERE n2.visit_id=n.visit_id AND COALESCE(n2.diagnosis,'')!='')`, month);
   const t = {};
   for (const r of rows) {
     const ageY = (new Date(r.created_at) - new Date(r.dob)) / (365.25 * 864e5);
-    const k = r.diagnosis || 'Other';
-    t[k] ||= { diagnosis: k, under5: 0, over5: 0 };
+    const name = (r.diagnosis || 'Other').trim().replace(/\s+/g, ' '), k = name.toLowerCase();
+    t[k] ||= { diagnosis: name, under5: 0, over5: 0 };
     ageY < 5 ? t[k].under5++ : t[k].over5++;
   }
   return { month, rows: Object.values(t).sort((a, b) => (b.under5 + b.over5) - (a.under5 + a.over5)) };
