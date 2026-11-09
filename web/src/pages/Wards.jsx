@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend } from 'recharts';
 import { api } from '../api';
 import { ConfigContext } from '../App';
-import { useData, Modal, Field, Badge, act, money, fmtDT, age, Empty, PatientPicker, Tabs } from '../ui';
+import { useData, Modal, Field, Badge, act, money, fmtDT, age, ageYears, Empty, PatientPicker, Tabs } from '../ui';
 
 export default function Wards() {
   const c = useContext(ConfigContext);
@@ -102,7 +102,10 @@ const OBS = [['temp', 'Temp °C', 36, 37.5], ['pulse', 'Pulse', 60, 100], ['resp
 function Observations({ a, reload }) {
   const [f, setF] = useState({});
   const save = async () => { await act(() => api.post(`/visits/${a.visit_id}/vitals`, f), 'Observations saved'); setF({}); reload(); };
-  const off = (k, v) => { const o = OBS.find(x => x[0] === k); return v != null && o && (v < o[2] || v > o[3]); };
+  // normal ranges by age (Kenya ETAT+ / WHO): infants and children breathe and beat faster than adults
+  const yrs = ageYears(a.patient?.dob);
+  const R = yrs < 1 ? { pulse: [100, 160], resp: [30, 50] } : yrs < 5 ? { pulse: [90, 140], resp: [24, 40] } : yrs < 12 ? { pulse: [70, 120], resp: [18, 30] } : {};
+  const off = (k, v) => { const o = OBS.find(x => x[0] === k); const [lo, hi] = R[k] || [o?.[2], o?.[3]]; return v != null && o && (v < lo || v > hi); };
   return <div className="stack" style={{ marginTop: 10 }}>
     <div className="row" style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
       {OBS.map(([k, l]) => <Field key={k} label={l}><input type="number" step="any" style={{ width: 92 }} value={f[k] ?? ''} onChange={e => setF({ ...f, [k]: e.target.value })} /></Field>)}

@@ -318,6 +318,9 @@ function seedSample(D, cfg) {
       line(bill, `Bed day - ${bed.name}`, 'bed', 'admissions', a, 1, bed.daily_rate, at);
       const adm = svc('ADMFEE'); if (adm) line(bill, adm.name, 'bed', 'services', adm.id, 1, adm.price, at);
       run('INSERT INTO nursing_notes(admission_id,note,by_user,created_at) VALUES(?,?,?,?)', a, 'Admitted, stable. Vitals taken, IV line in situ.', 'Nurse Jane Akinyi', at);
+      const DX = { pneumonia: ['Pneumonia', 'J18.9'], hypertension: ['Essential hypertension', 'I10'], labour: ['Supervision of normal pregnancy', 'Z34.9'] };
+      const dk = Object.keys(DX).find(k => reason.toLowerCase().includes(k));
+      if (dk) run('INSERT INTO notes(visit_id,patient_id,history,exam,diagnosis,dx_code,plan,by_user,created_at) VALUES(?,?,?,?,?,?,?,?,?)', v, pid, reason, '', DX[dk][0], DX[dk][1], 'Admit, monitor and treat', 'Dr. Peter Maina', at);
       return { v, a, bill };
     };
     const labour = cfg.maternity ? admit(ids[2], 'Labour - 39 weeks, G1P0', 'Maternity', 6) : null;
