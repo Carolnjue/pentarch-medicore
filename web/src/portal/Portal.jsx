@@ -50,8 +50,8 @@ let toastFn = () => {};
 export const toast = (m, kind) => toastFn(m, kind);
 function Toasts() {
   const [list, setList] = useState([]);
-  toastFn = (m, kind = 'ok') => { const id = Math.random(); setList(l => [...l, { id, m, kind }]); setTimeout(() => setList(l => l.filter(x => x.id !== id)), 4200); };
-  return <div className="pp-toasts">{list.map(t => <div key={t.id} className={'pp-toast ' + t.kind}>{t.m}</div>)}</div>;
+  toastFn = (m, kind = 'ok') => { const id = Math.random(); setList(l => [...l.slice(-1), { id, m, kind }]); setTimeout(() => setList(l => l.filter(x => x.id !== id)), 4200); };
+  return <div className="pp-toasts">{list.map(t => <div key={t.id} className={'pp-toast ' + t.kind} role="status" onClick={() => setList(l => l.filter(x => x.id !== t.id))}>{t.m}</div>)}</div>;
 }
 
 const Field = ({ label, hint, children, wide }) => <label className={'pp-field' + (wide ? ' wide' : '')}><span>{label}</span>{children}{hint && <small>{hint}</small>}</label>;
