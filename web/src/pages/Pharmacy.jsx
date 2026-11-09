@@ -128,7 +128,7 @@ function POS() {
   useEffect(() => {
     const k = e => {
       if (e.key === 'F2') { e.preventDefault(); searchRef.current?.focus(); }
-      if (e.key === 'F9' && cart.length) { e.preventDefault(); setPaying(true); }
+      if (e.key === 'F9' && cart.length) { e.preventDefault(); if (cart.some(l => l.item.rx_only && !l.rx_ref)) toast('Record the prescription for each Rx-only item first', true); else setPaying(true); }
       if (e.key === 'F8' && cart.length) { e.preventDefault(); park(); }
     };
     window.addEventListener('keydown', k); return () => window.removeEventListener('keydown', k);
@@ -138,7 +138,8 @@ function POS() {
   const short = cart.find(l => baseOf(l) > l.item.stock);
   const credit = cust && cust.credit_limit > 0 ? Math.max(0, cust.credit_limit - (cust.owed || 0)) : 0;
   const finish = async p => {
-    const r = await act(() => api.post('/pos/sale', { customer_id: cust?.id, customer: cust?.name || 'Walk-in customer', lines: cart.map(l => ({ item_id: l.item.id, qty: l.qty, mode: l.mode, rx_ref: l.rx_ref })), payments: p ? [p] : [] }), p ? 'Sale complete' : 'Sale put on account');
+    let r;
+    try { r = await act(() => api.post('/pos/sale', { customer_id: cust?.id, customer: cust?.name || 'Walk-in customer', lines: cart.map(l => ({ item_id: l.item.id, qty: l.qty, mode: l.mode, rx_ref: l.rx_ref })), payments: p ? [p] : [] }), p ? 'Sale complete' : 'Sale put on account'); } catch { return; }
     setCart([]); setCust(null); setPaying(false); setReceipt(r); reloadItems(); setTick(t => t + 1); searchRef.current?.focus();
   };
   return <div className="stack">
