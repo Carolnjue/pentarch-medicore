@@ -44,6 +44,6 @@ SCENES = [
          'Never promise a feature or date Pentarch has not confirmed.', 'Record every client in the portal the same day.',
          'Keep client details private.'],
        say="Five rules. Quote only the prices in the portal. Never collect money. Never promise a feature or a date that Pentarch has not confirmed. Record every client the same day, because the first agent to record a client is the one who earns. And keep client details private."),
-  dict(kind='end', kicker='Pentarch Communications', title='Questions? Call or WhatsApp Pentarch', sub='+254 729 455 912 · medicore.pentarchcommunications.com/portal',
+  dict(kind='end', kicker='Pentarch Communications', title='Questions? Call or WhatsApp Pentarch', sub='+254 729 455 912 · medicore.pentarchsystemssolutions.co.ke/portal',
        say="That's it. Record your clients, start demos, follow up, and close. If you need help with a client, call or WhatsApp Pentarch on zero seven two nine, four five five, nine one two. Good luck."),
 ]

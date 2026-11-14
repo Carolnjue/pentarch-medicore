@@ -20,7 +20,7 @@ app.set('trust proxy', true); // behind the host's web server, use the visitor's
 // The Pentarch website may post the "Try the demo" form straight to this server
 app.use('/api/public', (req, res, next) => {
   const o = req.get('origin') || '';
-  if (/^https:\/\/([a-z0-9-]+\.)*pentarchcommunications\.com$/.test(o)) { res.set('Access-Control-Allow-Origin', o); res.set('Vary', 'Origin'); res.set('Access-Control-Allow-Headers', 'content-type'); res.set('Access-Control-Allow-Methods', 'GET,POST'); }
+  if (/^https:\/\/([a-z0-9-]+\.)*(pentarchcommunications\.com|pentarchsystemssolutions\.co\.ke)$/.test(o)) { res.set('Access-Control-Allow-Origin', o); res.set('Vary', 'Origin'); res.set('Access-Control-Allow-Headers', 'content-type'); res.set('Access-Control-Allow-Methods', 'GET,POST'); }
   if (req.method === 'OPTIONS') return res.sendStatus(204);
   next();
 });
@@ -1291,7 +1291,7 @@ require('./commerce')(app, H);
 require('./backup')(app, H);
 Object.assign(H, { TYPES: D.TYPES, createBranch, SAMPLE_STAFF, uniqueUsername, sessionFor, dropBranch: D.dropBranch });
 if (process.env.MEDICORE_CLOUD === '1') require('./cloud')(app, H);
-// The MediCore section of pentarchcommunications.com is kept here so the site can be updated from this repo
+// The MediCore section of the Pentarch website is kept here so the site can be updated from this repo
 app.get('/api/public/website-section', (req, res) => res.type('text/html').sendFile(path.join(__dirname, '..', 'marketing', 'website', 'medicore-page.html')));
 app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API route' }));
 

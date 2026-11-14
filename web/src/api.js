@@ -23,7 +23,7 @@ async function call(method, url, body) {
     });
   } catch {
     // the server could not be reached at all: say what to check rather than a browser error
-    const online = /pentarchcommunications\.com$/.test(location.hostname);
+    const online = /(pentarchcommunications\.com|pentarchsystemssolutions\.co\.ke)$/.test(location.hostname);
     throw new Error(online ? 'Cannot reach MediCore. Check this device\'s internet connection and try again.'
       : 'Cannot reach the MediCore computer. Check that it is switched on with the black MediCore window open, and that this device is on the same Wi-Fi.');
   }

@@ -297,8 +297,8 @@
       <div id="mcx-done" style="display:none;gap:12px">
         <h3 style="font-size:22px">Your MediCore is ready</h3>
         <p style="margin:0">Save these details. You need them to sign in.</p>
-        <div class="creds"><div><small>Web address</small><b>medicore.pentarchcommunications.com</b></div><div><small>Username</small><b id="mcx-u"></b></div><div><small>PIN</small><b id="mcx-p"></b></div><div><small>Free until</small><b id="mcx-e"></b></div></div>
-        <a class="b p" id="mcx-open" href="https://medicore.pentarchcommunications.com/" style="justify-content:center">Open my MediCore</a>
+        <div class="creds"><div><small>Web address</small><b>medicore.pentarchsystemssolutions.co.ke</b></div><div><small>Username</small><b id="mcx-u"></b></div><div><small>PIN</small><b id="mcx-p"></b></div><div><small>Free until</small><b id="mcx-e"></b></div></div>
+        <a class="b p" id="mcx-open" href="https://medicore.pentarchsystemssolutions.co.ke/" style="justify-content:center">Open my MediCore</a>
       </div>
     </form>
   </div>
@@ -311,7 +311,7 @@
         <span class="ey">Earn with Pentarch</span>
         <h2 class="h2">Know pharmacies and clinics? Become a MediCore agent.</h2>
         <p class="sub">Medical reps, pharmacists, IT technicians and students across Kenya introduce MediCore in their area. Sign up free, record your clients from your phone, even offline, and start their demos yourself. Pentarch installs, trains and supports.</p>
-        <div class="cta"><a class="b p" href="https://medicore.pentarchcommunications.com/portal?apply">Apply to be an agent</a><a class="b o" href="https://medicore.pentarchcommunications.com/portal">Agent sign in</a></div>
+        <div class="cta"><a class="b p" href="https://medicore.pentarchsystemssolutions.co.ke/portal?apply">Apply to be an agent</a><a class="b o" href="https://medicore.pentarchsystemssolutions.co.ke/portal">Agent sign in</a></div>
       </div>
       <div class="earn">
         <div><b>20%</b><span>of each client's first-year software fees</span></div>
@@ -344,7 +344,7 @@
   var root=document.querySelector('.mcx'); if(!root) return;
   var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}})},{threshold:.12});
   root.querySelectorAll('.rv').forEach(function(el){io.observe(el)});
-  var f=document.getElementById('mcx-try'), type='pharmacy', API='https://medicore.pentarchcommunications.com';
+  var f=document.getElementById('mcx-try'), type='pharmacy', API='https://medicore.pentarchsystemssolutions.co.ke';
   f.querySelectorAll('.seg button').forEach(function(b){b.addEventListener('click',function(){type=b.getAttribute('data-t');f.querySelectorAll('.seg button').forEach(function(x){x.classList.toggle('on',x===b)})})});
   var err=document.getElementById('mcx-err');
   function show(m){err.textContent=m;err.style.display='block'}
