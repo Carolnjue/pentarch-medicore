@@ -18,7 +18,7 @@ module.exports = function cloud(app, H) {
   // ---------- portal sign-in (separate from facility staff) ----------
   if (!R.get("SELECT id FROM agents WHERE role='admin'")) {
     R.run("INSERT INTO agents(name,phone,email,code,pin_hash,role,status,created_at,approved_at) VALUES(?,?,?,?,?,'admin','active',?,?)",
-      'Pentarch Admin', process.env.PORTAL_ADMIN_PHONE || '0700000000', 'info@pentarchcommunications.com', 'PENTARCH', D.hashPin(process.env.MEDICORE_SUPER_PIN || '2026'), now(), now());
+      'Pentarch Admin', process.env.PORTAL_ADMIN_PHONE || '0700000000', 'info@pentarchsystemssolutions.co.ke', 'PENTARCH', D.hashPin(process.env.MEDICORE_SUPER_PIN || '2026'), now(), now());
   }
   function agentOf(req) {
     const t = req.get('x-portal');
