@@ -165,7 +165,7 @@ function Login({ onLogin, cloud }) {
   return (
     <div className="setup">
       <div className="box" style={{ width: 'min(680px,100%)' }}>
-        <img src="/pentarch-logo.png" alt="Pentarch Communications" style={{ height: 38, width: 'auto', display: 'block', marginBottom: 18 }} />
+        <img src="/pentarch-logo.png" alt="Pentarch Systems Solutions" style={{ height: 38, width: 'auto', display: 'block', marginBottom: 18 }} />
         <div style={{ marginBottom: 20 }}><h1>{list?.org?.name || 'MediCore'}</h1><span className="muted">{list?.org?.name ? 'Pentarch MediCore · sign in to continue' : 'Sign in to continue'}</span></div>
         <div className="card">
           {quick ? <>

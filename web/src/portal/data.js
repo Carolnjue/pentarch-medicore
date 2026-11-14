@@ -1,6 +1,6 @@
 export const LOGO = '/pentarch-logo.png';
 export const LOGO_WHITE = '/pentarch-logo-white.png';
-export const SITE = 'https://pentarchcommunications.com';
+export const SITE = 'https://pentarchsystemssolutions.co.ke';
 export const PHONE = '+254 729 455 912';
 export const PHONE_WA = '254729455912';
 export const EMAIL = 'info@pentarchcommunications.com';

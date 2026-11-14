@@ -552,7 +552,7 @@ function Prices({ me }) {
   const kit = P.kit.price * q.kit;
   const add = P.addons.reduce((s, [n, , price]) => s + (q.addons[n] || 0) * price, 0);
   const first = soft + setup + kit + add;
-  const quoteText = `Pentarch MediCore quotation\n${p.label} plan, ${q.branches} branch${q.branches > 1 ? 'es' : ''}\n\nSoftware (${q.billing}): ${KES(soft)}${q.billing === 'monthly' ? ' per month' : ' per year'}\nSetup, data import and training: ${KES(setup)} once\n${q.kit ? `Counter Kit x${q.kit}: ${KES(kit)} once\n` : ''}${P.addons.filter(([n]) => q.addons[n]).map(([n, , pr]) => `${n} x${q.addons[n]}: ${KES(pr * q.addons[n])}\n`).join('')}\nTotal to start: ${KES(first)}\n\nPrices in KES. Valid 30 days. Pentarch Communications, ${PHONE}.`;
+  const quoteText = `Pentarch MediCore quotation\n${p.label} plan, ${q.branches} branch${q.branches > 1 ? 'es' : ''}\n\nSoftware (${q.billing}): ${KES(soft)}${q.billing === 'monthly' ? ' per month' : ' per year'}\nSetup, data import and training: ${KES(setup)} once\n${q.kit ? `Counter Kit x${q.kit}: ${KES(kit)} once\n` : ''}${P.addons.filter(([n]) => q.addons[n]).map(([n, , pr]) => `${n} x${q.addons[n]}: ${KES(pr * q.addons[n])}\n`).join('')}\nTotal to start: ${KES(first)}\n\nPrices in KES. Valid 30 days. Pentarch Systems Solutions, ${PHONE}.`;
   const n = (k, v) => setQ({ ...q, [k]: Math.max(0, Math.min(20, v)) });
   return (
     <div className="pp-page">

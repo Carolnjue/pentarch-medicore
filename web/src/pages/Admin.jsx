@@ -26,7 +26,7 @@ export default function Admin({ session, types, onOpen, onLogout }) {
     <div style={{ minHeight: '100vh', background: 'var(--bg)' }}>
       <div style={{ background: 'linear-gradient(120deg,#0b1220,#13233f)', color: 'white', padding: '22px 30px' }}>
         <div className="row" style={{ maxWidth: 1300, margin: '0 auto' }}>
-          <img src="/pentarch-logo-white.png" alt="Pentarch" style={{ height: 34, width: 'auto' }} /><div><h1 style={{ color: 'white' }}>Pentarch console</h1><span style={{ color: '#94a3b8' }}>Signed in as {session.user.name}. You see every facility on this installation.</span></div>
+          <img src="/pentarch-logo-white.png" alt="Pentarch Systems Solutions" style={{ height: 34, width: 'auto' }} /><div><h1 style={{ color: 'white' }}>Pentarch console</h1><span style={{ color: '#94a3b8' }}>Signed in as {session.user.name}. You see every facility on this installation.</span></div>
           <div className="right row"><button className="primary" onClick={() => setCreating(true)}><Icon name="plus" size={15} />New facility</button>
             <button onClick={onLogout}><Icon name="logout" size={15} />Sign out</button></div>
         </div>

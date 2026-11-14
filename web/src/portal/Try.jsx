@@ -30,7 +30,7 @@ export default function Try() {
   };
   return (
     <div className="pp-try">
-      <header className="pp-wtop"><a href={SITE + '/systems/'}><Logo /></a><a className="pp-link" href={`https://wa.me/${PHONE_WA}?text=${encodeURIComponent('Hello Pentarch, I would like a guided MediCore demo.')}`}>Talk to us</a></header>
+      <header className="pp-wtop"><a href={SITE + '/medicore/'}><Logo /></a><a className="pp-link" href={`https://wa.me/${PHONE_WA}?text=${encodeURIComponent('Hello Pentarch, I would like a guided MediCore demo.')}`}>Talk to us</a></header>
       <div className="pp-wgrid">
         <section className="pp-pitch">
           <span className="pp-eyebrow">Pentarch MediCore · free 30-day demo</span>
@@ -69,7 +69,7 @@ export default function Try() {
           </form>}
         </section>
       </div>
-      <footer className="pp-foot">© Pentarch Communications · <a href={SITE + '/systems/'}>All Pentarch systems</a> · <a href="/portal?apply">Become a sales agent</a></footer>
+      <footer className="pp-foot">© Pentarch Systems Solutions · <a href={SITE + '/medicore/'}>Pentarch MediCore</a> · <a href="/portal?apply">Become a sales agent</a></footer>
     </div>
   );
 }
